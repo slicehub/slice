@@ -1,8 +1,8 @@
 // Ensure window is available for bb.js before any imports
+type GlobalScope = typeof globalThis & { window?: typeof globalThis };
+
 if (typeof window === "undefined" && typeof globalThis !== "undefined") {
-  const globalScope = globalThis as typeof globalThis & {
-    window?: typeof globalThis;
-  };
+  const globalScope: GlobalScope = globalThis;
   globalScope.window = globalScope;
 }
 
