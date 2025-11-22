@@ -16,3 +16,13 @@ client = true
 constructor_args = """
 --admin default
 """
+
+[development.contracts.slice]
+client = true
+constructor_args = """
+--admin default
+--min_vote_seconds 300
+--max_vote_seconds 86400
+--min_deadline_seconds 300
+--max_deadline_seconds 86400
+"""

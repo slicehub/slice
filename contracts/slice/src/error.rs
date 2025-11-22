@@ -1,0 +1,28 @@
+#[soroban_sdk::contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum ContractError {
+    ErrNotFound = 1,
+    ErrUnauthorized = 2,
+    ErrInvalidAmounts = 3,
+    ErrInvalidJurorCount = 4,
+    ErrInvalidDeadline = 5,
+    ErrInvalidAmount = 6,
+    ErrAlreadyPaid = 7,
+    ErrDeadlineReached = 8,
+    ErrStakeOutOfRange = 9,
+    ErrNoAvailableDisputes = 10,
+    ErrDisputeFull = 11,
+    ErrNotAllowedJuror = 12,
+    ErrAlreadyJuror = 13,
+    ErrInvalidProof = 14,
+    ErrVotingClosed = 15,
+    ErrNotJuror = 16,
+    ErrNotActive = 17,
+    ErrTooEarly = 18,
+    ErrAlreadyFinished = 19,
+    ErrCategoryNotFound = 20,
+    ErrAlreadyExists = 21,
+    ErrAlreadyVoted = 22,
+}
+

@@ -1,0 +1,7 @@
+[package]
+name = "tally"
+type = "bin"
+authors = [""]
+
+[dependencies]
+
