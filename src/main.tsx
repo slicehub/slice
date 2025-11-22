@@ -1,6 +1,9 @@
 // Ensure window is available for bb.js before any imports
-if (typeof window === 'undefined' && typeof globalThis !== 'undefined') {
-  (globalThis as any).window = globalThis;
+if (typeof window === "undefined" && typeof globalThis !== "undefined") {
+  const globalScope = globalThis as typeof globalThis & {
+    window?: typeof globalThis;
+  };
+  globalScope.window = globalScope;
 }
 
 import { StrictMode } from "react";

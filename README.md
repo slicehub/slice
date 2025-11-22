@@ -11,7 +11,7 @@ and if it's valid generate a proof client side that you solved the problem.
 This proof is then sent to the Stellar smart contract `guess-the-puzzle` which
 itself calls `ultrahonk-soroban-contract` to verify it. Upon proof validation,
 the contract's balance is transferred to the guesser. If the proof is incorrect,
-the guesser incurs a fee for trying which goes increases the contract's balance. 
+the guesser incurs a fee for trying which goes increases the contract's balance.
 
 ### Getting started
 
@@ -20,8 +20,8 @@ the guesser incurs a fee for trying which goes increases the contract's balance.
 stellar container start local --limits unlimited
 ```
 
-* The `--limits unlimited` preset sets Stellar smart contract resource limits to their maximum values for local mode.
-* Quickstart’s local mode exposes RPC on `http://localhost:8000` and includes a Friendbot faucet by default.
+- The `--limits unlimited` preset sets Stellar smart contract resource limits to their maximum values for local mode.
+- Quickstart’s local mode exposes RPC on `http://localhost:8000` and includes a Friendbot faucet by default.
 
 Then you can use Scaffold Stellar:
 

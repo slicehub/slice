@@ -1,31 +1,61 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button, Text } from '@stellar/design-system';
-import { useWallet } from '../hooks/useWallet';
-import { useWalletBalance } from '../hooks/useWalletBalance';
-import { usePrizePool } from '../contexts/PrizePoolContext';
-import { generateRandomSudoku } from '../util/sudokuGenerator';
-import { NoirService } from '../services/NoirService';
-import { contractClient, StellarContractService } from '../services/StellarContractService';
-import styles from './Sudoku.module.css';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Button, Text } from "@stellar/design-system";
+import { useWallet } from "../hooks/useWallet";
+import { useWalletBalance } from "../hooks/useWalletBalance";
+import { usePrizePool } from "../contexts/PrizePoolContext";
+import { generateRandomSudoku } from "../util/sudokuGenerator";
+import {
+  NoirService,
+  type CompiledCircuit,
+  type ProofArtifacts,
+} from "../services/NoirService";
+import {
+  contractClient,
+  StellarContractService,
+} from "../services/StellarContractService";
+import styles from "./Sudoku.module.css";
 
 // Example puzzle data
-const EXAMPLE_PUZZLE = [5,3,0,0,7,0,0,0,0,6,0,0,1,9,5,0,0,0,0,9,8,0,0,0,0,6,0,8,0,0,0,6,0,0,0,3,4,0,0,8,0,3,0,0,1,7,0,0,0,2,0,0,0,6,0,6,0,0,0,0,2,8,0,0,0,0,4,1,9,0,0,5,0,0,0,0,8,0,0,7,9];
-const EXAMPLE_SOLUTION = [5,3,4,6,7,8,9,1,2,6,7,2,1,9,5,3,4,8,1,9,8,3,4,2,5,6,7,8,5,9,7,6,1,4,2,3,4,2,6,8,5,3,7,9,1,7,1,3,9,2,4,8,5,6,9,6,1,5,3,7,2,8,4,2,8,7,4,1,9,6,3,5,3,4,5,2,8,6,1,7,9];
+const EXAMPLE_PUZZLE = [
+  5, 3, 0, 0, 7, 0, 0, 0, 0, 6, 0, 0, 1, 9, 5, 0, 0, 0, 0, 9, 8, 0, 0, 0, 0, 6,
+  0, 8, 0, 0, 0, 6, 0, 0, 0, 3, 4, 0, 0, 8, 0, 3, 0, 0, 1, 7, 0, 0, 0, 2, 0, 0,
+  0, 6, 0, 6, 0, 0, 0, 0, 2, 8, 0, 0, 0, 0, 4, 1, 9, 0, 0, 5, 0, 0, 0, 0, 8, 0,
+  0, 7, 9,
+];
+const EXAMPLE_SOLUTION = [
+  5, 3, 4, 6, 7, 8, 9, 1, 2, 6, 7, 2, 1, 9, 5, 3, 4, 8, 1, 9, 8, 3, 4, 2, 5, 6,
+  7, 8, 5, 9, 7, 6, 1, 4, 2, 3, 4, 2, 6, 8, 5, 3, 7, 9, 1, 7, 1, 3, 9, 2, 4, 8,
+  5, 6, 9, 6, 1, 5, 3, 7, 2, 8, 4, 2, 8, 7, 4, 1, 9, 6, 3, 5, 3, 4, 5, 2, 8, 6,
+  1, 7, 9,
+];
+
+const createEmptyGrid = (): number[] =>
+  Array.from<number>({ length: 81 }, () => 0);
+const createEmptyIndexSet = (): Set<number> => new Set<number>();
 
 export const Sudoku: React.FC = () => {
   const { address, signTransaction } = useWallet();
   const { updateBalance } = useWalletBalance();
   const { loadPrizePot } = usePrizePool();
-  const [grid, setGrid] = useState<number[]>(new Array(81).fill(0));
-  const [, setSolution] = useState<number[]>(new Array(81).fill(0));
-  const [givenIndices, setGivenIndices] = useState<Set<number>>(new Set());
+  const [grid, setGrid] = useState<number[]>(createEmptyGrid);
+  const [, setSolution] = useState<number[]>(createEmptyGrid);
+  const [givenIndices, setGivenIndices] =
+    useState<Set<number>>(createEmptyIndexSet);
   const [difficulty, setDifficulty] = useState(30);
-  const [validationErrors, setValidationErrors] = useState<Set<number>>(new Set());
-  const [validationValid, setValidationValid] = useState<Set<number>>(new Set());
-  const [output, setOutput] = useState<string>('');
+  const [validationErrors, setValidationErrors] =
+    useState<Set<number>>(createEmptyIndexSet);
+  const [validationValid, setValidationValid] =
+    useState<Set<number>>(createEmptyIndexSet);
+  const [output, setOutput] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const cellRefs = useRef<(HTMLInputElement | null)[]>([]);
   const noirService = useRef(new NoirService());
+  const getErrorMessage = useCallback((error: unknown) => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return typeof error === "string" ? error : "Unknown error";
+  }, []);
 
   // Initialize grid on mount
   useEffect(() => {
@@ -33,58 +63,67 @@ export const Sudoku: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const updateCell = useCallback((index: number, value: number) => {
-    if (givenIndices.has(index)) return;
-    
-    setGrid(prev => {
-      const newGrid = [...prev];
-      newGrid[index] = value;
-      return newGrid;
-    });
-    
-    // Clear validation states when cell is edited
-    setValidationErrors(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(index);
-      return newSet;
-    });
-    setValidationValid(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(index);
-      return newSet;
-    });
-  }, [givenIndices]);
+  const updateCell = useCallback(
+    (index: number, value: number) => {
+      if (givenIndices.has(index)) return;
+
+      setGrid((prev) => {
+        const newGrid = [...prev];
+        newGrid[index] = value;
+        return newGrid;
+      });
+
+      // Clear validation states when cell is edited
+      setValidationErrors((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(index);
+        return newSet;
+      });
+      setValidationValid((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(index);
+        return newSet;
+      });
+    },
+    [givenIndices],
+  );
 
   const handleCellChange = (index: number, value: string) => {
     // Only allow digits 1-9
-    const numValue = value.replace(/[^1-9]/g, '');
+    const numValue = value.replace(/[^1-9]/g, "");
     if (numValue.length > 1) {
       return;
     }
     updateCell(index, numValue ? parseInt(numValue) : 0);
   };
 
-  const handleCellKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (givenIndices.has(index) && (e.key === 'Backspace' || e.key === 'Delete')) {
+  const handleCellKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (
+      givenIndices.has(index) &&
+      (e.key === "Backspace" || e.key === "Delete")
+    ) {
       e.preventDefault();
       return;
     }
 
     let newIndex = index;
     switch (e.key) {
-      case 'ArrowUp':
+      case "ArrowUp":
         newIndex = index - 9;
         e.preventDefault();
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         newIndex = index + 9;
         e.preventDefault();
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         newIndex = index - 1;
         e.preventDefault();
         break;
-      case 'ArrowRight':
+      case "ArrowRight":
         newIndex = index + 1;
         e.preventDefault();
         break;
@@ -98,14 +137,14 @@ export const Sudoku: React.FC = () => {
   const setGivenCells = useCallback((puzzle: number[]) => {
     const newGivenIndices = new Set<number>();
     const newGrid = new Array(81).fill(0);
-    
+
     puzzle.forEach((value, index) => {
       if (value > 0) {
         newGivenIndices.add(index);
         newGrid[index] = value;
       }
     });
-    
+
     setGivenIndices(newGivenIndices);
     setGrid(newGrid);
   }, []);
@@ -116,20 +155,23 @@ export const Sudoku: React.FC = () => {
     setGivenIndices(new Set());
     setValidationErrors(new Set());
     setValidationValid(new Set());
-    setOutput('');
+    setOutput("");
   }, []);
 
   const generateRandomGame = useCallback(() => {
     clearGrid();
-    setOutput('Generating random Sudoku...');
-    
-    const { puzzle, solution: generatedSolution } = generateRandomSudoku(difficulty);
+    setOutput("Generating random Sudoku...");
+
+    const { puzzle, solution: generatedSolution } =
+      generateRandomSudoku(difficulty);
     setGivenCells(puzzle);
-    
+
     // Store solution separately for proof generation
     setSolution(generatedSolution);
-    
-    setOutput(`✓ Random game generated with ${puzzle.filter(v => v > 0).length} givens. Fill in the empty cells to complete the puzzle.`);
+
+    setOutput(
+      `✓ Random game generated with ${puzzle.filter((v) => v > 0).length} givens. Fill in the empty cells to complete the puzzle.`,
+    );
   }, [difficulty, clearGrid, setGivenCells]);
 
   const loadExample = useCallback(() => {
@@ -138,21 +180,23 @@ export const Sudoku: React.FC = () => {
     // Fill in the complete solution (given cells are already set and locked)
     setGrid(EXAMPLE_SOLUTION);
     setSolution(EXAMPLE_SOLUTION);
-    const preFilledCount = EXAMPLE_PUZZLE.filter(v => v > 0).length;
+    const preFilledCount = EXAMPLE_PUZZLE.filter((v) => v > 0).length;
     setDifficulty(preFilledCount);
-    setOutput('✓ Example sudoku loaded.');
+    setOutput("✓ Example sudoku loaded.");
   }, [clearGrid, setGivenCells]);
 
   const resetPuzzle = useCallback(() => {
-    setGrid(prev => prev.map((value, index) => {
-      if (givenIndices.has(index)) {
-        return value;
-      }
-      return 0;
-    }));
+    setGrid((prev) =>
+      prev.map((value, index) => {
+        if (givenIndices.has(index)) {
+          return value;
+        }
+        return 0;
+      }),
+    );
     setValidationErrors(new Set());
     setValidationValid(new Set());
-    setOutput('');
+    setOutput("");
   }, [givenIndices]);
 
   const validateSudokuGrid = useCallback(() => {
@@ -161,9 +205,11 @@ export const Sudoku: React.FC = () => {
     setValidationValid(new Set());
 
     // Check if grid is full
-    const emptyCells = grid.filter(v => v === 0).length;
+    const emptyCells = grid.filter((v) => v === 0).length;
     if (emptyCells > 0) {
-      setOutput(`Grid is not complete! ${emptyCells} empty cells remaining. Please fill all cells before validating.`);
+      setOutput(
+        `Grid is not complete! ${emptyCells} empty cells remaining. Please fill all cells before validating.`,
+      );
       return;
     }
 
@@ -255,13 +301,18 @@ export const Sudoku: React.FC = () => {
     setValidationValid(validIndices);
 
     if (errorIndices.size === 0) {
-      setOutput('✓ Validation passed! No duplicates found.');
+      setOutput("✓ Validation passed! No duplicates found.");
     } else {
-      setOutput('❌ Validation failed: Found duplicates in rows, columns, or 3x3 boxes.');
+      setOutput(
+        "❌ Validation failed: Found duplicates in rows, columns, or 3x3 boxes.",
+      );
     }
   }, [grid]);
 
-  const collectSudokuGridData = useCallback((): { puzzle: number[], solution: number[] } => {
+  const collectSudokuGridData = useCallback((): {
+    puzzle: number[];
+    solution: number[];
+  } => {
     // Solution is the current grid state (what user has filled in)
     const finalSolution = grid;
     // Puzzle is only the given cells
@@ -276,7 +327,7 @@ export const Sudoku: React.FC = () => {
 
   const generateProof = useCallback(async () => {
     if (!address || !signTransaction) {
-      setOutput('Error: Please connect your wallet first.');
+      setOutput("Error: Please connect your wallet first.");
       return;
     }
 
@@ -300,28 +351,29 @@ export const Sudoku: React.FC = () => {
     // Validate that all values are 1-9
     const invalidSolution = solution.some((v) => v < 1 || v > 9);
     if (invalidSolution) {
-      setOutput('Solution contains invalid values! All cells must be 1-9.');
+      setOutput("Solution contains invalid values! All cells must be 1-9.");
       return;
     }
 
     setIsGenerating(true);
-    setOutput('Generating proof...\n');
+    setOutput("Generating proof...\n");
 
-    let noirError: any = null;
-    let proofResult: any = null;
+    let noirError: Error | null = null;
+    let proofResult: ProofArtifacts | null = null;
 
     // Try to generate proof with Noir
     try {
-      proofResult = await noirService.current.generateProof('sudoku', {
+      proofResult = await noirService.current.generateProof("sudoku", {
         puzzle,
         solution,
       });
-    } catch (error: any) {
-      noirError = error;
-      console.error('Noir proof generation error:', error);
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      noirError = error instanceof Error ? error : new Error(message);
+      console.error("Noir proof generation error:", message);
     }
 
-    let outputText = '';
+    let outputText = "";
 
     // If Noir failed, show the error but still try to submit to contract
     if (noirError) {
@@ -341,22 +393,28 @@ Attempting to submit to smart contract to see contract-level validation...
       // Try to create an invalid proof blob using helper methods
       try {
         // Load circuit and VK using helper methods
-        const circuitResponse = await fetch('/circuits/sudoku.json');
+        const circuitResponse = await fetch("/circuits/sudoku.json");
         if (!circuitResponse.ok) {
-          throw new Error('Failed to load circuit');
+          throw new Error("Failed to load circuit");
         }
-        const circuit = await circuitResponse.json();
-        const vkJson = await noirService.current.loadVk('sudoku');
+        const circuit = (await circuitResponse.json()) as CompiledCircuit;
+        const vkJson = await noirService.current.loadVk("sudoku");
 
         // Encode public inputs using helper method
-        const publicInputsBytes = noirService.current.encodePublicInputs(circuit, { puzzle });
+        const publicInputsBytes = noirService.current.encodePublicInputs(
+          circuit,
+          { puzzle },
+        );
 
         // Create dummy proof data (all zeros - will fail verification)
         // Use standard proof size: 440 fields * 32 bytes
         const proofBytes = new Uint8Array(440 * 32);
 
         // Build proof blob using helper method
-        const { proofBlob } = noirService.current.buildProofBlob(publicInputsBytes, proofBytes);
+        const { proofBlob } = noirService.current.buildProofBlob(
+          publicInputsBytes,
+          proofBytes,
+        );
 
         outputText += `\n\nSubmitting invalid proof to contract (properly formatted but with invalid proof data)...\n`;
 
@@ -371,13 +429,15 @@ Attempting to submit to smart contract to see contract-level validation...
             proof_blob: proofBuffer,
           });
 
-          const result = await tx.signAndSend({ signTransaction: walletSignTransaction });
+          const result = await tx.signAndSend({
+            signTransaction: walletSignTransaction,
+          });
           const txData = StellarContractService.extractTransactionData(result);
 
           // Refresh prize pool and wallet balance after verification attempt
           setTimeout(() => {
-            loadPrizePot();
-            updateBalance();
+            void loadPrizePot();
+            void updateBalance();
           }, 2000);
 
           if (txData.success) {
@@ -387,21 +447,21 @@ Attempting to submit to smart contract to see contract-level validation...
 
 The smart contract also rejected the invalid proof, confirming that both client-side (Noir) and on-chain validation work correctly.`;
           }
-        } catch (contractError: any) {
+        } catch (contractError: unknown) {
           // Refresh prize pool and wallet balance after verification attempt (even on error)
           setTimeout(() => {
-            loadPrizePot();
-            updateBalance();
+            void loadPrizePot();
+            void updateBalance();
           }, 2000);
 
           outputText += `\n\n✗ Contract Verification Failed (as expected)
 
-Contract Error: ${contractError.message}
+Contract Error: ${getErrorMessage(contractError)}
 
 The smart contract also rejected the invalid proof, confirming that both client-side (Noir) and on-chain validation work correctly.`;
         }
-      } catch (error: any) {
-        outputText += `\n\n✗ Failed to submit to contract: ${error.message}`;
+      } catch (error: unknown) {
+        outputText += `\n\n✗ Failed to submit to contract: ${getErrorMessage(error)}`;
       }
     } else if (proofResult) {
       // Noir succeeded, proceed with normal flow
@@ -415,7 +475,9 @@ VK Size: ${proofResult.vkJson.length} bytes
 Time: ${proofResult.proofTime}s
 
 Proof Blob (first 100 bytes):
-${Array.from((proofResult.proofBlob as Uint8Array).slice(0, 100)).map((byte) => byte.toString(16).padStart(2, '0')).join(' ')}...
+${Array.from(proofResult.proofBlob.slice(0, 100))
+  .map((byte) => byte.toString(16).padStart(2, "0"))
+  .join(" ")}...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STELLAR VERIFICATION
@@ -426,7 +488,9 @@ STELLAR VERIFICATION
       try {
         contractClient.options.publicKey = address;
         const vkBuffer = StellarContractService.toBuffer(proofResult.vkJson);
-        const proofBuffer = StellarContractService.toBuffer(proofResult.proofBlob);
+        const proofBuffer = StellarContractService.toBuffer(
+          proofResult.proofBlob,
+        );
 
         const tx = await contractClient.verify_puzzle({
           guesser: address,
@@ -434,14 +498,17 @@ STELLAR VERIFICATION
           proof_blob: proofBuffer,
         });
 
-        const cpuInstructions = StellarContractService.extractCpuInstructions(tx);
-        const result = await tx.signAndSend({ signTransaction: walletSignTransaction });
+        const cpuInstructions =
+          StellarContractService.extractCpuInstructions(tx);
+        const result = await tx.signAndSend({
+          signTransaction: walletSignTransaction,
+        });
         const txData = StellarContractService.extractTransactionData(result);
 
         // Refresh prize pool and wallet balance after verification attempt
         setTimeout(() => {
-          loadPrizePot();
-          updateBalance();
+          void loadPrizePot();
+          void updateBalance();
         }, 2000);
 
         if (txData.success) {
@@ -463,20 +530,27 @@ Verification Status: ✓ VERIFIED`;
         } else {
           outputText += `\n\n✗ Verification failed`;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Refresh prize pool and wallet balance after verification attempt (even on error)
         setTimeout(() => {
-          loadPrizePot();
-          updateBalance();
+          void loadPrizePot();
+          void updateBalance();
         }, 2000);
 
-        outputText += `\n\n✗ Verification failed: ${error.message || String(error)}`;
+        outputText += `\n\n✗ Verification failed: ${getErrorMessage(error)}`;
       }
     }
 
     setOutput(outputText);
     setIsGenerating(false);
-  }, [address, signTransaction, collectSudokuGridData, loadPrizePot, updateBalance]);
+  }, [
+    address,
+    signTransaction,
+    collectSudokuGridData,
+    loadPrizePot,
+    updateBalance,
+    getErrorMessage,
+  ]);
 
   if (!address) {
     return (
@@ -509,25 +583,13 @@ Verification Status: ✓ VERIFIED`;
 
       {/* Control buttons */}
       <div className={styles.sudokuControls}>
-        <Button
-          onClick={generateRandomGame}
-          variant="secondary"
-          size="md"
-        >
+        <Button onClick={generateRandomGame} variant="secondary" size="md">
           Generate Random
         </Button>
-        <Button
-          onClick={loadExample}
-          variant="secondary"
-          size="md"
-        >
+        <Button onClick={loadExample} variant="secondary" size="md">
           Load Example
         </Button>
-        <Button
-          onClick={resetPuzzle}
-          variant="secondary"
-          size="md"
-        >
+        <Button onClick={resetPuzzle} variant="secondary" size="md">
           Reset Puzzle
         </Button>
         <Button
@@ -539,12 +601,12 @@ Verification Status: ✓ VERIFIED`;
           Validate Grid
         </Button>
         <Button
-          onClick={generateProof}
+          onClick={() => void generateProof()}
           variant="primary"
           size="md"
           disabled={isGenerating}
         >
-          {isGenerating ? 'Generating...' : 'Generate Proof'}
+          {isGenerating ? "Generating..." : "Generate Proof"}
         </Button>
       </div>
 
@@ -557,19 +619,23 @@ Verification Status: ✓ VERIFIED`;
             const isValid = validationValid.has(i);
             const cellClasses = [
               styles.sudokuCell,
-              isGiven ? styles.locked : '',
-              hasError ? styles.error : '',
-              isValid ? styles.valid : '',
-            ].filter(Boolean).join(' ');
+              isGiven ? styles.locked : "",
+              hasError ? styles.error : "",
+              isValid ? styles.valid : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
 
             return (
               <input
                 key={i}
-                ref={(el) => { cellRefs.current[i] = el; }}
+                ref={(el) => {
+                  cellRefs.current[i] = el;
+                }}
                 type="text"
                 className={cellClasses}
                 maxLength={1}
-                value={grid[i] > 0 ? grid[i].toString() : ''}
+                value={grid[i] > 0 ? grid[i].toString() : ""}
                 readOnly={isGiven}
                 onChange={(e) => handleCellChange(i, e.target.value)}
                 onKeyDown={(e) => handleCellKeyDown(i, e)}
@@ -581,19 +647,20 @@ Verification Status: ✓ VERIFIED`;
 
       {/* Output */}
       {output && (
-        <div style={{
-          marginTop: '20px',
-          padding: '15px',
-          background: '#f5f5f5',
-          borderRadius: '4px',
-          whiteSpace: 'pre-wrap',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-        }}>
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "15px",
+            background: "#f5f5f5",
+            borderRadius: "4px",
+            whiteSpace: "pre-wrap",
+            fontFamily: "monospace",
+            fontSize: "12px",
+          }}
+        >
           {output}
         </div>
       )}
     </div>
   );
 };
-

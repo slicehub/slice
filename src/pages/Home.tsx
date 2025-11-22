@@ -13,10 +13,11 @@ const Home: React.FC = () => {
           Sudoku Proof Generator
         </Text>
         <Text as="p" size="md">
-          Solve Sudoku puzzles and generate zero-knowledge proofs that verify your solution
-          on the Stellar blockchain using the UltraHonk proof system.
+          Solve Sudoku puzzles and generate zero-knowledge proofs that verify
+          your solution on the Stellar blockchain using the UltraHonk proof
+          system.
         </Text>
-        
+
         <Box gap="md" direction="column" style={{ marginTop: "2rem" }}>
           <ContractConfig />
           <PrizePool />

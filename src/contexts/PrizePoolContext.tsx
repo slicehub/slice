@@ -1,6 +1,10 @@
+/* eslint-disable react-x/no-use-context, react-x/no-context-provider */
 import React, { createContext, useContext, useCallback, useState } from "react";
 import { useWallet } from "../hooks/useWallet";
-import { contractClient, StellarContractService } from "../services/StellarContractService";
+import {
+  contractClient,
+  StellarContractService,
+} from "../services/StellarContractService";
 
 interface PrizePoolContextType {
   balance: { stroops: string; xlm: string } | null;
@@ -8,8 +12,11 @@ interface PrizePoolContextType {
   loadPrizePot: () => Promise<void>;
 }
 
-const PrizePoolContext = createContext<PrizePoolContextType | undefined>(undefined);
+const PrizePoolContext = createContext<PrizePoolContextType | undefined>(
+  undefined,
+);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePrizePool = () => {
   const context = useContext(PrizePoolContext);
   if (!context) {
@@ -22,9 +29,14 @@ interface PrizePoolProviderProps {
   children: React.ReactNode;
 }
 
-export const PrizePoolProvider: React.FC<PrizePoolProviderProps> = ({ children }) => {
+export const PrizePoolProvider: React.FC<PrizePoolProviderProps> = ({
+  children,
+}) => {
   const { address } = useWallet();
-  const [balance, setBalance] = useState<{ stroops: string; xlm: string } | null>(null);
+  const [balance, setBalance] = useState<{
+    stroops: string;
+    xlm: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadPrizePot = useCallback(async () => {
@@ -39,15 +51,15 @@ export const PrizePoolProvider: React.FC<PrizePoolProviderProps> = ({ children }
       contractClient.options.publicKey = address;
       const tx = await contractClient.prize_pot();
       const result = tx.result;
-      
+
       if (result !== undefined && result !== null) {
         const stroops = result.toString();
         const xlm = StellarContractService.formatStroopsToXlm(stroops);
         setBalance({ stroops, xlm });
       } else {
-        throw new Error('No result from prize_pot simulation');
+        throw new Error("No result from prize_pot simulation");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load prize pot:", error);
       setBalance({ stroops: "0", xlm: "0.0000000" });
     } finally {
@@ -61,4 +73,3 @@ export const PrizePoolProvider: React.FC<PrizePoolProviderProps> = ({ children }
     </PrizePoolContext.Provider>
   );
 };
-

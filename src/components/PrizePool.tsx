@@ -3,17 +3,23 @@ import { Button, Input, Text } from "@stellar/design-system";
 import { Box } from "./layout/Box";
 import { useWallet } from "../hooks/useWallet";
 import { usePrizePool } from "../contexts/PrizePoolContext";
-import { contractClient, StellarContractService } from "../services/StellarContractService";
+import {
+  contractClient,
+  StellarContractService,
+} from "../services/StellarContractService";
 
 export const PrizePool = () => {
   const { address, signTransaction } = useWallet();
   const { balance, isLoading, loadPrizePot } = usePrizePool();
   const [isAdding, setIsAdding] = useState(false);
   const [amount, setAmount] = useState<string>("");
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
-    loadPrizePot();
+    void loadPrizePot();
   }, [loadPrizePot]);
 
   const handleAddFunds = async () => {
@@ -54,7 +60,7 @@ export const PrizePool = () => {
     try {
       contractClient.options.publicKey = address;
       const amountBigInt = BigInt(amountInStroops);
-      
+
       const tx = await contractClient.add_funds({
         funder: address,
         amount: amountBigInt,
@@ -62,22 +68,27 @@ export const PrizePool = () => {
 
       const result = await tx.signAndSend({ signTransaction });
       const txData = StellarContractService.extractTransactionData(result);
-      
+
       if (txData.success) {
-        setMessage({ 
-          type: "success", 
-          text: `Successfully added funds! Transaction: ${txData.txHash?.slice(0, 8)}...` 
+        setMessage({
+          type: "success",
+          text: `Successfully added funds! Transaction: ${txData.txHash?.slice(0, 8)}...`,
         });
         setAmount("");
         // Refresh balance after successful transaction
         setTimeout(() => {
-          loadPrizePot();
+          void loadPrizePot();
         }, 2000);
       } else {
         setMessage({ type: "error", text: "Failed to add funds" });
       }
-    } catch (error: any) {
-      setMessage({ type: "error", text: error.message || "Failed to add funds" });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to add funds";
+      setMessage({
+        type: "error",
+        text: message,
+      });
     } finally {
       setIsAdding(false);
     }
@@ -107,7 +118,11 @@ export const PrizePool = () => {
             <Text as="p" size="sm" style={{ margin: 0, color: "#6b7280" }}>
               Balance:
             </Text>
-            <Text as="p" size="md" style={{ fontWeight: "bold", color: "#00d4aa", margin: 0 }}>
+            <Text
+              as="p"
+              size="md"
+              style={{ fontWeight: "bold", color: "#00d4aa", margin: 0 }}
+            >
               {balance.xlm} XLM
             </Text>
           </Box>
@@ -134,7 +149,7 @@ export const PrizePool = () => {
             style={{ width: "150px", flexShrink: 0 }}
           />
           <Button
-            onClick={handleAddFunds}
+            onClick={() => void handleAddFunds()}
             disabled={isAdding || !amount.trim()}
             variant="primary"
             size="md"
@@ -159,4 +174,3 @@ export const PrizePool = () => {
     </Box>
   );
 };
-

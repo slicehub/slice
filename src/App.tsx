@@ -19,11 +19,7 @@ const AppLayout: React.FC = () => (
               }}
             >
               {({ isActive }) => (
-                <Button
-                  variant="tertiary"
-                  size="md"
-                  disabled={isActive}
-                >
+                <Button variant="tertiary" size="md" disabled={isActive}>
                   <Icon.Code02 size="md" />
                   Debugger
                 </Button>

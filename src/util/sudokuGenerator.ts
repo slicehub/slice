@@ -9,7 +9,7 @@ function isValidMove(
   grid: number[],
   row: number,
   col: number,
-  num: number
+  num: number,
 ): boolean {
   // Check row
   for (let c = 0; c < 9; c++) {
@@ -52,8 +52,8 @@ function solveSudoku(grid: number[]): boolean {
       const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
       for (let j = numbers.length - 1; j > 0; j--) {
         const k = Math.floor(Math.random() * (j + 1));
-        const temp = numbers[j]!;
-        numbers[j] = numbers[k]!;
+        const temp = numbers[j];
+        numbers[j] = numbers[k];
         numbers[k] = temp;
       }
 
@@ -76,15 +76,15 @@ function solveSudoku(grid: number[]): boolean {
  * Generates a complete valid Sudoku solution
  */
 function generateSolution(): number[] {
-  const grid = new Array(81).fill(0);
-  
+  const grid = Array.from<number>({ length: 81 }, () => 0);
+
   // Fill diagonal 3x3 boxes first (they don't conflict)
   for (let box = 0; box < 9; box += 3) {
     const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     for (let j = numbers.length - 1; j > 0; j--) {
       const k = Math.floor(Math.random() * (j + 1));
-      const temp = numbers[j]!;
-      numbers[j] = numbers[k]!;
+      const temp = numbers[j];
+      numbers[j] = numbers[k];
       numbers[k] = temp;
     }
 
@@ -110,12 +110,12 @@ function generateSolution(): number[] {
 function generatePuzzle(solution: number[], difficulty: number = 30): number[] {
   const puzzle = [...solution];
   const indices = Array.from({ length: 81 }, (_, i) => i);
-  
+
   // Shuffle indices randomly
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    const temp = indices[i]!;
-    indices[i] = indices[j]!;
+    const temp = indices[i];
+    indices[i] = indices[j];
     indices[j] = temp;
   }
 
@@ -124,7 +124,7 @@ function generatePuzzle(solution: number[], difficulty: number = 30): number[] {
   const minGivens = 17;
   const targetGivens = Math.max(difficulty, minGivens);
   const cellsToRemove = 81 - targetGivens;
-  
+
   // Remove cells strategically to maintain some symmetry
   let removed = 0;
   for (let i = 0; i < indices.length && removed < cellsToRemove; i++) {
@@ -149,4 +149,3 @@ export function generateRandomSudoku(difficulty: number = 30): {
   const puzzle = generatePuzzle(solution, difficulty);
   return { puzzle, solution };
 }
-
