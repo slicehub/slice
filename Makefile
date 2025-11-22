@@ -176,7 +176,7 @@ slice-commit-vote:
 		commit_vote \
 		--caller $(JUROR) \
 		--dispute_id 1 \
-		--commitment 0000000000000000000000000000000000000000000000000000000000000001
+		--commitment 2158a8906d5e2c2be001bac943ab9cab4063536e1c546b40221fdf8db031a4bb
 
 # 2. Reveal Vote (Requires ZK Proof Blob)
 # Note: vk_json and proof_blob must be hex bytes.

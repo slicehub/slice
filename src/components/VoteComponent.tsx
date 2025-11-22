@@ -5,6 +5,7 @@ import { useWallet } from "../hooks/useWallet";
 import { NoirService } from "../services/NoirService";
 import { StellarContractService } from "../services/StellarContractService";
 import slice from "../contracts/slice";
+import { Buffer } from "buffer";
 
 // Helper to generate a random 31-byte hex salt (safe for BN254 Field size)
 const generateRandomSalt = () => {
@@ -46,7 +47,7 @@ export const VoteComponent: React.FC = () => {
     }
 
     setIsGenerating(true);
-    setOutput("Generating ZK Proof for Vote...");
+    setOutput("Generating ZK Proof for Vote Reveal...");
 
     try {
       const inputs = {
@@ -66,18 +67,26 @@ export const VoteComponent: React.FC = () => {
 Proof ID: ${proofResult.proofId.slice(0, 16)}...
 Commitment Hash generated inside circuit.
 
-Submitting to Slice Contract...`,
+Submitting Reveal to Slice Contract...`,
       );
 
       slice.options.publicKey = address;
 
-      const proofBuffer = StellarContractService.toBuffer(
+      // 1. Prepare Salt (BytesN<32>)
+      // Remove 0x prefix and parse hex
+      const saltHex = salt.replace(/^0x/, "");
+      const rawSaltBuffer = Buffer.from(saltHex, "hex");
+      // Pad to 32 bytes (random salt is 31 bytes to fit in BN254 field)
+      const saltBuffer = Buffer.alloc(32);
+      rawSaltBuffer.copy(saltBuffer, 32 - rawSaltBuffer.length);
+
+      // 2. Prepare Proof and VK (Bytes)
+      const vkJsonBuffer = StellarContractService.toBuffer(proofResult.vkJson);
+      const proofBlobBuffer = StellarContractService.toBuffer(
         proofResult.proofBlob,
       );
-      const publicInputsBuffer = StellarContractService.toBuffer(
-        proofResult.publicInputs,
-      );
 
+      // 3. Define Signer Helper
       const walletSignTransaction = async (xdr: string) => {
         const signed = await signTransaction(xdr);
         return {
@@ -86,17 +95,23 @@ Submitting to Slice Contract...`,
         };
       };
 
-      const tx = await slice.submit_vote({
+      // 4. Build Transaction
+      // Note: This assumes the user has already Committed and is now Revealing
+      const tx = await slice.reveal_vote({
         caller: address,
         dispute_id: BigInt(disputeId),
-        proof: proofBuffer,
-        public_inputs: publicInputsBuffer,
+        vote: selectedVote,
+        salt: saltBuffer,
+        vk_json: vkJsonBuffer,
+        proof_blob: proofBlobBuffer,
       });
 
-      const result = await tx.signAndSend({
+      // 5. Sign and Send (Fixing ESLint unsafe-assignment error)
+      // We cast to unknown first to handle the generic Result type from the SDK
+      const result = (await tx.signAndSend({
         signTransaction: walletSignTransaction,
-      });
-      // Explicitly type 'result' as 'unknown' and handle type assertion before passing to extractTransactionData
+      })) as unknown;
+
       const txData = StellarContractService.extractTransactionData(
         result as Parameters<
           typeof StellarContractService.extractTransactionData
@@ -107,19 +122,17 @@ Submitting to Slice Contract...`,
         setOutput(
           (prev) =>
             prev +
-            `\n\n✓ Vote Submitted Successfully!
+            `\n\n✓ Vote Revealed Successfully!
 Tx Hash: ${txData.txHash?.slice(0, 10)}...
 Fee: ${txData.fee} stroops
 
-IMPORTANT: Save your SALT to reveal later!
-Salt: ${salt}`,
+IMPORTANT: You have successfully revealed your vote.`,
         );
       } else {
         setOutput((prev) => prev + `\n\n❌ Submission Failed.`);
       }
     } catch (error: unknown) {
       console.error(error);
-      // [FIX] Safe error handling
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       setOutput((prev) => prev + `\n\n❌ Error: ${errorMessage}`);
@@ -132,12 +145,13 @@ Salt: ${salt}`,
     <Card>
       <Box gap="md" direction="column">
         <Text as="h2" size="lg">
-          Juror Private Voting (ZK)
+          Juror Private Vote Reveal (ZK)
         </Text>
         <Text as="p" size="sm" style={{ color: "#6b7280" }}>
-          Cast your vote privately. A Zero-Knowledge proof will be generated
-          locally to verify your vote is valid (0 or 1) and lock in your
-          commitment without revealing your choice to the network.
+          Reveal your vote to the chain. A Zero-Knowledge proof will be
+          generated locally to verify your vote matches your earlier commitment
+          (vote + salt) without publicly exposing your salt until the proof is
+          verified.
         </Text>
 
         <Input
@@ -189,14 +203,13 @@ Salt: ${salt}`,
         <Button
           variant="primary"
           size="lg"
-          // [FIX] Explicitly voiding the promise return
           onClick={() => void generateAndSubmitVote()}
           disabled={isGenerating || selectedVote === null || !address}
           isLoading={isGenerating}
         >
           {isGenerating
             ? "Generating Proof & Submitting..."
-            : "Encrypt & Submit Vote"}
+            : "Generate Proof & Reveal Vote"}
         </Button>
 
         {output && (

@@ -21,8 +21,10 @@ constructor_args = """
 client = true
 constructor_args = """
 --admin default
---min_vote_seconds 300
---max_vote_seconds 86400
---min_deadline_seconds 300
---max_deadline_seconds 86400
+--min_pay_seconds 300
+--max_pay_seconds 86400
+--min_commit_seconds 300
+--max_commit_seconds 86400
+--min_reveal_seconds 300
+--max_reveal_seconds 86400
 """
