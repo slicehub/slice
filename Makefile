@@ -43,6 +43,17 @@ clean:
 	cargo clean
 	rm -rf target/
 
+
+fund-accounts:
+	@echo "======================================================="
+	@echo ">>> FUNDING ACCOUNTS"
+	@echo "======================================================="
+	@for act in $(ADMIN) $(CLAIMER) $(DEFENDER) $(JUROR); do \
+		addr=$$(stellar keys address $$act); \
+		echo "Funding $$act ($$addr)..."; \
+		curl -sf "http://localhost:8000/friendbot?addr=$$addr" > /dev/null || echo "Error funding $$act"; \
+	done
+
 # ==============================================================================
 # Deployments
 # ==============================================================================
@@ -56,7 +67,7 @@ deploy-honk: optimize
 		--alias $(ULTRAHONK)
 
 # 2. Deploy Slice (Main Protocol)
-# Constructor args: admin, min_vote_s, max_vote_s, min_deadline_s, max_deadline_s
+# Constructor args: admin, min_pay_s, max_pay_s, min_commit_s, max_commit_s, min_reveal_s, max_reveal_s
 deploy-slice: optimize
 	stellar contract deploy \
 		--wasm $(SLICE_WASM) \
@@ -65,10 +76,12 @@ deploy-slice: optimize
 		--alias $(SLICE) \
 		-- \
 		--admin $(ADMIN) \
-		--min_vote_seconds 300 \
-		--max_vote_seconds 86400 \
-		--min_deadline_seconds 300 \
-		--max_deadline_seconds 86400
+		--min_pay_seconds 300 \
+		--max_pay_seconds 86400 \
+		--min_commit_seconds 300 \
+		--max_commit_seconds 86400 \
+		--min_reveal_seconds 300 \
+		--max_reveal_seconds 86400
 
 # 3. Deploy Guess The Puzzle (Demo Game)
 deploy-guess: optimize
@@ -95,7 +108,6 @@ slice-add-category:
 		--name "General"
 
 # Create a Dispute
-# Note: meta_hash is 32 bytes hex.
 slice-create-dispute:
 	stellar contract invoke \
 		--source $(ADMIN) \
@@ -109,10 +121,8 @@ slice-create-dispute:
 		--min_amount 100 \
 		--max_amount 1000 \
 		--category "General" \
-		--allowed_jurors "None" \
 		--jurors_required 5 \
-		--pay_deadline_seconds 3600 \
-		--vote_deadline_seconds 3600
+		--limits '{"pay_seconds": 3600, "commit_seconds": 3600, "reveal_seconds": 3600}'
 
 # Pay Dispute (Claimer pays into escrow)
 slice-pay-claimer:
@@ -150,19 +160,39 @@ slice-assign-juror:
 		--category "General" \
 		--stake_amount 200
 
-# Juror Submits Vote (Requires ZK Proof Blob)
-# Note: proof and public_inputs must be hex bytes. Using dummy data for CLI example.
-slice-submit-vote:
+# ---------------------------------------------------------
+# Voting Phase
+# ---------------------------------------------------------
+
+# 1. Commit Vote (Hash of vote + salt)
+# Note: commitment is a 32-byte hex string (SHA256 of vote + salt)
+# Example commitment for vote=0, salt=...
+slice-commit-vote:
 	stellar contract invoke \
 		--source $(JUROR) \
 		--network $(NETWORK) \
 		--id $(SLICE) \
 		-- \
-		submit_vote \
+		commit_vote \
 		--caller $(JUROR) \
 		--dispute_id 1 \
-		--proof dede \
-		--public_inputs dede
+		--commitment 0000000000000000000000000000000000000000000000000000000000000001
+
+# 2. Reveal Vote (Requires ZK Proof Blob)
+# Note: vk_json and proof_blob must be hex bytes.
+slice-reveal-vote:
+	stellar contract invoke \
+		--source $(JUROR) \
+		--network $(NETWORK) \
+		--id $(SLICE) \
+		-- \
+		reveal_vote \
+		--caller $(JUROR) \
+		--dispute_id 1 \
+		--vote 0 \
+		--salt 0000000000000000000000000000000000000000000000000000000000000000 \
+		--vk_json dede \
+		--proof_blob dede
 
 # Execute Tally (Finalize Dispute)
 slice-execute:
@@ -172,9 +202,7 @@ slice-execute:
 		--id $(SLICE) \
 		-- \
 		execute \
-		--dispute_id 1 \
-		--tally_proof dede \
-		--tally_public_inputs dede
+		--dispute_id 1
 
 # Get Dispute Details
 slice-get-dispute:
@@ -221,8 +249,6 @@ guess-set-puzzle:
 		--puzzle 123456
 
 # Verify Puzzle
-# Note: vk_json and proof_blob are bytes. This usually requires a script to handle large hex inputs.
-# This command is a placeholder for the signature.
 guess-verify:
 	stellar contract invoke \
 		--source $(CLAIMER) \
@@ -234,15 +260,12 @@ guess-verify:
 		--vk_json 00 \
 		--proof_blob 00
 
-
 # ==============================================================================
 # End-to-End (E2E) Demo Flow
 # ==============================================================================
 
-.PHONY: e2e-demo
-
-e2e-demo:
-	@echo "======================================================="
+e2e-demo: fund-accounts
+	@echo "\n======================================================="
 	@echo ">>> STEP 1: DEPLOYING CONTRACTS"
 	@echo "======================================================="
 	$(MAKE) deploy-honk
@@ -251,44 +274,35 @@ e2e-demo:
 	@echo "\n======================================================="
 	@echo ">>> STEP 2: INITIALIZING PROTOCOL"
 	@echo "======================================================="
-	@echo "--> Adding 'General' category..."
 	$(MAKE) slice-add-category
 
 	@echo "\n======================================================="
 	@echo ">>> STEP 3: CREATING DISPUTE"
 	@echo "======================================================="
-	@echo "--> Creating Dispute #1 (Claimer vs Defender)..."
 	$(MAKE) slice-create-dispute
 
 	@echo "\n======================================================="
 	@echo ">>> STEP 4: FUNDING PHASE"
 	@echo "======================================================="
-	@echo "--> Claimer paying 500 stake..."
 	$(MAKE) slice-pay-claimer
-	@echo "--> Defender paying 500 stake..."
 	$(MAKE) slice-pay-defender
 
 	@echo "\n======================================================="
 	@echo ">>> STEP 5: JUROR ASSIGNMENT"
 	@echo "======================================================="
-	@echo "--> Juror1 staking 200 to join the case..."
 	$(MAKE) slice-assign-juror
 
 	@echo "\n======================================================="
-	@echo ">>> STEP 6: VOTING (SIMULATED)"
+	@echo ">>> STEP 6: JUROR COMMIT"
 	@echo "======================================================="
-	@echo "--> Submitting vote with mock proof..."
-	@echo "(Note: This transaction may fail on-chain if the ZK proof is invalid)"
-	# We use '-' to ignore errors here because we are passing mock hex data
-	# instead of a real Noir generated proof in this Make macro.
-	-$(MAKE) slice-submit-vote
+	$(MAKE) slice-commit-vote
 
 	@echo "\n======================================================="
-	@echo ">>> STEP 7: EXECUTION"
+	@echo ">>> STEP 7: JUROR REVEAL"
 	@echo "======================================================="
-	@echo "--> Executing final ruling..."
+	-$(MAKE) slice-reveal-vote
+
+	@echo "\n======================================================="
+	@echo ">>> STEP 8: EXECUTION"
+	@echo "======================================================="
 	-$(MAKE) slice-execute
-
-	@echo "\n======================================================="
-	@echo ">>> E2E FLOW COMPLETE"
-	@echo "======================================================="

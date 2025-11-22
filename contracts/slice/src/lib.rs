@@ -68,8 +68,8 @@ pub struct Dispute {
     pub juror_stakes: Vec<i128>,
 
     // Commit–reveal scheme
-    pub commitments: Vec<Option<BytesN<32>>>,    
-    pub revealed_votes: Vec<Option<u32>>,        
+    pub commitments: Vec<Option<BytesN<32>>>,
+    pub revealed_votes: Vec<Option<u32>>,
     pub revealed_salts: Vec<Option<BytesN<32>>>,
 
     // Status
@@ -83,6 +83,15 @@ pub struct Dispute {
 
     // Final result
     pub winner: Option<Address>,
+}
+
+// Add this struct to group arguments and solve the "too many parameters" error
+#[contracttype]
+#[derive(Clone)]
+pub struct TimeLimits {
+    pub pay_seconds: u64,
+    pub commit_seconds: u64,
+    pub reveal_seconds: u64,
 }
 
 #[contracttype]
@@ -160,11 +169,12 @@ impl Slice {
     }
 
     fn get_categories(env: &Env) -> Categories {
-        env.storage().instance().get(CATEGORIES_KEY).unwrap_or(
-            Categories {
+        env.storage()
+            .instance()
+            .get(CATEGORIES_KEY)
+            .unwrap_or(Categories {
                 items: Vec::new(env),
-            },
-        )
+            })
     }
 
     fn set_categories(env: &Env, cats: Categories) {
@@ -172,7 +182,10 @@ impl Slice {
     }
 
     fn get_dispute_counter(env: &Env) -> u64 {
-        env.storage().instance().get(DISPUTE_COUNTER_KEY).unwrap_or(0u64)
+        env.storage()
+            .instance()
+            .get(DISPUTE_COUNTER_KEY)
+            .unwrap_or(0u64)
     }
 
     fn increment_dispute_counter(env: &Env) -> u64 {
@@ -190,7 +203,9 @@ impl Slice {
     }
 
     fn get_dispute_internal(env: &Env, id: u64) -> Option<Dispute> {
-        env.storage().instance().get(&Self::get_dispute_key(env, id))
+        env.storage()
+            .instance()
+            .get(&Self::get_dispute_key(env, id))
     }
 
     fn set_dispute(env: &Env, dispute: &Dispute) {
@@ -306,11 +321,7 @@ impl Slice {
         category: Symbol,
         allowed_jurors: Option<Vec<Address>>,
         jurors_required: u32,
-
-        // user-chosen durations (validated)
-        deadline_pay_seconds: u64,
-        deadline_commit_seconds: u64,
-        deadline_reveal_seconds: u64,
+        limits: TimeLimits,
     ) -> Result<u64, ContractError> {
         if !Self::category_exists(&env, category.clone()) {
             return Err(ContractError::ErrCategoryNotFound);
@@ -327,29 +338,27 @@ impl Slice {
         let cfg = Self::get_config(&env);
 
         // Validate pay phase
-        if deadline_pay_seconds < cfg.min_pay_seconds
-            || deadline_pay_seconds > cfg.max_pay_seconds
-        {
+        if limits.pay_seconds < cfg.min_pay_seconds || limits.pay_seconds > cfg.max_pay_seconds {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
         // Validate commit phase
-        if deadline_commit_seconds < cfg.min_commit_seconds
-            || deadline_commit_seconds > cfg.max_commit_seconds
+        if limits.commit_seconds < cfg.min_commit_seconds
+            || limits.commit_seconds > cfg.max_commit_seconds
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
         // Validate reveal phase
-        if deadline_reveal_seconds < cfg.min_reveal_seconds
-            || deadline_reveal_seconds > cfg.max_reveal_seconds
+        if limits.reveal_seconds < cfg.min_reveal_seconds
+            || limits.reveal_seconds > cfg.max_reveal_seconds
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
         // Must satisfy: pay ≤ commit ≤ reveal
-        if !(deadline_pay_seconds <= deadline_commit_seconds
-            && deadline_commit_seconds <= deadline_reveal_seconds)
+        if !(limits.pay_seconds <= limits.commit_seconds
+            && limits.commit_seconds <= limits.reveal_seconds)
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
@@ -368,9 +377,9 @@ impl Slice {
             allowed_jurors,
             jurors_required,
 
-            deadline_pay_seconds: now + deadline_pay_seconds,
-            deadline_commit_seconds: now + deadline_commit_seconds,
-            deadline_reveal_seconds: now + deadline_reveal_seconds,
+            deadline_pay_seconds: now + limits.pay_seconds,
+            deadline_commit_seconds: now + limits.commit_seconds,
+            deadline_reveal_seconds: now + limits.reveal_seconds,
 
             assigned_jurors: Vec::new(&env),
             juror_stakes: Vec::new(&env),
@@ -555,8 +564,8 @@ impl Slice {
         let idx = dispute
             .assigned_jurors
             .iter()
-            .position(|addr| *addr == caller)
-            .ok_or(ContractError::ErrNotJuror)?;
+            .position(|addr| addr == caller)
+            .ok_or(ContractError::ErrNotJuror)? as u32;
 
         if dispute.commitments.get(idx).unwrap().is_some() {
             return Err(ContractError::ErrAlreadyVoted);
@@ -620,8 +629,8 @@ impl Slice {
         let idx = dispute
             .assigned_jurors
             .iter()
-            .position(|a| *a == caller)
-            .ok_or(ContractError::ErrNotJuror)?;
+            .position(|a| a == caller)
+            .ok_or(ContractError::ErrNotJuror)? as u32;
 
         if dispute.revealed_votes.get(idx).unwrap().is_some() {
             return Err(ContractError::ErrAlreadyVoted);
@@ -640,7 +649,7 @@ impl Slice {
         let client = ultrahonk_contract::Client::new(&env, &addr);
 
         match client.try_verify_proof(&vk_json, &proof_blob) {
-            Ok(Ok(_)) => {}       // Valid proof
+            Ok(Ok(_)) => {} // Valid proof
             _ => return Err(ContractError::ErrInvalidProof),
         }
 
@@ -712,11 +721,7 @@ impl Slice {
             }
         }
 
-        let winner_vote = if votes_claimer > votes_defender {
-            0
-        } else {
-            1
-        };
+        let winner_vote = if votes_claimer > votes_defender { 0 } else { 1 };
 
         // Determine correct jurors
         let mut correctness = Vec::new(&env);

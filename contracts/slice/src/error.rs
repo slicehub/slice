@@ -24,5 +24,8 @@ pub enum ContractError {
     ErrCategoryNotFound = 20,
     ErrAlreadyExists = 21,
     ErrAlreadyVoted = 22,
+    ErrRevealPhaseNotStarted = 23,
+    ErrRevealClosed = 24,
+    ErrRevealNotFinished = 25,
+    ErrInvalidVote = 26,
 }
-
