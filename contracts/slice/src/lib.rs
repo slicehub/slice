@@ -1,9 +1,9 @@
 #![no_std]
-extern crate alloc;
-use alloc::vec::Vec as StdVec;
+
 use sha2::{Digest, Sha256};
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, Symbol, Vec};
-use soroban_sdk::xdr::ToXdr;
+use soroban_sdk::{
+    contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, Symbol, Vec,
+};
 
 mod error;
 use error::ContractError;
@@ -11,35 +11,78 @@ use error::ContractError;
 mod xlm;
 
 mod ultrahonk_contract {
-    soroban_sdk::contractimport!(file = "../guess-the-puzzle/ultrahonk_soroban_contract.wasm");
+    soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
 }
 
 #[contract]
 pub struct Slice;
 
+// ---------------------------------------------------------
+// Dispute statuses
+// ---------------------------------------------------------
+const STATUS_CREATED: u32 = 0;
+const STATUS_COMMIT: u32 = 1;
+const STATUS_REVEAL: u32 = 2;
+const STATUS_FINISHED: u32 = 3;
+
+// Storage keys
+pub const CATEGORIES_KEY: &Symbol = &symbol_short!("CATS");
+pub const CONFIG_KEY: &Symbol = &symbol_short!("CONF");
+pub const DISPUTE_COUNTER_KEY: &Symbol = &symbol_short!("CNTR");
+
+// UltraHonk verifier contract address
+pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
+    "CAXMCB6EYJ6Z6PHHC3MZ54IKHAZV5WSM2OAK4DSGM2E2M6DJG4FX5CPB";
+
+// ---------------------------------------------------------
+// Data Structures
+// ---------------------------------------------------------
 #[contracttype]
 #[derive(Clone)]
 pub struct Dispute {
     pub id: u64,
+
+    // Parties
     pub claimer: Address,
     pub defender: Address,
+
+    // Metadata hash provided off-chain
     pub meta_hash: BytesN<32>,
+
+    // Amount bonding requirements
     pub min_amount: i128,
     pub max_amount: i128,
+
+    // Category assignment
     pub category: Symbol,
     pub allowed_jurors: Option<Vec<Address>>,
     pub jurors_required: u32,
+
+    // Absolute UNIX-style timestamps (ledger timestamps)
+    pub deadline_pay_seconds: u64,
+    pub deadline_commit_seconds: u64,
+    pub deadline_reveal_seconds: u64,
+
+    // Juror data
     pub assigned_jurors: Vec<Address>,
-    pub votes: Vec<Option<BytesN<32>>>,
-    pub deadline_pay: u64,
-    pub deadline_vote: u64,
+    pub juror_stakes: Vec<i128>,
+
+    // Commit–reveal scheme
+    pub commitments: Vec<Option<BytesN<32>>>,    
+    pub revealed_votes: Vec<Option<u32>>,        
+    pub revealed_salts: Vec<Option<BytesN<32>>>,
+
+    // Status
     pub status: u32,
+
+    // Payments
     pub claimer_paid: bool,
     pub defender_paid: bool,
-    pub juror_stakes: Vec<i128>,
     pub claimer_amount: i128,
     pub defender_amount: i128,
-    pub winner_address: Option<Address>,
+
+    // Final result
+    pub winner: Option<Address>,
 }
 
 #[contracttype]
@@ -48,40 +91,54 @@ pub struct Categories {
     pub items: Vec<Symbol>,
 }
 
+// Global configuration set by admin
 #[contracttype]
 #[derive(Clone)]
 pub struct Config {
     pub admin: Address,
-    pub min_vote_seconds: u64,
-    pub max_vote_seconds: u64,
-    pub min_deadline_seconds: u64,
-    pub max_deadline_seconds: u64,
-}
 
-const CATEGORIES_KEY: &Symbol = &symbol_short!("CATS");
-const CONFIG_KEY: &Symbol = &symbol_short!("CONF");
-const DISPUTE_COUNTER_KEY: &Symbol = &symbol_short!("CNTR");
-const ULTRAHONK_CONTRACT_ADDRESS: &str = "CAXMCB6EYJ6Z6PHHC3MZ54IKHAZV5WSM2OAK4DSGM2E2M6DJG4FX5CPB";
+    // Time constraints enforced globally
+    pub min_pay_seconds: u64,
+    pub max_pay_seconds: u64,
+
+    pub min_commit_seconds: u64,
+    pub max_commit_seconds: u64,
+
+    pub min_reveal_seconds: u64,
+    pub max_reveal_seconds: u64,
+}
 
 #[contractimpl]
 impl Slice {
+    // ---------------------------------------------------------
+    // Constructor
+    // ---------------------------------------------------------
     pub fn __constructor(
         env: Env,
         admin: Address,
-        min_vote_seconds: u64,
-        max_vote_seconds: u64,
-        min_deadline_seconds: u64,
-        max_deadline_seconds: u64,
+        min_pay_seconds: u64,
+        max_pay_seconds: u64,
+        min_commit_seconds: u64,
+        max_commit_seconds: u64,
+        min_reveal_seconds: u64,
+        max_reveal_seconds: u64,
     ) {
+        // Only admin can deploy
         admin.require_auth();
+
         let config = Config {
             admin: admin.clone(),
-            min_vote_seconds,
-            max_vote_seconds,
-            min_deadline_seconds,
-            max_deadline_seconds,
+            min_pay_seconds,
+            max_pay_seconds,
+            min_commit_seconds,
+            max_commit_seconds,
+            min_reveal_seconds,
+            max_reveal_seconds,
         };
+
         env.storage().instance().set(CONFIG_KEY, &config);
+
+        // Initialize category list and dispute counter
         let categories = Categories {
             items: Vec::new(&env),
         };
@@ -89,6 +146,7 @@ impl Slice {
         env.storage().instance().set(DISPUTE_COUNTER_KEY, &0u64);
     }
 
+    // Utility getters
     fn get_config(env: &Env) -> Config {
         env.storage()
             .instance()
@@ -97,107 +155,147 @@ impl Slice {
     }
 
     fn require_admin(env: &Env) {
-        let config = Self::get_config(env);
-        config.admin.require_auth();
+        let cfg = Self::get_config(env);
+        cfg.admin.require_auth();
     }
 
     fn get_categories(env: &Env) -> Categories {
-        env.storage()
-            .instance()
-            .get(CATEGORIES_KEY)
-            .unwrap_or(Categories {
+        env.storage().instance().get(CATEGORIES_KEY).unwrap_or(
+            Categories {
                 items: Vec::new(env),
-            })
+            },
+        )
     }
 
-    fn set_categories(env: &Env, categories: Categories) {
-        env.storage().instance().set(CATEGORIES_KEY, &categories);
+    fn set_categories(env: &Env, cats: Categories) {
+        env.storage().instance().set(CATEGORIES_KEY, &cats);
     }
 
     fn get_dispute_counter(env: &Env) -> u64 {
-        env.storage()
-            .instance()
-            .get(DISPUTE_COUNTER_KEY)
-            .unwrap_or(0u64)
+        env.storage().instance().get(DISPUTE_COUNTER_KEY).unwrap_or(0u64)
     }
 
     fn increment_dispute_counter(env: &Env) -> u64 {
-        let counter = Self::get_dispute_counter(env) + 1;
-        env.storage().instance().set(DISPUTE_COUNTER_KEY, &counter);
-        counter
+        let new = Self::get_dispute_counter(env) + 1;
+        env.storage().instance().set(DISPUTE_COUNTER_KEY, &new);
+        new
     }
 
-    fn get_dispute_key(env: &Env, dispute_id: u64) -> BytesN<32> {
-        let mut key_bytes = [0u8; 32];
-        key_bytes[0..4].copy_from_slice(b"DISP");
-        let id_bytes = dispute_id.to_be_bytes();
-        key_bytes[4..12].copy_from_slice(&id_bytes);
-        BytesN::from_array(env, &key_bytes)
+    // Storage key for a specific dispute
+    fn get_dispute_key(env: &Env, id: u64) -> BytesN<32> {
+        let mut arr = [0u8; 32];
+        arr[0..4].copy_from_slice(b"DISP");
+        arr[4..12].copy_from_slice(&id.to_be_bytes());
+        BytesN::from_array(env, &arr)
     }
 
-    fn get_dispute_internal(env: &Env, dispute_id: u64) -> Option<Dispute> {
-        let key = Self::get_dispute_key(env, dispute_id);
-        env.storage().instance().get(&key)
+    fn get_dispute_internal(env: &Env, id: u64) -> Option<Dispute> {
+        env.storage().instance().get(&Self::get_dispute_key(env, id))
     }
 
     fn set_dispute(env: &Env, dispute: &Dispute) {
-        let key = Self::get_dispute_key(env, dispute.id);
-        env.storage().instance().set(&key, dispute);
+        env.storage()
+            .instance()
+            .set(&Self::get_dispute_key(env, dispute.id), dispute);
     }
 
-    fn bytes32_to_field_bytes(bytes: &BytesN<32>) -> [u8; 32] {
-        bytes.to_array()
+    fn category_exists(env: &Env, cat: Symbol) -> bool {
+        Self::get_categories(env).items.contains(&cat)
     }
 
-    fn address_to_field_bytes(env: &Env, address: &Address) -> [u8; 32] {
-        let mut field_bytes = [0u8; 32];
-        let address_val = address.to_val();
-        let address_bytes = address_val.to_xdr(env);
-        let address_vec = address_bytes.to_alloc_vec();
+    // ---------------------------------------------------------
+    // Commit–Reveal Utility
+    // ---------------------------------------------------------
+    /// Computes H(vote || salt) using SHA256.
+    /// Used to verify commit correctness before reveal.
+    fn compute_commitment(env: &Env, vote: u32, salt: &BytesN<32>) -> BytesN<32> {
+        if vote > 1 {
+            panic!("invalid vote");
+        }
+
         let mut hasher = Sha256::new();
-        hasher.update(&address_vec);
+        hasher.update(&vote.to_be_bytes());
+        hasher.update(&salt.to_array());
         let hash = hasher.finalize();
-        field_bytes.copy_from_slice(&hash[0..32]);
-        field_bytes
+
+        let mut out = [0u8; 32];
+        out.copy_from_slice(&hash[..32]);
+        BytesN::from_array(env, &out)
     }
 
-    fn category_exists(env: &Env, category: Symbol) -> bool {
-        let categories = Self::get_categories(env);
-        categories.items.contains(&category)
+    /// Forces transition from COMMIT → REVEAL if:
+    /// - commit deadline passed, or
+    /// - all jurors committed their commitments.
+    fn maybe_start_reveal_phase(env: &Env, dispute: &mut Dispute) {
+        if dispute.status != STATUS_COMMIT {
+            return;
+        }
+
+        let now = env.ledger().timestamp();
+
+        let mut all_committed = true;
+        for i in 0..dispute.commitments.len() {
+            if dispute.commitments.get(i).unwrap().is_none() {
+                all_committed = false;
+                break;
+            }
+        }
+
+        if now > dispute.deadline_commit_seconds || all_committed {
+            dispute.status = STATUS_REVEAL;
+        }
     }
 
+    // ---------------------------------------------------------
+    // Category Management
+    // ---------------------------------------------------------
     pub fn add_category(env: Env, name: Symbol) -> Result<(), ContractError> {
         Self::require_admin(&env);
-        let mut categories = Self::get_categories(&env);
-        if categories.items.contains(&name) {
+
+        let mut cats = Self::get_categories(&env);
+        if cats.items.contains(&name) {
             return Err(ContractError::ErrAlreadyExists);
         }
-        categories.items.push_back(name);
-        Self::set_categories(&env, categories);
+
+        cats.items.push_back(name);
+        Self::set_categories(&env, cats);
         Ok(())
     }
 
     pub fn remove_category(env: Env, name: Symbol) -> Result<(), ContractError> {
         Self::require_admin(&env);
-        let mut categories = Self::get_categories(&env);
+
+        let mut cats = Self::get_categories(&env);
         let mut found = false;
         let mut new_items = Vec::new(&env);
-        for i in 0..categories.items.len() {
-            let item = categories.items.get(i).unwrap();
+
+        for i in 0..cats.items.len() {
+            let item = cats.items.get(i).unwrap();
             if item != name {
                 new_items.push_back(item);
             } else {
                 found = true;
             }
         }
+
         if !found {
             return Err(ContractError::ErrNotFound);
         }
-        categories.items = new_items;
-        Self::set_categories(&env, categories);
+
+        cats.items = new_items;
+        Self::set_categories(&env, cats);
         Ok(())
     }
 
+    // ---------------------------------------------------------
+    // create_dispute
+    // ---------------------------------------------------------
+    /// Creates a new dispute with predetermined deadlines for:
+    /// - payment phase
+    /// - commit phase
+    /// - reveal phase
+    ///
+    /// The creator chooses the durations, but they must respect the global config bounds.
     pub fn create_dispute(
         env: Env,
         claimer: Address,
@@ -208,8 +306,11 @@ impl Slice {
         category: Symbol,
         allowed_jurors: Option<Vec<Address>>,
         jurors_required: u32,
-        pay_deadline_seconds: u64,
-        vote_deadline_seconds: u64,
+
+        // user-chosen durations (validated)
+        deadline_pay_seconds: u64,
+        deadline_commit_seconds: u64,
+        deadline_reveal_seconds: u64,
     ) -> Result<u64, ContractError> {
         if !Self::category_exists(&env, category.clone()) {
             return Err(ContractError::ErrCategoryNotFound);
@@ -223,26 +324,41 @@ impl Slice {
             return Err(ContractError::ErrInvalidAmounts);
         }
 
-        let config = Self::get_config(&env);
-        if pay_deadline_seconds < config.min_deadline_seconds
-            || pay_deadline_seconds > config.max_deadline_seconds
+        let cfg = Self::get_config(&env);
+
+        // Validate pay phase
+        if deadline_pay_seconds < cfg.min_pay_seconds
+            || deadline_pay_seconds > cfg.max_pay_seconds
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
-        if vote_deadline_seconds < config.min_vote_seconds
-            || vote_deadline_seconds > config.max_vote_seconds
+        // Validate commit phase
+        if deadline_commit_seconds < cfg.min_commit_seconds
+            || deadline_commit_seconds > cfg.max_commit_seconds
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
-        let dispute_id = Self::increment_dispute_counter(&env);
-        let current_time = env.ledger().timestamp();
-        let deadline_pay = current_time + pay_deadline_seconds;
-        let deadline_vote = current_time + vote_deadline_seconds;
+        // Validate reveal phase
+        if deadline_reveal_seconds < cfg.min_reveal_seconds
+            || deadline_reveal_seconds > cfg.max_reveal_seconds
+        {
+            return Err(ContractError::ErrInvalidDeadline);
+        }
+
+        // Must satisfy: pay ≤ commit ≤ reveal
+        if !(deadline_pay_seconds <= deadline_commit_seconds
+            && deadline_commit_seconds <= deadline_reveal_seconds)
+        {
+            return Err(ContractError::ErrInvalidDeadline);
+        }
+
+        let id = Self::increment_dispute_counter(&env);
+        let now = env.ledger().timestamp();
 
         let dispute = Dispute {
-            id: dispute_id,
+            id,
             claimer: claimer.clone(),
             defender: defender.clone(),
             meta_hash,
@@ -251,29 +367,47 @@ impl Slice {
             category,
             allowed_jurors,
             jurors_required,
+
+            deadline_pay_seconds: now + deadline_pay_seconds,
+            deadline_commit_seconds: now + deadline_commit_seconds,
+            deadline_reveal_seconds: now + deadline_reveal_seconds,
+
             assigned_jurors: Vec::new(&env),
-            votes: Vec::new(&env),
-            deadline_pay,
-            deadline_vote,
-            status: 0,
+            juror_stakes: Vec::new(&env),
+
+            commitments: Vec::new(&env),
+            revealed_votes: Vec::new(&env),
+            revealed_salts: Vec::new(&env),
+
+            status: STATUS_CREATED,
             claimer_paid: false,
             defender_paid: false,
-            juror_stakes: Vec::new(&env),
             claimer_amount: 0,
             defender_amount: 0,
-            winner_address: None,
+            winner: None,
         };
 
         Self::set_dispute(&env, &dispute);
-        Ok(dispute_id)
+        Ok(id)
     }
 
-    pub fn pay_dispute(env: Env, caller: Address, dispute_id: u64, amount: i128) -> Result<(), ContractError> {
+    // ---------------------------------------------------------
+    // pay_dispute
+    // ---------------------------------------------------------
+    /// Allows both parties to lock their stake in the dispute.
+    /// Once both have paid, the dispute automatically enters COMMIT phase.
+    pub fn pay_dispute(
+        env: Env,
+        caller: Address,
+        dispute_id: u64,
+        amount: i128,
+    ) -> Result<(), ContractError> {
         caller.require_auth();
-        let mut dispute = Self::get_dispute_internal(&env, dispute_id)
-            .ok_or(ContractError::ErrNotFound)?;
 
-        if dispute.status != 0 {
+        let mut dispute =
+            Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
+
+        if dispute.status != STATUS_CREATED {
             return Err(ContractError::ErrAlreadyPaid);
         }
 
@@ -281,8 +415,8 @@ impl Slice {
             return Err(ContractError::ErrUnauthorized);
         }
 
-        let current_time = env.ledger().timestamp();
-        if current_time > dispute.deadline_pay {
+        let now = env.ledger().timestamp();
+        if now > dispute.deadline_pay_seconds {
             return Err(ContractError::ErrDeadlineReached);
         }
 
@@ -296,24 +430,28 @@ impl Slice {
             }
             dispute.claimer_paid = true;
             dispute.claimer_amount = amount;
-        } else if caller == dispute.defender {
+        } else {
             if dispute.defender_paid {
                 return Err(ContractError::ErrAlreadyPaid);
             }
             dispute.defender_paid = true;
             dispute.defender_amount = amount;
-        } else {
-            return Err(ContractError::ErrUnauthorized);
         }
 
+        // When both have paid → move to COMMIT phase
         if dispute.claimer_paid && dispute.defender_paid {
-            dispute.status = 1;
+            dispute.status = STATUS_COMMIT;
         }
 
         Self::set_dispute(&env, &dispute);
         Ok(())
     }
 
+    // ---------------------------------------------------------
+    // assign_dispute
+    // ---------------------------------------------------------
+    /// Jurors self-assign into disputes matching their category.
+    /// They must provide a stake, and optionally be whitelisted.
     pub fn assign_dispute(
         env: Env,
         caller: Address,
@@ -326,33 +464,35 @@ impl Slice {
             return Err(ContractError::ErrCategoryNotFound);
         }
 
-        let mut eligible_disputes = Vec::new(&env);
-        let counter = Self::get_dispute_counter(&env);
+        let mut eligible = Vec::new(&env);
+        let count = Self::get_dispute_counter(&env);
 
-        for i in 1..=counter {
+        // Find disputes needing more jurors
+        for i in 1..=count {
             if let Some(dispute) = Self::get_dispute_internal(&env, i) {
-                if dispute.status == 1
+                if dispute.status == STATUS_COMMIT
                     && dispute.category == category
                     && (dispute.assigned_jurors.len() as u32) < dispute.jurors_required
                 {
+                    // If whitelist exists → must be included
                     if let Some(ref allowed) = dispute.allowed_jurors {
                         if allowed.contains(&caller) {
-                            eligible_disputes.push_back(i);
+                            eligible.push_back(i);
                         }
                     } else {
-                        eligible_disputes.push_back(i);
+                        eligible.push_back(i);
                     }
                 }
             }
         }
 
-        if eligible_disputes.is_empty() {
+        if eligible.is_empty() {
             return Err(ContractError::ErrNoAvailableDisputes);
         }
 
-        let dispute_id = eligible_disputes.get(0).unwrap();
-        let mut dispute = Self::get_dispute_internal(&env, dispute_id)
-            .ok_or(ContractError::ErrNotFound)?;
+        let dispute_id = eligible.get(0).unwrap();
+        let mut dispute =
+            Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
         if stake_amount < dispute.min_amount || stake_amount > dispute.max_amount {
             return Err(ContractError::ErrStakeOutOfRange);
@@ -373,25 +513,32 @@ impl Slice {
         }
 
         dispute.assigned_jurors.push_back(caller.clone());
-        dispute.votes.push_back(None);
         dispute.juror_stakes.push_back(stake_amount);
+
+        dispute.commitments.push_back(None);
+        dispute.revealed_votes.push_back(None);
+        dispute.revealed_salts.push_back(None);
 
         Self::set_dispute(&env, &dispute);
         Ok((dispute_id, caller))
     }
 
-    pub fn submit_vote(
+    // ---------------------------------------------------------
+    // commit_vote
+    // ---------------------------------------------------------
+    /// Juror submits their commitment hash (H(vote || salt)).
+    pub fn commit_vote(
         env: Env,
         caller: Address,
         dispute_id: u64,
-        proof: Bytes,
-        public_inputs: Bytes,
+        commitment: BytesN<32>,
     ) -> Result<(), ContractError> {
         caller.require_auth();
-        let mut dispute = Self::get_dispute_internal(&env, dispute_id)
-            .ok_or(ContractError::ErrNotFound)?;
 
-        if dispute.status != 1 {
+        let mut dispute =
+            Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
+
+        if dispute.status != STATUS_COMMIT {
             return Err(ContractError::ErrVotingClosed);
         }
 
@@ -399,159 +546,203 @@ impl Slice {
             return Err(ContractError::ErrNotJuror);
         }
 
-        let mut juror_index = None;
-        for i in 0..dispute.assigned_jurors.len() {
-            if dispute.assigned_jurors.get(i).unwrap() == caller {
-                juror_index = Some(i);
-                break;
-            }
-        }
-        let juror_index = juror_index.ok_or(ContractError::ErrNotJuror)?;
-
-        if juror_index >= dispute.votes.len() {
-            return Err(ContractError::ErrNotJuror);
-        }
-
-        if dispute.votes.get(juror_index).unwrap().is_some() {
-            return Err(ContractError::ErrAlreadyVoted);
-        }
-
-        let current_time = env.ledger().timestamp();
-        if current_time > dispute.deadline_vote {
+        let now = env.ledger().timestamp();
+        if now > dispute.deadline_commit_seconds {
             return Err(ContractError::ErrVotingClosed);
         }
 
-        let ultrahonk_contract_address = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
-        let ultrahonk_client = ultrahonk_contract::Client::new(&env, &ultrahonk_contract_address);
+        // Find juror index
+        let idx = dispute
+            .assigned_jurors
+            .iter()
+            .position(|addr| *addr == caller)
+            .ok_or(ContractError::ErrNotJuror)?;
 
-        let vk_json = Bytes::from_slice(&env, &[]);
-        match ultrahonk_client.try_verify_proof(&vk_json, &proof) {
-            Ok(Ok(_proof_id)) => {
-                let pub_inputs_vec = public_inputs.to_alloc_vec();
-                if pub_inputs_vec.len() < 32 {
-                    return Err(ContractError::ErrInvalidProof);
-                }
-                let mut commitment_bytes = [0u8; 32];
-                commitment_bytes.copy_from_slice(&pub_inputs_vec[0..32]);
-                let vote_commitment = BytesN::from_array(&env, &commitment_bytes);
-
-                dispute.votes.set(juror_index, Some(vote_commitment));
-                Self::set_dispute(&env, &dispute);
-                Ok(())
-            }
-            _ => Err(ContractError::ErrInvalidProof),
+        if dispute.commitments.get(idx).unwrap().is_some() {
+            return Err(ContractError::ErrAlreadyVoted);
         }
+
+        dispute.commitments.set(idx, Some(commitment));
+
+        // Auto-transition to REVEAL if all jurors committed
+        let mut all_committed = true;
+        for i in 0..dispute.commitments.len() {
+            if dispute.commitments.get(i).unwrap().is_none() {
+                all_committed = false;
+                break;
+            }
+        }
+        if all_committed {
+            dispute.status = STATUS_REVEAL;
+        }
+
+        Self::set_dispute(&env, &dispute);
+        Ok(())
     }
 
-    pub fn execute(
+    // ---------------------------------------------------------
+    // reveal_vote (ZK-verified)
+    // ---------------------------------------------------------
+    /// Juror reveals (vote, salt) + zk-proof.
+    /// UltraHonk must confirm the proof is valid.
+    pub fn reveal_vote(
         env: Env,
+        caller: Address,
         dispute_id: u64,
-        tally_proof: Bytes,
-        tally_public_inputs: Bytes,
-    ) -> Result<Address, ContractError> {
-        let mut dispute = Self::get_dispute_internal(&env, dispute_id)
-            .ok_or(ContractError::ErrNotFound)?;
+        vote: u32,
+        salt: BytesN<32>,
 
-        if dispute.status != 1 {
-            return Err(ContractError::ErrNotActive);
+        // ZK inputs
+        vk_json: Bytes,
+        proof_blob: Bytes,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let mut dispute =
+            Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
+
+        // Auto-transition if commit phase is over
+        Self::maybe_start_reveal_phase(&env, &mut dispute);
+
+        if dispute.status != STATUS_REVEAL {
+            return Err(ContractError::ErrRevealPhaseNotStarted);
         }
 
-        if dispute.status == 2 {
-            return Err(ContractError::ErrAlreadyFinished);
+        let now = env.ledger().timestamp();
+        if now > dispute.deadline_reveal_seconds {
+            return Err(ContractError::ErrRevealClosed);
         }
 
-        let ultrahonk_contract_address = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
-        let ultrahonk_client = ultrahonk_contract::Client::new(&env, &ultrahonk_contract_address);
+        if !dispute.assigned_jurors.contains(&caller) {
+            return Err(ContractError::ErrNotJuror);
+        }
 
-        let vk_json = Bytes::from_slice(&env, &[]);
-        match ultrahonk_client.try_verify_proof(&vk_json, &tally_proof) {
-            Ok(Ok(_proof_id)) => {}
+        let idx = dispute
+            .assigned_jurors
+            .iter()
+            .position(|a| *a == caller)
+            .ok_or(ContractError::ErrNotJuror)?;
+
+        if dispute.revealed_votes.get(idx).unwrap().is_some() {
+            return Err(ContractError::ErrAlreadyVoted);
+        }
+
+        let stored_commit = dispute
+            .commitments
+            .get(idx)
+            .unwrap()
+            .ok_or(ContractError::ErrInvalidProof)?;
+
+        // -----------------------------------------
+        // 1. Verify zk-proof using UltraHonk
+        // -----------------------------------------
+        let addr = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
+        let client = ultrahonk_contract::Client::new(&env, &addr);
+
+        match client.try_verify_proof(&vk_json, &proof_blob) {
+            Ok(Ok(_)) => {}       // Valid proof
             _ => return Err(ContractError::ErrInvalidProof),
         }
 
-        let pub_inputs_vec = tally_public_inputs.to_alloc_vec();
-        
+        // -----------------------------------------
+        // 2. Verify commitment matches reveal
+        // -----------------------------------------
+        let computed = Self::compute_commitment(&env, vote, &salt);
+        if computed != stored_commit {
+            return Err(ContractError::ErrInvalidProof);
+        }
+
+        // -----------------------------------------
+        // 3. Store revealed vote + salt
+        // -----------------------------------------
+        dispute.revealed_votes.set(idx, Some(vote));
+        dispute.revealed_salts.set(idx, Some(salt));
+
+        Self::set_dispute(&env, &dispute);
+        Ok(())
+    }
+
+    // ---------------------------------------------------------
+    // execute
+    // ---------------------------------------------------------
+    /// Finalizes the dispute:
+    /// - checks majority
+    /// - slashes incorrect jurors + losing party
+    /// - distributes rewards to correct jurors and winner
+    pub fn execute(env: Env, dispute_id: u64) -> Result<Address, ContractError> {
+        let mut dispute =
+            Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
+
+        // Auto-transition if necessary
+        Self::maybe_start_reveal_phase(&env, &mut dispute);
+
+        if dispute.status != STATUS_REVEAL {
+            return Err(ContractError::ErrNotActive);
+        }
+
+        let now = env.ledger().timestamp();
         let juror_count = dispute.assigned_jurors.len();
-        let required_fields = 1u32 + (juror_count as u32) * 3u32;
-        let required_len = (required_fields * 32u32) as usize;
-        
-        if pub_inputs_vec.len() < required_len {
-            return Err(ContractError::ErrInvalidProof);
-        }
 
-        let winner_field_offset = 0usize;
-        if winner_field_offset + 31 >= pub_inputs_vec.len() {
-            return Err(ContractError::ErrInvalidProof);
-        }
-        let winner = u32::from_be_bytes([
-            pub_inputs_vec[winner_field_offset + 28],
-            pub_inputs_vec[winner_field_offset + 29],
-            pub_inputs_vec[winner_field_offset + 30],
-            pub_inputs_vec[winner_field_offset + 31],
-        ]);
-
-        if winner > 1 {
-            return Err(ContractError::ErrInvalidProof);
-        }
-
-        let mut juror_correctness = Vec::new(&env);
+        let mut all_revealed = true;
         for i in 0..juror_count {
-            let field_offset = ((1u32 + i as u32) * 32u32) as usize;
-            if field_offset + 31 >= pub_inputs_vec.len() {
-                return Err(ContractError::ErrInvalidProof);
+            if dispute.revealed_votes.get(i).unwrap().is_none() {
+                all_revealed = false;
+                break;
             }
-            let correctness = u32::from_be_bytes([
-                pub_inputs_vec[field_offset + 28],
-                pub_inputs_vec[field_offset + 29],
-                pub_inputs_vec[field_offset + 30],
-                pub_inputs_vec[field_offset + 31],
-            ]);
-            if correctness > 1 {
-                return Err(ContractError::ErrInvalidProof);
-            }
-            juror_correctness.push_back(correctness);
         }
 
-        let commitments_start = ((1u32 + juror_count as u32) * 32u32) as usize;
+        // If not all revealed, must wait for reveal deadline
+        if !all_revealed && now <= dispute.deadline_reveal_seconds {
+            return Err(ContractError::ErrRevealNotFinished);
+        }
+
+        // -------------------------------
+        // Count votes
+        // -------------------------------
+        let mut votes_claimer = 0;
+        let mut votes_defender = 0;
+
         for i in 0..juror_count {
-            let field_offset = commitments_start + (i as usize * 32);
-            if field_offset + 31 >= pub_inputs_vec.len() {
-                return Err(ContractError::ErrInvalidProof);
-            }
-            let contract_commitment_bytes = Self::bytes32_to_field_bytes(
-                &dispute.votes.get(i).unwrap().ok_or(ContractError::ErrInvalidProof)?
-            );
-            let proof_commitment = &pub_inputs_vec[field_offset..field_offset + 32];
-            if contract_commitment_bytes != proof_commitment {
-                return Err(ContractError::ErrInvalidProof);
+            if let Some(vote) = dispute.revealed_votes.get(i).unwrap() {
+                match vote {
+                    0 => votes_claimer += 1,
+                    1 => votes_defender += 1,
+                    _ => return Err(ContractError::ErrInvalidVote),
+                }
             }
         }
 
-        let jurors_start = commitments_start + (juror_count as usize * 32);
+        let winner_vote = if votes_claimer > votes_defender {
+            0
+        } else {
+            1
+        };
+
+        // Determine correct jurors
+        let mut correctness = Vec::new(&env);
         for i in 0..juror_count {
-            let field_offset = jurors_start + (i as usize * 32);
-            if field_offset + 31 >= pub_inputs_vec.len() {
-                return Err(ContractError::ErrInvalidProof);
+            let mut ok = 0;
+            if let Some(v) = dispute.revealed_votes.get(i).unwrap() {
+                if v == winner_vote {
+                    ok = 1;
+                }
             }
-            let contract_juror_bytes = Self::address_to_field_bytes(&env, &dispute.assigned_jurors.get(i).unwrap());
-            let mut proof_juror = [0u8; 32];
-            proof_juror.copy_from_slice(&pub_inputs_vec[field_offset..field_offset + 32]);
-            if contract_juror_bytes != proof_juror {
-                return Err(ContractError::ErrInvalidProof);
-            }
+            correctness.push_back(ok);
         }
 
-
+        // -------------------------------
+        // Slashing
+        // -------------------------------
         let mut total_slashed = 0i128;
 
-        if winner == 1 {
-            total_slashed += dispute.defender_amount;
-        } else {
+        if winner_vote == 1 {
             total_slashed += dispute.claimer_amount;
+        } else {
+            total_slashed += dispute.defender_amount;
         }
 
         for i in 0..juror_count {
-            if juror_correctness.get(i).unwrap() == 0 {
+            if correctness.get(i).unwrap() == 0 {
                 total_slashed += dispute.juror_stakes.get(i).unwrap();
             }
         }
@@ -559,62 +750,67 @@ impl Slice {
         let admin_fee = total_slashed * 5 / 100;
         let reward_pool = total_slashed - admin_fee;
 
-        let mut jurors_correct = 0u32;
+        // Count correct jurors
+        let mut correct_count = 0;
         for i in 0..juror_count {
-            if juror_correctness.get(i).unwrap() == 1 {
-                jurors_correct += 1;
+            if correctness.get(i).unwrap() == 1 {
+                correct_count += 1;
             }
         }
 
-        let winners_count = jurors_correct + 1;
-        let reward_per_winner = if winners_count > 0 {
-            reward_pool / (winners_count as i128)
+        // Winner + jurors_correct share reward
+        let winners_total = correct_count + 1;
+        let reward_each = if winners_total > 0 {
+            reward_pool / (winners_total as i128)
         } else {
             0
         };
 
+        // Transfers
         let xlm_client = xlm::token_client(&env);
-        let contract_address = env.current_contract_address();
+        let contract_addr = env.current_contract_address();
         let config = Self::get_config(&env);
 
         if admin_fee > 0 {
-            let _ = xlm_client.try_transfer(&contract_address, &config.admin, &admin_fee);
+            let _ = xlm_client.try_transfer(&contract_addr, &config.admin, &admin_fee);
         }
 
-        let winner_address = if winner == 1 {
-            dispute.claimer.clone()
-        } else {
+        let winner = if winner_vote == 1 {
             dispute.defender.clone()
+        } else {
+            dispute.claimer.clone()
         };
 
-        if reward_per_winner > 0 {
-            let _ = xlm_client.try_transfer(&contract_address, &winner_address, &reward_per_winner);
+        if reward_each > 0 {
+            let _ = xlm_client.try_transfer(&contract_addr, &winner, &reward_each);
 
             for i in 0..juror_count {
-                if juror_correctness.get(i).unwrap() == 1 {
+                if correctness.get(i).unwrap() == 1 {
                     let juror = dispute.assigned_jurors.get(i).unwrap();
-                    let _ = xlm_client.try_transfer(&contract_address, &juror, &reward_per_winner);
+                    let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
                 }
             }
         }
 
-        dispute.status = 2;
-        dispute.winner_address = Some(winner_address.clone());
+        dispute.status = STATUS_FINISHED;
+        dispute.winner = Some(winner.clone());
         Self::set_dispute(&env, &dispute);
 
-        Ok(winner_address)
+        Ok(winner)
     }
 
+    // ---------------------------------------------------------
+    // Getters
+    // ---------------------------------------------------------
     pub fn get_winner(env: Env, dispute_id: u64) -> Option<Address> {
-        let dispute = Self::get_dispute_internal(&env, dispute_id)?;
-        if dispute.status != 2 {
+        let d = Self::get_dispute_internal(&env, dispute_id)?;
+        if d.status != STATUS_FINISHED {
             return None;
         }
-        dispute.winner_address
+        d.winner
     }
 
     pub fn get_dispute(env: Env, dispute_id: u64) -> Result<Dispute, ContractError> {
         Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)
     }
 }
-
