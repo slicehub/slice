@@ -10,7 +10,7 @@ import App from "./App.tsx";
 import "@stellar/design-system/build/styles.min.css";
 import { WalletProvider } from "./providers/WalletProvider.tsx";
 import { NotificationProvider } from "./providers/NotificationProvider.tsx";
-import { PrizePoolProvider } from "./contexts/PrizePoolContext.tsx";
+import { VotingProvider } from "./contexts/VotingContext.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -28,11 +28,11 @@ createRoot(document.getElementById("root") as HTMLElement).render(
     <NotificationProvider>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <PrizePoolProvider>
+          <VotingProvider>
             <BrowserRouter>
               <App />
             </BrowserRouter>
-          </PrizePoolProvider>
+          </VotingProvider>
         </WalletProvider>
       </QueryClientProvider>
     </NotificationProvider>

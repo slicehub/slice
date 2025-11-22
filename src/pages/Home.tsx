@@ -1,8 +1,7 @@
 import React from "react";
 import { Layout, Text } from "@stellar/design-system";
-import { Sudoku } from "../components/Sudoku";
+import { Voting } from "../components/Voting";
 import { ContractConfig } from "../components/ContractConfig";
-import { PrizePool } from "../components/PrizePool";
 import { Box } from "../components/layout/Box";
 
 const Home: React.FC = () => {
@@ -10,17 +9,16 @@ const Home: React.FC = () => {
     <Layout.Content>
       <Layout.Inset>
         <Text as="h1" size="xl">
-          Sudoku Proof Generator
+          Anonymous Voting System
         </Text>
         <Text as="p" size="md">
-          Solve Sudoku puzzles and generate zero-knowledge proofs that verify your solution
-          on the Stellar blockchain using the UltraHonk proof system.
+          Participate in anonymous voting using zero-knowledge proofs on the Stellar blockchain.
+          Your vote is hidden until you reveal it, ensuring privacy and preventing vote manipulation.
         </Text>
         
         <Box gap="md" direction="column" style={{ marginTop: "2rem" }}>
           <ContractConfig />
-          <PrizePool />
-          <Sudoku />
+          <Voting />
         </Box>
       </Layout.Inset>
     </Layout.Content>

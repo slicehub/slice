@@ -16,3 +16,9 @@ client = true
 constructor_args = """
 --admin default
 """
+
+[development.contracts.voting]
+client = true
+constructor_args = """
+--admin default
+"""
