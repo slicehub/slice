@@ -65,10 +65,45 @@ export class NoirService {
 
     // Generate proof (use keccak oracle hash for Stellar verification)
     console.log(`[5/6] Generating proof (this may take 30-60 seconds)...`);
+    console.log(`[DEBUG] Witness length: ${witness.length}, Bytecode length: ${circuit.bytecode.length}`);
     const proofStart = performance.now();
-    const proof = await backend.generateProof(witness, { keccak: true });
-    const proofTime = ((performance.now() - proofStart) / 1000).toFixed(2);
-    console.log(`[5/6] Proof generated in ${proofTime}s`);
+    
+    try {
+      const proof = await backend.generateProof(witness, { keccak: true });
+      const proofTime = ((performance.now() - proofStart) / 1000).toFixed(2);
+      console.log(`[5/6] Proof generated in ${proofTime}s`);
+      
+      // Extract proof bytes
+      const proofBytes = proof.proof;
+      
+      // Build public inputs from circuit inputs using helper method
+      const publicInputsBytes = this.encodePublicInputs(circuit, inputs);
+      console.log(`[DEBUG] Total public inputs: ${publicInputsBytes.length} bytes (${publicInputsBytes.length / 32} fields)`);
+      
+      // Build proof blob using helper method
+      const { proofBlob, proofId } = this.buildProofBlob(publicInputsBytes, proofBytes);
+      
+      // Load pre-generated VK using helper method
+      console.log(`[6/6] Loading verification key...`);
+      const vkJson = await this.loadVk(circuitName);
+      
+      console.log(`[6/6] Complete! Proof ID: ${proofId}`);
+      
+      return {
+        proof: proofBytes,
+        publicInputs: publicInputsBytes,
+        proofBlob,
+        proofId,
+        vkJson,
+      };
+    } catch (error: any) {
+      const proofTime = ((performance.now() - proofStart) / 1000).toFixed(2);
+      console.error(`[5/6] Proof generation failed after ${proofTime}s:`, error);
+      
+      // Provide more detailed error information
+      const errorMessage = error?.message || error?.toString() || 'Unknown error';
+      throw new Error(`Proof generation failed: ${errorMessage}. This may be due to circuit compatibility issues with UltraHonk backend.`);
+    }
 
     // Extract proof bytes
     const proofBytes = proof.proof;

@@ -1,0 +1,25 @@
+[package]
+name = "voting"
+description = "Anonymous voting system with zero-knowledge proofs"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[package.metadata.stellar]
+cargo_inherit = true
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = { version = "23.1.0", features = ["alloc"] }
+stellar-registry = "0.0.5"
+sha3 = { version = "0.10", default-features = false }
+
+[dev-dependencies]
+stellar-xdr = { version = "24.0.0", features = ["curr", "serde"] }
+soroban-sdk = { version = "23.1.0", features = ["testutils"] }
+
