@@ -1,5 +1,5 @@
 [package]
-name = "noir_sudoku"
+name = "voting"
 type = "bin"
 authors = [""]
 
