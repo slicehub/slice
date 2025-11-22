@@ -1,0 +1,28 @@
+.container {
+  width: 393px;
+  margin: 0 auto;
+  padding: 0;
+  background: #f5f6f9;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scrollableContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 20px;
+}
+
+@media (max-width: 393px) {
+  .container {
+    width: 100%;
+  }
+}
+

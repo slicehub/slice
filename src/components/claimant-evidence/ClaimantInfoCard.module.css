@@ -1,0 +1,81 @@
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  margin: 16px 19px 0 19px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.avatarContainer {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #8c8fff;
+  position: relative;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: #8c8fff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.infoSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1b1c23;
+  letter-spacing: -0.54px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #8c8fff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: -0.2px;
+  width: fit-content;
+}
+
+

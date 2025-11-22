@@ -1,0 +1,223 @@
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  margin: 16px 19px 0 19px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.logoContainer {
+  width: 55px;
+  height: 55px;
+  border-radius: 8px;
+  background: #f5f6f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.logoPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: #8c8fff;
+  border-radius: 8px;
+}
+
+.titleSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1b1c23;
+  letter-spacing: -0.54px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(140, 143, 255, 0.2);
+  color: #1b1c23;
+  padding: 4px 8px;
+  border-radius: 11.5px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: -0.2px;
+  width: fit-content;
+  height: 23px;
+}
+
+.actorsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actorCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f5f6f9;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.actorAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #8c8fff;
+  position: relative;
+}
+
+.actorAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: #8c8fff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.actorInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.actorName {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1b1c23;
+  letter-spacing: -0.28px;
+  line-height: 1.2;
+}
+
+.actorRole {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: #8c8fff;
+  letter-spacing: -0.24px;
+  line-height: 1.2;
+}
+
+.contextSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contextTitle {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1b1c23;
+  letter-spacing: -0.32px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.contextText {
+  font-family: "Manrope", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: #31353b;
+  letter-spacing: -0.28px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.datesSection {
+  display: flex;
+  gap: 16px;
+}
+
+.dateItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dateLabel {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #1b1c23;
+  letter-spacing: -0.26px;
+  line-height: 1.2;
+}
+
+.dateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(140, 143, 255, 0.2);
+  color: #1b1c23;
+  padding: 6px 10px;
+  border-radius: 11.5px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: -0.2px;
+  width: fit-content;
+  height: 23px;
+}
+
+.calendarIcon {
+  flex-shrink: 0;
+  display: block;
+  width: 10px;
+  height: 11.666px;
+}
+

@@ -1,0 +1,20 @@
+.container {
+  background-color: #eff1f5;
+  min-height: 100vh;
+  width: 393px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding-bottom: 40px;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (max-width: 393px) {
+  .container {
+    width: 100%;
+    max-width: 393px;
+  }
+}
+
