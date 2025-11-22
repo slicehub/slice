@@ -4,6 +4,7 @@ import { Sudoku } from "../components/Sudoku";
 import { ContractConfig } from "../components/ContractConfig";
 import { PrizePool } from "../components/PrizePool";
 import { Box } from "../components/layout/Box";
+import { VoteComponent } from "../components/VoteComponent";
 
 const Home: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const Home: React.FC = () => {
         <Box gap="md" direction="column" style={{ marginTop: "2rem" }}>
           <ContractConfig />
           <PrizePool />
+          <VoteComponent />
           <Sudoku />
         </Box>
       </Layout.Inset>
