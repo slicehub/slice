@@ -31,3 +31,11 @@ Cargo.lock
 dist
 
 node_modules
+
+.tmp/
+tmp/
+
+packages/
+
+src/contracts/
+!src/contracts/util.ts

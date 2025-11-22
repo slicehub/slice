@@ -1,0 +1,6 @@
+[package]
+name = "vote"
+type = "bin"
+authors = [""]
+
+[dependencies]
