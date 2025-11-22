@@ -14,6 +14,7 @@ import "@stellar/design-system/build/styles.min.css";
 import { WalletProvider } from "./providers/WalletProvider.tsx";
 import { NotificationProvider } from "./providers/NotificationProvider.tsx";
 import { PrizePoolProvider } from "./contexts/PrizePoolContext.tsx";
+import { TimerProvider } from "./contexts/TimerContext.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -32,9 +33,11 @@ createRoot(document.getElementById("root") as HTMLElement).render(
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
           <PrizePoolProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
+            <TimerProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </TimerProvider>
           </PrizePoolProvider>
         </WalletProvider>
       </QueryClientProvider>

@@ -1,0 +1,93 @@
+.container {
+  background-color: #eff1f5;
+  min-height: 100vh;
+  padding-bottom: 120px; /* Space for fixed button */
+  position: relative;
+  width: 393px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 393px) {
+  .container {
+    width: 100%;
+    max-width: 393px;
+  }
+}
+
+.mainCard {
+  background: white;
+  border-radius: 19px;
+  width: 358px;
+  min-height: 318px;
+  margin-top: 30px;
+  padding: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.handIcon {
+  width: 102px;
+  height: 98px;
+  margin-top: 0;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.handIcon img,
+.handIcon video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.handVideo {
+  display: block;
+}
+
+.title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #31353b;
+  letter-spacing: -0.54px;
+  line-height: 1.11;
+  margin: 110px 0 0 0;
+  text-align: center;
+  width: 261px;
+}
+
+.subtitle {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: #31353b;
+  letter-spacing: -0.26px;
+  line-height: 1.15;
+  opacity: 0.6;
+  margin: 10px 0 0 0;
+  text-align: center;
+  width: 284px;
+}
+
+.swipeButtonContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  position: relative;
+}
+

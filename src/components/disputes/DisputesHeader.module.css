@@ -1,0 +1,14 @@
+.header {
+  padding: 34px 0 0 0;
+  height: 43px;
+  width: 339px;
+  margin: 0 auto 0 27px;
+}
+
+.headerImage {
+  width: 339px;
+  height: 43px;
+  object-fit: contain;
+  display: block;
+}
+

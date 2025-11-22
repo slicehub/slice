@@ -1,0 +1,52 @@
+.card {
+  background: white;
+  border-radius: 19px;
+  width: 358px;
+  min-height: 74px;
+  margin-top: 20px;
+  padding: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.iconContainer {
+  flex-shrink: 0;
+  width: 51px;
+  height: 51px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconCircle {
+  width: 51px;
+  height: 51px;
+  background: #8c8fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.alertIcon {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+
+.message {
+  flex: 1;
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: #1b1c23;
+  letter-spacing: -0.22px;
+  line-height: 1.36;
+  margin: 0;
+  min-width: 0;
+}
+
+

@@ -1,0 +1,28 @@
+.section {
+  margin: 20px 19px 0 19px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1b1c23;
+  letter-spacing: -0.32px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.text {
+  font-family: "Manrope", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: #31353b;
+  letter-spacing: -0.28px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+

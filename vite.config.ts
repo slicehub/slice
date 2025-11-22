@@ -2,6 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import wasm from "vite-plugin-wasm";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://vite.dev/config/
 export default defineConfig(() => {
@@ -18,6 +22,12 @@ export default defineConfig(() => {
       }),
       wasm(),
     ],
+    resolve: {
+      alias: {
+        slice: path.resolve(__dirname, "./packages/slice/dist/index.js"),
+        "guess_the_puzzle": path.resolve(__dirname, "./packages/guess_the_puzzle/dist/index.js"),
+      },
+    },
     build: {
       target: "esnext",
     },

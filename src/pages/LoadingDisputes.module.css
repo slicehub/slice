@@ -1,0 +1,54 @@
+.container {
+  background-color: white;
+  min-height: 100vh;
+  width: 393px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+@media (max-width: 393px) {
+  .container {
+    width: 100%;
+    max-width: 393px;
+  }
+}
+
+.loadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.videoContainer {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.loadingText {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1b1c23;
+  letter-spacing: -0.32px;
+  line-height: 1.25;
+  text-align: center;
+  margin: 0;
+}
+

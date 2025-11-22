@@ -1,0 +1,259 @@
+.card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0px 2px 4px 0px rgba(27, 28, 35, 0.1);
+  padding: 22px;
+  position: relative;
+  width: 354px;
+  height: 261px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  gap: 0;
+  justify-content: space-between;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 17px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.iconContainer {
+  width: 55px;
+  height: 55px;
+  flex-shrink: 0;
+}
+
+.icon,
+.defaultIcon {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.titleSection {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1;
+  color: #1b1c23;
+  letter-spacing: -0.3px;
+  margin: 0 0 10px 0;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: rgba(140, 143, 255, 0.2);
+  color: #1b1c23;
+  padding: 8px 12px;
+  height: 23px;
+  border-radius: 11.5px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: -0.2px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.badge svg {
+  flex-shrink: 0;
+}
+
+.content {
+  background: #f5f6f9;
+  border-radius: 12px;
+  padding: 22px;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+  height: 111px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.voteSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  flex: 1;
+}
+
+.voteLabel {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  color: #1b1c23;
+  letter-spacing: -0.24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.voters {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.voterCard {
+  position: relative;
+  width: 134px;
+  height: 43px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px 9px 10px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.voterAvatar {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #8c8fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.voterAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: #8c8fff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.voterName {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  color: #1b1c23;
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 24px; /* Espacio para el voteIndicator */
+}
+
+.voteIndicator {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 20px;
+  width: 100%;
+  gap: 12px;
+}
+
+.prize {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  color: #14141a;
+  letter-spacing: -0.28px;
+  line-height: 1.14;
+}
+
+.starIcon {
+  flex-shrink: 0;
+}
+
+.readButton {
+  background: #8c8fff;
+  color: white;
+  border: none;
+  border-radius: 12.5px;
+  padding: 8px 16px;
+  height: 25px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: -0.33px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.readButton:hover {
+  opacity: 0.9;
+}
+
