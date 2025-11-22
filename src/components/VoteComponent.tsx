@@ -1,21 +1,23 @@
-import React, { useState, useRef, useCallback } from "react";
-import { Button, Text, Card, Input, Code } from "@stellar/design-system";
-import { Box } from "./layout/Box";
-import { useWallet } from "../hooks/useWallet";
-import { NoirService } from "../services/NoirService";
-import { StellarContractService } from "../services/StellarContractService";
-import slice from "../contracts/slice";
-import { Buffer } from "buffer";
+import React, { useState, useRef, useCallback } from 'react';
+import { Button, Text, Card, Input, Code } from '@stellar/design-system';
+import { Box } from './layout/Box';
+import { useWallet } from '../hooks/useWallet';
+import { NoirService } from '../services/NoirService';
+import { StellarContractService } from '../services/StellarContractService';
+import slice from '../contracts/slice';
+import { Buffer } from 'buffer';
+import { sha256 } from '@noble/hashes/sha2.js';
 
-// Helper to generate a random 31-byte hex salt (safe for BN254 Field size)
+// Helper to generate a random 31-byte hex salt (cómodo para Noir Field)
+// Luego lo vamos a left-pad a 32 bytes para el SHA256 del contrato
 const generateRandomSalt = () => {
   const array = new Uint8Array(31);
   crypto.getRandomValues(array);
   return (
-    "0x" +
+    '0x' +
     Array.from(array)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("")
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
   );
 };
 
@@ -23,70 +25,60 @@ export const VoteComponent: React.FC = () => {
   const { address, signTransaction } = useWallet();
   const [selectedVote, setSelectedVote] = useState<number | null>(null);
   const [salt, setSalt] = useState<string>(() => generateRandomSalt());
-  const [disputeId, setDisputeId] = useState<string>("1");
+  const [disputeId, setDisputeId] = useState<string>('1');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [output, setOutput] = useState<string>("");
+  const [output, setOutput] = useState<string>('');
 
   const noirService = useRef(new NoirService());
 
   const handleVoteSelect = (vote: number) => {
     setSelectedVote(vote);
     setSalt(generateRandomSalt());
-    setOutput("");
+    setOutput('');
   };
 
   const generateAndSubmitVote = useCallback(async () => {
     if (!address || !signTransaction) {
-      setOutput("Error: Please connect your wallet first.");
+      setOutput('Error: Please connect your wallet first.');
       return;
     }
 
     if (selectedVote === null) {
-      setOutput("Error: Please select a vote option (Party A or Party B).");
+      setOutput('Error: Please select a vote option.');
       return;
     }
 
     setIsGenerating(true);
-    setOutput("Generating ZK Proof for Vote Reveal...");
+    setOutput('Computing SHA256 commitment and submitting vote...');
 
     try {
-      const inputs = {
-        vote: selectedVote,
-        salt: salt,
-      };
-
-      const proofResult = await noirService.current.generateProof(
-        "vote",
-        inputs,
-      );
-
-      setOutput(
-        (prev) =>
-          prev +
-          `\n\n✓ Proof Generated!
-Proof ID: ${proofResult.proofId.slice(0, 16)}...
-Commitment Hash generated inside circuit.
-
-Submitting Reveal to Slice Contract...`,
-      );
-
       slice.options.publicKey = address;
 
-      // 1. Prepare Salt (BytesN<32>)
-      // Remove 0x prefix and parse hex
-      const saltHex = salt.replace(/^0x/, "");
-      const rawSaltBuffer = Buffer.from(saltHex, "hex");
-      // Pad to 32 bytes (random salt is 31 bytes to fit in BN254 field)
-      const saltBuffer = Buffer.alloc(32);
-      rawSaltBuffer.copy(saltBuffer, 32 - rawSaltBuffer.length);
+      // -------------------------------------------------------------
+      // 1. COMPUTE COMMITMENT = SHA256(vote.to_be_bytes() || salt[32])
+      // -------------------------------------------------------------
+      const voteBytes = new Uint8Array(4);
+      new DataView(voteBytes.buffer).setUint32(0, selectedVote, false);
 
-      // 2. Prepare Proof and VK (Bytes)
-      const vkJsonBuffer = StellarContractService.toBuffer(proofResult.vkJson);
-      const proofBlobBuffer = StellarContractService.toBuffer(
-        proofResult.proofBlob,
-      );
+      const saltHex = salt.replace(/^0x/, '');
+      const saltRaw = Buffer.from(saltHex, 'hex');
+      const saltBuf32 = Buffer.alloc(32);
+      saltRaw.copy(saltBuf32, 32 - saltRaw.length);
 
-      // 3. Define Signer Helper
+      const preimage = new Uint8Array(36);
+      preimage.set(voteBytes, 0);
+      preimage.set(saltBuf32, 4);
+
+      const commitmentBytes = sha256(preimage);
+      const commitmentBuf = Buffer.from(commitmentBytes);
+
+      // MUST BE 32 bytes
+      const commitmentBuf32 = Buffer.alloc(32);
+      commitmentBuf.copy(commitmentBuf32);
+
+      // -------------------------------------------------------------
+      // 2. COMMIT
+      // -------------------------------------------------------------
       const walletSignTransaction = async (xdr: string) => {
         const signed = await signTransaction(xdr);
         return {
@@ -95,47 +87,55 @@ Submitting Reveal to Slice Contract...`,
         };
       };
 
-      // 4. Build Transaction
-      // Note: This assumes the user has already Committed and is now Revealing
-      const tx = await slice.reveal_vote({
+      const commitTx = await slice.commit_vote({
+        caller: address,
+        dispute_id: BigInt(disputeId),
+        commitment: commitmentBuf32,
+      });
+
+      const commitRes = await commitTx.signAndSend({
+        signTransaction: walletSignTransaction,
+      });
+
+      const commitTxData = StellarContractService.extractTransactionData(commitRes);
+      if (!commitTxData.success) throw new Error('commit failed');
+
+      // -------------------------------------------------------------
+      // 3. REVEAL — GENERATE ZK PROOF
+      // -------------------------------------------------------------
+      const revealInputs = {
+        vote: selectedVote,
+      };
+
+      const revealProof = await noirService.current.generateProof('reveal', revealInputs);
+
+      const vkJsonBuffer = StellarContractService.toBuffer(revealProof.vkJson);
+      const proofBlobBuffer = StellarContractService.toBuffer(revealProof.proofBlob);
+
+      // -------------------------------------------------------------
+      // 4. SEND reveal_vote
+      // -------------------------------------------------------------
+      const revealTx = await slice.reveal_vote({
         caller: address,
         dispute_id: BigInt(disputeId),
         vote: selectedVote,
-        salt: saltBuffer,
+        salt: saltBuf32,
         vk_json: vkJsonBuffer,
         proof_blob: proofBlobBuffer,
       });
 
-      // 5. Sign and Send (Fixing ESLint unsafe-assignment error)
-      // We cast to unknown first to handle the generic Result type from the SDK
-      const result = (await tx.signAndSend({
+      const revealRes = await revealTx.signAndSend({
         signTransaction: walletSignTransaction,
-      })) as unknown;
+      });
 
-      const txData = StellarContractService.extractTransactionData(
-        result as Parameters<
-          typeof StellarContractService.extractTransactionData
-        >[0],
-      );
+      const revealTxData = StellarContractService.extractTransactionData(revealRes);
 
-      if (txData.success) {
-        setOutput(
-          (prev) =>
-            prev +
-            `\n\n✓ Vote Revealed Successfully!
-Tx Hash: ${txData.txHash?.slice(0, 10)}...
-Fee: ${txData.fee} stroops
+      if (!revealTxData.success) throw new Error('reveal failed');
 
-IMPORTANT: You have successfully revealed your vote.`,
-        );
-      } else {
-        setOutput((prev) => prev + `\n\n❌ Submission Failed.`);
-      }
-    } catch (error: unknown) {
-      console.error(error);
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      setOutput((prev) => prev + `\n\n❌ Error: ${errorMessage}`);
+      setOutput((prev) => prev + '\n✓ Vote revealed!');
+    } catch (err: any) {
+      console.error(err);
+      setOutput((prev) => prev + `\n❌ Error: ${err.message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -145,13 +145,7 @@ IMPORTANT: You have successfully revealed your vote.`,
     <Card>
       <Box gap="md" direction="column">
         <Text as="h2" size="lg">
-          Juror Private Vote Reveal (ZK)
-        </Text>
-        <Text as="p" size="sm" style={{ color: "#6b7280" }}>
-          Reveal your vote to the chain. A Zero-Knowledge proof will be
-          generated locally to verify your vote matches your earlier commitment
-          (vote + salt) without publicly exposing your salt until the proof is
-          verified.
+          Juror Private Vote (Commit + Reveal with ZK)
         </Text>
 
         <Input
@@ -164,15 +158,16 @@ IMPORTANT: You have successfully revealed your vote.`,
 
         <Box gap="md" direction="row" justify="center">
           <Button
-            variant={selectedVote === 0 ? "primary" : "secondary"}
+            variant={selectedVote === 0 ? 'primary' : 'secondary'}
             onClick={() => handleVoteSelect(0)}
             disabled={isGenerating}
             size="md"
           >
             Vote Party A (0)
           </Button>
+
           <Button
-            variant={selectedVote === 1 ? "primary" : "secondary"}
+            variant={selectedVote === 1 ? 'primary' : 'secondary'}
             onClick={() => handleVoteSelect(1)}
             disabled={isGenerating}
             size="md"
@@ -185,16 +180,12 @@ IMPORTANT: You have successfully revealed your vote.`,
           <Box
             gap="xs"
             direction="column"
-            style={{
-              background: "#f3f4f6",
-              padding: "10px",
-              borderRadius: "4px",
-            }}
+            style={{ background: '#f3f4f6', padding: 10, borderRadius: 4 }}
           >
-            <Text as="span" size="xs" weight="bold">
+            <Text size="xs" weight="bold">
               Generated Secret Salt:
             </Text>
-            <Code size="sm" style={{ wordBreak: "break-all" }}>
+            <Code size="sm" style={{ wordBreak: 'break-all' }}>
               {salt}
             </Code>
           </Box>
@@ -207,22 +198,20 @@ IMPORTANT: You have successfully revealed your vote.`,
           disabled={isGenerating || selectedVote === null || !address}
           isLoading={isGenerating}
         >
-          {isGenerating
-            ? "Generating Proof & Submitting..."
-            : "Generate Proof & Reveal Vote"}
+          {isGenerating ? 'Submitting...' : 'Generate Proof & Vote'}
         </Button>
 
         {output && (
           <div
             style={{
-              marginTop: "10px",
-              padding: "15px",
-              background: "#2c3e50",
-              color: "#fff",
-              borderRadius: "4px",
-              whiteSpace: "pre-wrap",
-              fontFamily: "monospace",
-              fontSize: "12px",
+              marginTop: 10,
+              padding: 15,
+              background: '#2c3e50',
+              color: '#fff',
+              borderRadius: 4,
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'monospace',
+              fontSize: 12,
             }}
           >
             {output}

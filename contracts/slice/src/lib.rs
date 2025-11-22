@@ -42,50 +42,39 @@ pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
 pub struct Dispute {
     pub id: u64,
 
-    // Parties
     pub claimer: Address,
     pub defender: Address,
 
-    // Metadata hash provided off-chain
     pub meta_hash: BytesN<32>,
 
-    // Amount bonding requirements
     pub min_amount: i128,
     pub max_amount: i128,
 
-    // Category assignment
     pub category: Symbol,
     pub allowed_jurors: Option<Vec<Address>>,
     pub jurors_required: u32,
 
-    // Absolute UNIX-style timestamps (ledger timestamps)
     pub deadline_pay_seconds: u64,
     pub deadline_commit_seconds: u64,
     pub deadline_reveal_seconds: u64,
 
-    // Juror data
     pub assigned_jurors: Vec<Address>,
     pub juror_stakes: Vec<i128>,
 
-    // Commit–reveal scheme
     pub commitments: Vec<Option<BytesN<32>>>,
     pub revealed_votes: Vec<Option<u32>>,
     pub revealed_salts: Vec<Option<BytesN<32>>>,
 
-    // Status
     pub status: u32,
 
-    // Payments
     pub claimer_paid: bool,
     pub defender_paid: bool,
     pub claimer_amount: i128,
     pub defender_amount: i128,
 
-    // Final result
     pub winner: Option<Address>,
 }
 
-// Add this struct to group arguments and solve the "too many parameters" error
 #[contracttype]
 #[derive(Clone)]
 pub struct TimeLimits {
@@ -100,13 +89,11 @@ pub struct Categories {
     pub items: Vec<Symbol>,
 }
 
-// Global configuration set by admin
 #[contracttype]
 #[derive(Clone)]
 pub struct Config {
     pub admin: Address,
 
-    // Time constraints enforced globally
     pub min_pay_seconds: u64,
     pub max_pay_seconds: u64,
 
@@ -132,7 +119,6 @@ impl Slice {
         min_reveal_seconds: u64,
         max_reveal_seconds: u64,
     ) {
-        // Only admin can deploy
         admin.require_auth();
 
         let config = Config {
@@ -147,7 +133,6 @@ impl Slice {
 
         env.storage().instance().set(CONFIG_KEY, &config);
 
-        // Initialize category list and dispute counter
         let categories = Categories {
             items: Vec::new(&env),
         };
@@ -155,7 +140,7 @@ impl Slice {
         env.storage().instance().set(DISPUTE_COUNTER_KEY, &0u64);
     }
 
-    // Utility getters
+    // Getters
     fn get_config(env: &Env) -> Config {
         env.storage()
             .instance()
@@ -194,7 +179,6 @@ impl Slice {
         new
     }
 
-    // Storage key for a specific dispute
     fn get_dispute_key(env: &Env, id: u64) -> BytesN<32> {
         let mut arr = [0u8; 32];
         arr[0..4].copy_from_slice(b"DISP");
@@ -219,18 +203,22 @@ impl Slice {
     }
 
     // ---------------------------------------------------------
-    // Commit–Reveal Utility
+    // Commitment (SHA256)
     // ---------------------------------------------------------
     /// Computes H(vote || salt) using SHA256.
-    /// Used to verify commit correctness before reveal.
     fn compute_commitment(env: &Env, vote: u32, salt: &BytesN<32>) -> BytesN<32> {
         if vote > 1 {
             panic!("invalid vote");
         }
 
         let mut hasher = Sha256::new();
+
+        // vote as 4 bytes big-endian
         hasher.update(&vote.to_be_bytes());
+
+        // salt as 32 bytes
         hasher.update(&salt.to_array());
+
         let hash = hasher.finalize();
 
         let mut out = [0u8; 32];
@@ -238,9 +226,6 @@ impl Slice {
         BytesN::from_array(env, &out)
     }
 
-    /// Forces transition from COMMIT → REVEAL if:
-    /// - commit deadline passed, or
-    /// - all jurors committed their commitments.
     fn maybe_start_reveal_phase(env: &Env, dispute: &mut Dispute) {
         if dispute.status != STATUS_COMMIT {
             return;
@@ -262,7 +247,7 @@ impl Slice {
     }
 
     // ---------------------------------------------------------
-    // Category Management
+    // Category admin
     // ---------------------------------------------------------
     pub fn add_category(env: Env, name: Symbol) -> Result<(), ContractError> {
         Self::require_admin(&env);
@@ -305,12 +290,6 @@ impl Slice {
     // ---------------------------------------------------------
     // create_dispute
     // ---------------------------------------------------------
-    /// Creates a new dispute with predetermined deadlines for:
-    /// - payment phase
-    /// - commit phase
-    /// - reveal phase
-    ///
-    /// The creator chooses the durations, but they must respect the global config bounds.
     pub fn create_dispute(
         env: Env,
         claimer: Address,
@@ -337,26 +316,22 @@ impl Slice {
 
         let cfg = Self::get_config(&env);
 
-        // Validate pay phase
         if limits.pay_seconds < cfg.min_pay_seconds || limits.pay_seconds > cfg.max_pay_seconds {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
-        // Validate commit phase
         if limits.commit_seconds < cfg.min_commit_seconds
             || limits.commit_seconds > cfg.max_commit_seconds
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
-        // Validate reveal phase
         if limits.reveal_seconds < cfg.min_reveal_seconds
             || limits.reveal_seconds > cfg.max_reveal_seconds
         {
             return Err(ContractError::ErrInvalidDeadline);
         }
 
-        // Must satisfy: pay ≤ commit ≤ reveal
         if !(limits.pay_seconds <= limits.commit_seconds
             && limits.commit_seconds <= limits.reveal_seconds)
         {
@@ -403,8 +378,6 @@ impl Slice {
     // ---------------------------------------------------------
     // pay_dispute
     // ---------------------------------------------------------
-    /// Allows both parties to lock their stake in the dispute.
-    /// Once both have paid, the dispute automatically enters COMMIT phase.
     pub fn pay_dispute(
         env: Env,
         caller: Address,
@@ -447,7 +420,6 @@ impl Slice {
             dispute.defender_amount = amount;
         }
 
-        // When both have paid → move to COMMIT phase
         if dispute.claimer_paid && dispute.defender_paid {
             dispute.status = STATUS_COMMIT;
         }
@@ -459,8 +431,6 @@ impl Slice {
     // ---------------------------------------------------------
     // assign_dispute
     // ---------------------------------------------------------
-    /// Jurors self-assign into disputes matching their category.
-    /// They must provide a stake, and optionally be whitelisted.
     pub fn assign_dispute(
         env: Env,
         caller: Address,
@@ -476,14 +446,12 @@ impl Slice {
         let mut eligible = Vec::new(&env);
         let count = Self::get_dispute_counter(&env);
 
-        // Find disputes needing more jurors
         for i in 1..=count {
             if let Some(dispute) = Self::get_dispute_internal(&env, i) {
                 if dispute.status == STATUS_COMMIT
                     && dispute.category == category
                     && (dispute.assigned_jurors.len() as u32) < dispute.jurors_required
                 {
-                    // If whitelist exists → must be included
                     if let Some(ref allowed) = dispute.allowed_jurors {
                         if allowed.contains(&caller) {
                             eligible.push_back(i);
@@ -535,7 +503,6 @@ impl Slice {
     // ---------------------------------------------------------
     // commit_vote
     // ---------------------------------------------------------
-    /// Juror submits their commitment hash (H(vote || salt)).
     pub fn commit_vote(
         env: Env,
         caller: Address,
@@ -560,7 +527,6 @@ impl Slice {
             return Err(ContractError::ErrVotingClosed);
         }
 
-        // Find juror index
         let idx = dispute
             .assigned_jurors
             .iter()
@@ -573,7 +539,6 @@ impl Slice {
 
         dispute.commitments.set(idx, Some(commitment));
 
-        // Auto-transition to REVEAL if all jurors committed
         let mut all_committed = true;
         for i in 0..dispute.commitments.len() {
             if dispute.commitments.get(i).unwrap().is_none() {
@@ -590,18 +555,14 @@ impl Slice {
     }
 
     // ---------------------------------------------------------
-    // reveal_vote (ZK-verified)
+    // reveal_vote (ZK verified)
     // ---------------------------------------------------------
-    /// Juror reveals (vote, salt) + zk-proof.
-    /// UltraHonk must confirm the proof is valid.
     pub fn reveal_vote(
         env: Env,
         caller: Address,
         dispute_id: u64,
         vote: u32,
         salt: BytesN<32>,
-
-        // ZK inputs
         vk_json: Bytes,
         proof_blob: Bytes,
     ) -> Result<(), ContractError> {
@@ -610,7 +571,6 @@ impl Slice {
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
-        // Auto-transition if commit phase is over
         Self::maybe_start_reveal_phase(&env, &mut dispute);
 
         if dispute.status != STATUS_REVEAL {
@@ -642,28 +602,22 @@ impl Slice {
             .unwrap()
             .ok_or(ContractError::ErrInvalidProof)?;
 
-        // -----------------------------------------
-        // 1. Verify zk-proof using UltraHonk
-        // -----------------------------------------
+        // 1. Verify ZK proof via UltraHonk
         let addr = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
         let client = ultrahonk_contract::Client::new(&env, &addr);
 
         match client.try_verify_proof(&vk_json, &proof_blob) {
-            Ok(Ok(_)) => {} // Valid proof
+            Ok(Ok(_)) => {}
             _ => return Err(ContractError::ErrInvalidProof),
         }
 
-        // -----------------------------------------
-        // 2. Verify commitment matches reveal
-        // -----------------------------------------
+        // 2. Verify SHA256(vote || salt) == commitment
         let computed = Self::compute_commitment(&env, vote, &salt);
         if computed != stored_commit {
             return Err(ContractError::ErrInvalidProof);
         }
 
-        // -----------------------------------------
-        // 3. Store revealed vote + salt
-        // -----------------------------------------
+        // 3. Store reveal
         dispute.revealed_votes.set(idx, Some(vote));
         dispute.revealed_salts.set(idx, Some(salt));
 
@@ -672,17 +626,12 @@ impl Slice {
     }
 
     // ---------------------------------------------------------
-    // execute
+    // execute (same as original)
     // ---------------------------------------------------------
-    /// Finalizes the dispute:
-    /// - checks majority
-    /// - slashes incorrect jurors + losing party
-    /// - distributes rewards to correct jurors and winner
     pub fn execute(env: Env, dispute_id: u64) -> Result<Address, ContractError> {
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
-        // Auto-transition if necessary
         Self::maybe_start_reveal_phase(&env, &mut dispute);
 
         if dispute.status != STATUS_REVEAL {
@@ -700,44 +649,36 @@ impl Slice {
             }
         }
 
-        // If not all revealed, must wait for reveal deadline
         if !all_revealed && now <= dispute.deadline_reveal_seconds {
             return Err(ContractError::ErrRevealNotFinished);
         }
 
-        // -------------------------------
-        // Count votes
-        // -------------------------------
         let mut votes_claimer = 0;
         let mut votes_defender = 0;
 
         for i in 0..juror_count {
             if let Some(vote) = dispute.revealed_votes.get(i).unwrap() {
-                match vote {
-                    0 => votes_claimer += 1,
-                    1 => votes_defender += 1,
-                    _ => return Err(ContractError::ErrInvalidVote),
+                if vote == 0 {
+                    votes_claimer += 1;
+                } else if vote == 1 {
+                    votes_defender += 1;
+                } else {
+                    return Err(ContractError::ErrInvalidVote);
                 }
             }
         }
 
         let winner_vote = if votes_claimer > votes_defender { 0 } else { 1 };
 
-        // Determine correct jurors
         let mut correctness = Vec::new(&env);
         for i in 0..juror_count {
-            let mut ok = 0;
-            if let Some(v) = dispute.revealed_votes.get(i).unwrap() {
-                if v == winner_vote {
-                    ok = 1;
-                }
-            }
-            correctness.push_back(ok);
+            let is_correct = match dispute.revealed_votes.get(i).unwrap() {
+                Some(v) if v == winner_vote => 1,
+                _ => 0,
+            };
+            correctness.push_back(is_correct);
         }
 
-        // -------------------------------
-        // Slashing
-        // -------------------------------
         let mut total_slashed = 0i128;
 
         if winner_vote == 1 {
@@ -755,7 +696,6 @@ impl Slice {
         let admin_fee = total_slashed * 5 / 100;
         let reward_pool = total_slashed - admin_fee;
 
-        // Count correct jurors
         let mut correct_count = 0;
         for i in 0..juror_count {
             if correctness.get(i).unwrap() == 1 {
@@ -763,7 +703,6 @@ impl Slice {
             }
         }
 
-        // Winner + jurors_correct share reward
         let winners_total = correct_count + 1;
         let reward_each = if winners_total > 0 {
             reward_pool / (winners_total as i128)
@@ -771,7 +710,6 @@ impl Slice {
             0
         };
 
-        // Transfers
         let xlm_client = xlm::token_client(&env);
         let contract_addr = env.current_contract_address();
         let config = Self::get_config(&env);
