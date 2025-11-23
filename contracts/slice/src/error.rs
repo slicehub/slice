@@ -28,4 +28,6 @@ pub enum ContractError {
     ErrRevealClosed = 24,
     ErrRevealNotFinished = 25,
     ErrInvalidVote = 26,
+    ErrInternalState = 27,
+    ErrConfigMissing = 28,
 }

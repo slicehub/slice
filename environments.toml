@@ -1,16 +1,16 @@
 [development]
 accounts = ["default"]
 
-# [development.network]
-# rpc-url = "http://localhost:8000/rpc"
-# network-passphrase = "Standalone Network ; February 2017"
-# run-locally = true
-
-# Testnet
 [development.network]
-rpc-url = "https://soroban-testnet.stellar.org"
-network-passphrase = "Test SDF Network ; September 2015"
-run-locally = false
+rpc-url = "http://localhost:8000/rpc"
+network-passphrase = "Standalone Network ; February 2017"
+run-locally = true
+
+# # Testnet
+# [development.network]
+# rpc-url = "https://soroban-testnet.stellar.org"
+# network-passphrase = "Test SDF Network ; September 2015"
+# run-locally = false
 
 [development.contracts]
 

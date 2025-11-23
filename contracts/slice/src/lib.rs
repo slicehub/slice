@@ -1,13 +1,14 @@
 #![no_std]
-
+use error::ContractError;
 use sha2::{Digest, Sha256};
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, Symbol, Vec,
+use soroban_sdk::{contract, contractimpl, Address, Bytes, BytesN, Env, Symbol, Vec};
+use types::{
+    Categories, Config, Dispute, DisputeStatus, TimeLimits, CATEGORIES_KEY, CONFIG_KEY,
+    DISPUTE_COUNTER_KEY, ULTRAHONK_CONTRACT_ADDRESS,
 };
 
 mod error;
-use error::ContractError;
-
+mod types;
 mod xlm;
 
 mod ultrahonk_contract {
@@ -17,98 +18,8 @@ mod ultrahonk_contract {
 #[contract]
 pub struct Slice;
 
-// ---------------------------------------------------------
-// Dispute statuses
-// ---------------------------------------------------------
-const STATUS_CREATED: u32 = 0;
-const STATUS_COMMIT: u32 = 1;
-const STATUS_REVEAL: u32 = 2;
-const STATUS_FINISHED: u32 = 3;
-
-// Storage keys
-pub const CATEGORIES_KEY: &Symbol = &symbol_short!("CATS");
-pub const CONFIG_KEY: &Symbol = &symbol_short!("CONF");
-pub const DISPUTE_COUNTER_KEY: &Symbol = &symbol_short!("CNTR");
-
-// UltraHonk verifier contract address
-pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
-    "CAXMCB6EYJ6Z6PHHC3MZ54IKHAZV5WSM2OAK4DSGM2E2M6DJG4FX5CPB";
-
-// ---------------------------------------------------------
-// Data Structures
-// ---------------------------------------------------------
-#[contracttype]
-#[derive(Clone)]
-pub struct Dispute {
-    pub id: u64,
-
-    pub claimer: Address,
-    pub defender: Address,
-
-    pub meta_hash: BytesN<32>,
-
-    pub min_amount: i128,
-    pub max_amount: i128,
-
-    pub category: Symbol,
-    pub allowed_jurors: Option<Vec<Address>>,
-    pub jurors_required: u32,
-
-    pub deadline_pay_seconds: u64,
-    pub deadline_commit_seconds: u64,
-    pub deadline_reveal_seconds: u64,
-
-    pub assigned_jurors: Vec<Address>,
-    pub juror_stakes: Vec<i128>,
-
-    pub commitments: Vec<Option<BytesN<32>>>,
-    pub revealed_votes: Vec<Option<u32>>,
-    pub revealed_salts: Vec<Option<BytesN<32>>>,
-
-    pub status: u32,
-
-    pub claimer_paid: bool,
-    pub defender_paid: bool,
-    pub claimer_amount: i128,
-    pub defender_amount: i128,
-
-    pub winner: Option<Address>,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct TimeLimits {
-    pub pay_seconds: u64,
-    pub commit_seconds: u64,
-    pub reveal_seconds: u64,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct Categories {
-    pub items: Vec<Symbol>,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct Config {
-    pub admin: Address,
-
-    pub min_pay_seconds: u64,
-    pub max_pay_seconds: u64,
-
-    pub min_commit_seconds: u64,
-    pub max_commit_seconds: u64,
-
-    pub min_reveal_seconds: u64,
-    pub max_reveal_seconds: u64,
-}
-
 #[contractimpl]
 impl Slice {
-    // ---------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------
     pub fn __constructor(
         env: Env,
         admin: Address,
@@ -140,17 +51,22 @@ impl Slice {
         env.storage().instance().set(DISPUTE_COUNTER_KEY, &0u64);
     }
 
-    // Getters
-    fn get_config(env: &Env) -> Config {
+    // ---------------------------------------------------------
+    // Internal Helpers (Refactored to return Result)
+    // ---------------------------------------------------------
+
+    // Replaced .expect() with Result
+    fn get_config(env: &Env) -> Result<Config, ContractError> {
         env.storage()
             .instance()
             .get(CONFIG_KEY)
-            .expect("Config not initialized")
+            .ok_or(ContractError::ErrConfigMissing)
     }
 
-    fn require_admin(env: &Env) {
-        let cfg = Self::get_config(env);
+    fn require_admin(env: &Env) -> Result<(), ContractError> {
+        let cfg = Self::get_config(env)?;
         cfg.admin.require_auth();
+        Ok(())
     }
 
     fn get_categories(env: &Env) -> Categories {
@@ -202,55 +118,59 @@ impl Slice {
         Self::get_categories(env).items.contains(&cat)
     }
 
-    // ---------------------------------------------------------
-    // Commitment (SHA256)
-    // ---------------------------------------------------------
-    /// Computes H(vote || salt) using SHA256.
-    fn compute_commitment(env: &Env, vote: u32, salt: &BytesN<32>) -> BytesN<32> {
+    // Replaced panic!("invalid vote") with Result
+    fn compute_commitment(
+        env: &Env,
+        vote: u32,
+        salt: &BytesN<32>,
+    ) -> Result<BytesN<32>, ContractError> {
         if vote > 1 {
-            panic!("invalid vote");
+            return Err(ContractError::ErrInvalidVote);
         }
 
         let mut hasher = Sha256::new();
-
-        // vote as 4 bytes big-endian
         hasher.update(&vote.to_be_bytes());
-
-        // salt as 32 bytes
         hasher.update(&salt.to_array());
-
         let hash = hasher.finalize();
 
         let mut out = [0u8; 32];
         out.copy_from_slice(&hash[..32]);
-        BytesN::from_array(env, &out)
+        Ok(BytesN::from_array(env, &out))
     }
 
-    fn maybe_start_reveal_phase(env: &Env, dispute: &mut Dispute) {
-        if dispute.status != STATUS_COMMIT {
-            return;
+    // Replaced unwraps in loop with Result
+    fn maybe_start_reveal_phase(env: &Env, dispute: &mut Dispute) -> Result<(), ContractError> {
+        if dispute.status != DisputeStatus::Commit {
+            return Ok(());
         }
 
         let now = env.ledger().timestamp();
 
         let mut all_committed = true;
         for i in 0..dispute.commitments.len() {
-            if dispute.commitments.get(i).unwrap().is_none() {
+            if dispute
+                .commitments
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?
+                .is_none()
+            {
                 all_committed = false;
                 break;
             }
         }
 
         if now > dispute.deadline_commit_seconds || all_committed {
-            dispute.status = STATUS_REVEAL;
+            dispute.status = DisputeStatus::Reveal;
         }
+        Ok(())
     }
 
     // ---------------------------------------------------------
-    // Category admin
+    // External Functions
     // ---------------------------------------------------------
+
     pub fn add_category(env: Env, name: Symbol) -> Result<(), ContractError> {
-        Self::require_admin(&env);
+        Self::require_admin(&env)?;
 
         let mut cats = Self::get_categories(&env);
         if cats.items.contains(&name) {
@@ -263,14 +183,15 @@ impl Slice {
     }
 
     pub fn remove_category(env: Env, name: Symbol) -> Result<(), ContractError> {
-        Self::require_admin(&env);
+        Self::require_admin(&env)?;
 
         let mut cats = Self::get_categories(&env);
         let mut found = false;
         let mut new_items = Vec::new(&env);
 
         for i in 0..cats.items.len() {
-            let item = cats.items.get(i).unwrap();
+            // Replaced unwrap
+            let item = cats.items.get(i).ok_or(ContractError::ErrInternalState)?;
             if item != name {
                 new_items.push_back(item);
             } else {
@@ -287,9 +208,6 @@ impl Slice {
         Ok(())
     }
 
-    // ---------------------------------------------------------
-    // create_dispute
-    // ---------------------------------------------------------
     pub fn create_dispute(
         env: Env,
         claimer: Address,
@@ -314,7 +232,7 @@ impl Slice {
             return Err(ContractError::ErrInvalidAmounts);
         }
 
-        let cfg = Self::get_config(&env);
+        let cfg = Self::get_config(&env)?;
 
         if limits.pay_seconds < cfg.min_pay_seconds || limits.pay_seconds > cfg.max_pay_seconds {
             return Err(ContractError::ErrInvalidDeadline);
@@ -363,7 +281,7 @@ impl Slice {
             revealed_votes: Vec::new(&env),
             revealed_salts: Vec::new(&env),
 
-            status: STATUS_CREATED,
+            status: DisputeStatus::Created,
             claimer_paid: false,
             defender_paid: false,
             claimer_amount: 0,
@@ -375,9 +293,6 @@ impl Slice {
         Ok(id)
     }
 
-    // ---------------------------------------------------------
-    // pay_dispute
-    // ---------------------------------------------------------
     pub fn pay_dispute(
         env: Env,
         caller: Address,
@@ -389,7 +304,7 @@ impl Slice {
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
-        if dispute.status != STATUS_CREATED {
+        if dispute.status != DisputeStatus::Created {
             return Err(ContractError::ErrAlreadyPaid);
         }
 
@@ -421,16 +336,13 @@ impl Slice {
         }
 
         if dispute.claimer_paid && dispute.defender_paid {
-            dispute.status = STATUS_COMMIT;
+            dispute.status = DisputeStatus::Commit;
         }
 
         Self::set_dispute(&env, &dispute);
         Ok(())
     }
 
-    // ---------------------------------------------------------
-    // assign_dispute
-    // ---------------------------------------------------------
     pub fn assign_dispute(
         env: Env,
         caller: Address,
@@ -448,7 +360,7 @@ impl Slice {
 
         for i in 1..=count {
             if let Some(dispute) = Self::get_dispute_internal(&env, i) {
-                if dispute.status == STATUS_COMMIT
+                if dispute.status == DisputeStatus::Commit
                     && dispute.category == category
                     && (dispute.assigned_jurors.len() as u32) < dispute.jurors_required
                 {
@@ -467,7 +379,8 @@ impl Slice {
             return Err(ContractError::ErrNoAvailableDisputes);
         }
 
-        let dispute_id = eligible.get(0).unwrap();
+        // Replaced unwrap
+        let dispute_id = eligible.get(0).ok_or(ContractError::ErrInternalState)?;
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
@@ -500,9 +413,6 @@ impl Slice {
         Ok((dispute_id, caller))
     }
 
-    // ---------------------------------------------------------
-    // commit_vote
-    // ---------------------------------------------------------
     pub fn commit_vote(
         env: Env,
         caller: Address,
@@ -514,7 +424,7 @@ impl Slice {
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
-        if dispute.status != STATUS_COMMIT {
+        if dispute.status != DisputeStatus::Commit {
             return Err(ContractError::ErrVotingClosed);
         }
 
@@ -533,7 +443,13 @@ impl Slice {
             .position(|addr| addr == caller)
             .ok_or(ContractError::ErrNotJuror)? as u32;
 
-        if dispute.commitments.get(idx).unwrap().is_some() {
+        // Replaced unwrap
+        if dispute
+            .commitments
+            .get(idx)
+            .ok_or(ContractError::ErrInternalState)?
+            .is_some()
+        {
             return Err(ContractError::ErrAlreadyVoted);
         }
 
@@ -541,22 +457,25 @@ impl Slice {
 
         let mut all_committed = true;
         for i in 0..dispute.commitments.len() {
-            if dispute.commitments.get(i).unwrap().is_none() {
+            // Replaced unwrap
+            if dispute
+                .commitments
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?
+                .is_none()
+            {
                 all_committed = false;
                 break;
             }
         }
         if all_committed {
-            dispute.status = STATUS_REVEAL;
+            dispute.status = DisputeStatus::Reveal;
         }
 
         Self::set_dispute(&env, &dispute);
         Ok(())
     }
 
-    // ---------------------------------------------------------
-    // reveal_vote (ZK verified)
-    // ---------------------------------------------------------
     pub fn reveal_vote(
         env: Env,
         caller: Address,
@@ -571,9 +490,10 @@ impl Slice {
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
-        Self::maybe_start_reveal_phase(&env, &mut dispute);
+        // Propagate errors from phase helper
+        Self::maybe_start_reveal_phase(&env, &mut dispute)?;
 
-        if dispute.status != STATUS_REVEAL {
+        if dispute.status != DisputeStatus::Reveal {
             return Err(ContractError::ErrRevealPhaseNotStarted);
         }
 
@@ -592,14 +512,21 @@ impl Slice {
             .position(|a| a == caller)
             .ok_or(ContractError::ErrNotJuror)? as u32;
 
-        if dispute.revealed_votes.get(idx).unwrap().is_some() {
+        // Replaced unwrap
+        if dispute
+            .revealed_votes
+            .get(idx)
+            .ok_or(ContractError::ErrInternalState)?
+            .is_some()
+        {
             return Err(ContractError::ErrAlreadyVoted);
         }
 
+        // Replaced nested unwrap with ok_or
         let stored_commit = dispute
             .commitments
             .get(idx)
-            .unwrap()
+            .ok_or(ContractError::ErrInternalState)?
             .ok_or(ContractError::ErrInvalidProof)?;
 
         // 1. Verify ZK proof via UltraHonk
@@ -612,7 +539,8 @@ impl Slice {
         }
 
         // 2. Verify SHA256(vote || salt) == commitment
-        let computed = Self::compute_commitment(&env, vote, &salt);
+        // Propagate error from compute_commitment
+        let computed = Self::compute_commitment(&env, vote, &salt)?;
         if computed != stored_commit {
             return Err(ContractError::ErrInvalidProof);
         }
@@ -625,16 +553,13 @@ impl Slice {
         Ok(())
     }
 
-    // ---------------------------------------------------------
-    // execute (same as original)
-    // ---------------------------------------------------------
     pub fn execute(env: Env, dispute_id: u64) -> Result<Address, ContractError> {
         let mut dispute =
             Self::get_dispute_internal(&env, dispute_id).ok_or(ContractError::ErrNotFound)?;
 
-        Self::maybe_start_reveal_phase(&env, &mut dispute);
+        Self::maybe_start_reveal_phase(&env, &mut dispute)?;
 
-        if dispute.status != STATUS_REVEAL {
+        if dispute.status != DisputeStatus::Reveal {
             return Err(ContractError::ErrNotActive);
         }
 
@@ -643,7 +568,13 @@ impl Slice {
 
         let mut all_revealed = true;
         for i in 0..juror_count {
-            if dispute.revealed_votes.get(i).unwrap().is_none() {
+            // Replaced unwrap
+            if dispute
+                .revealed_votes
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?
+                .is_none()
+            {
                 all_revealed = false;
                 break;
             }
@@ -657,7 +588,12 @@ impl Slice {
         let mut votes_defender = 0;
 
         for i in 0..juror_count {
-            if let Some(vote) = dispute.revealed_votes.get(i).unwrap() {
+            // Replaced unwrap
+            if let Some(vote) = dispute
+                .revealed_votes
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?
+            {
                 if vote == 0 {
                     votes_claimer += 1;
                 } else if vote == 1 {
@@ -672,7 +608,12 @@ impl Slice {
 
         let mut correctness = Vec::new(&env);
         for i in 0..juror_count {
-            let is_correct = match dispute.revealed_votes.get(i).unwrap() {
+            // Replaced unwrap
+            let is_correct = match dispute
+                .revealed_votes
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?
+            {
                 Some(v) if v == winner_vote => 1,
                 _ => 0,
             };
@@ -688,8 +629,12 @@ impl Slice {
         }
 
         for i in 0..juror_count {
-            if correctness.get(i).unwrap() == 0 {
-                total_slashed += dispute.juror_stakes.get(i).unwrap();
+            // Replaced unwrap
+            if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 0 {
+                total_slashed += dispute
+                    .juror_stakes
+                    .get(i)
+                    .ok_or(ContractError::ErrInternalState)?;
             }
         }
 
@@ -698,7 +643,8 @@ impl Slice {
 
         let mut correct_count = 0;
         for i in 0..juror_count {
-            if correctness.get(i).unwrap() == 1 {
+            // Replaced unwrap
+            if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
                 correct_count += 1;
             }
         }
@@ -712,7 +658,7 @@ impl Slice {
 
         let xlm_client = xlm::token_client(&env);
         let contract_addr = env.current_contract_address();
-        let config = Self::get_config(&env);
+        let config = Self::get_config(&env)?;
 
         if admin_fee > 0 {
             let _ = xlm_client.try_transfer(&contract_addr, &config.admin, &admin_fee);
@@ -728,26 +674,27 @@ impl Slice {
             let _ = xlm_client.try_transfer(&contract_addr, &winner, &reward_each);
 
             for i in 0..juror_count {
-                if correctness.get(i).unwrap() == 1 {
-                    let juror = dispute.assigned_jurors.get(i).unwrap();
+                // Replaced unwrap
+                if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
+                    let juror = dispute
+                        .assigned_jurors
+                        .get(i)
+                        .ok_or(ContractError::ErrInternalState)?;
                     let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
                 }
             }
         }
 
-        dispute.status = STATUS_FINISHED;
+        dispute.status = DisputeStatus::Finished;
         dispute.winner = Some(winner.clone());
         Self::set_dispute(&env, &dispute);
 
         Ok(winner)
     }
 
-    // ---------------------------------------------------------
-    // Getters
-    // ---------------------------------------------------------
     pub fn get_winner(env: Env, dispute_id: u64) -> Option<Address> {
         let d = Self::get_dispute_internal(&env, dispute_id)?;
-        if d.status != STATUS_FINISHED {
+        if d.status != DisputeStatus::Finished {
             return None;
         }
         d.winner
