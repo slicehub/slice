@@ -182,7 +182,7 @@ export const VoteComponent: React.FC = () => {
             direction="column"
             style={{ background: '#f3f4f6', padding: 10, borderRadius: 4 }}
           >
-            <Text size="xs" weight="bold">
+            <Text as="span" size="xs" weight="bold">
               Generated Secret Salt:
             </Text>
             <Code size="sm" style={{ wordBreak: 'break-all' }}>
