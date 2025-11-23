@@ -6,6 +6,8 @@
  */
 
 import { Buffer } from "buffer";
+import type { SentTransaction } from "@stellar/stellar-sdk/contract";
+import { Api } from "@stellar/stellar-sdk/rpc";
 import game from "../contracts/guess_the_puzzle";
 
 type InstructionsValue =
@@ -56,6 +58,15 @@ type TransactionResult =
       transactionResponse?: TransactionResponse;
       getTransactionResponse?: () => TransactionResponse | undefined;
     };
+
+type SignAndSendResult = TransactionResult | SentTransaction<unknown>;
+
+const isSentTransaction = (
+  value: SignAndSendResult,
+): value is SentTransaction<unknown> => {
+  if (!value || typeof value !== "object") return false;
+  return "sendTransactionResponse" in value || "getTransactionResponse" in value;
+};
 
 /**
  * Transaction data extracted from a transaction result
@@ -115,17 +126,27 @@ export class StellarContractService {
    * @param result - Result from signAndSend
    * @returns Transaction data including hash, fee, and success status
    */
-  static extractTransactionData(result: TransactionResult): TransactionData {
-    // signAndSend throws on error, so if we got here, the transaction succeeded
+  static extractTransactionData(result: SignAndSendResult): TransactionData {
     const txHash =
       typeof result === "string"
         ? result
-        : result?.hash || result?.transactionHash || "";
+        : isSentTransaction(result)
+          ? result.getTransactionResponse?.txHash ||
+            result.sendTransactionResponse?.hash ||
+            ""
+          : result?.hash || result?.transactionHash || "";
     let fee: string | undefined;
 
     // Try to get transaction response for fee information
-    const resolveResponse = (): TransactionResponse | undefined => {
+    const resolveResponse = ():
+      | TransactionResponse
+      | Api.GetTransactionResponse
+      | undefined => {
       if (typeof result === "string") return undefined;
+
+      if (isSentTransaction(result)) {
+        return result.getTransactionResponse;
+      }
 
       if (typeof result?.getTransactionResponse === "function") {
         try {
@@ -150,23 +171,43 @@ export class StellarContractService {
 
     // Extract fee if available
     if (txResponse) {
-      if (
-        txResponse.resultXdr &&
-        typeof txResponse.resultXdr.feeCharged === "function"
+      const resultXdr =
+        "resultXdr" in txResponse ? txResponse.resultXdr : undefined;
+      const hasFeeCharged =
+        resultXdr &&
+        typeof resultXdr === "object" &&
+        "feeCharged" in resultXdr &&
+        typeof (resultXdr as { feeCharged?: () => { toString(): string } })
+          .feeCharged === "function";
+
+      if (hasFeeCharged) {
+        const feeValue = (
+          resultXdr as { feeCharged: () => { toString(): string } }
+        ).feeCharged();
+        fee = feeValue.toString();
+      } else if (
+        "feeCharged" in txResponse &&
+        txResponse.feeCharged !== undefined
       ) {
-        fee = txResponse.resultXdr.feeCharged().toString();
-      } else if (txResponse.feeCharged) {
         fee = txResponse.feeCharged.toString();
-      } else if (txResponse.fee) {
+      } else if ("fee" in txResponse && txResponse.fee !== undefined) {
         fee = txResponse.fee.toString();
       }
     }
 
-    // signAndSend throws on error, so if we got here without an exception, it succeeded
+    const failedSend =
+      isSentTransaction(result) &&
+      result.sendTransactionResponse?.status === "ERROR";
+    const failedGet =
+      isSentTransaction(result) &&
+      result.getTransactionResponse?.status === Api.GetTransactionStatus.FAILED;
+
+    const success = !(failedSend || failedGet);
+
     return {
       txHash,
       fee,
-      success: true,
+      success,
     };
   }
 
