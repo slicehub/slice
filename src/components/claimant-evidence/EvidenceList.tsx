@@ -21,7 +21,7 @@ export const EvidenceList: React.FC<EvidenceListProps> = ({ evidenceList }) => {
       <div className={styles.header}>
         <span className={styles.filterBadge}>
           <PictureIcon size={10} color="#1b1c23" />
-          Imágenes
+          Images
         </span>
       </div>
       <div className={styles.scrollContainer}>

@@ -21,7 +21,7 @@ export interface Dispute {
   }>;
 }
 
-// Mock data - en producción vendría del contrato
+// Mock data - in production would come from the contract
 const mockDisputes: Dispute[] = [
   {
     id: "1",

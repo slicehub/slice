@@ -41,7 +41,7 @@ export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({ onBa
             onEnded={handleVideoEnded}
           />
         </div>
-        <span className={styles.categoryText}>Selecciona una categoria</span>
+        <span className={styles.categoryText}>Select a category</span>
         <img 
           src="/images/category-amount/chevron-down.svg" 
           alt="Dropdown" 

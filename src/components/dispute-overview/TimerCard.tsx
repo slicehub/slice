@@ -24,7 +24,7 @@ export const TimerCard: React.FC = () => {
         />
         <span className={styles.time}>{formatTime(timeInSeconds)}min</span>
       </div>
-      <span className={styles.label}>Tiempo para votar disponible:</span>
+      <span className={styles.label}>Time available to vote:</span>
     </div>
   );
 };

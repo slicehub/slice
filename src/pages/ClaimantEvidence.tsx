@@ -22,7 +22,7 @@ export const ClaimantEvidence: React.FC = () => {
     void navigate("/dispute-overview");
   };
 
-  // Mínima distancia para considerar un swipe (50px)
+  // Minimum distance to consider a swipe (50px)
   const minSwipeDistance = 50;
 
   // Touch events
@@ -39,7 +39,7 @@ export const ClaimantEvidence: React.FC = () => {
     const deltaX = Math.abs(touch.clientX - startX.current);
     const deltaY = Math.abs(touch.clientY - (startY.current || 0));
     
-    // Solo prevenir scroll si el movimiento es principalmente horizontal
+    // Only prevent scroll if movement is primarily horizontal
     if (deltaX > deltaY && deltaX > 10) {
       e.preventDefault();
     }
@@ -54,13 +54,13 @@ export const ClaimantEvidence: React.FC = () => {
     const deltaX = startX.current - endX;
     const deltaY = startY.current - endY;
 
-    // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
+    // Only consider horizontal swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha/defensora)
+        // Swipe left (slide left = navigate right/defendant)
         void navigate("/defendant-evidence");
       } else {
-        // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
+        // Swipe right (slide right = navigate left/back)
         void navigate("/dispute-overview");
       }
     }
@@ -70,7 +70,7 @@ export const ClaimantEvidence: React.FC = () => {
     isDragging.current = false;
   }, [navigate]);
 
-  // Mouse events para desarrollo en desktop
+  // Mouse events for desktop development
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     startX.current = e.clientX;
     startY.current = e.clientY;
@@ -89,13 +89,13 @@ export const ClaimantEvidence: React.FC = () => {
     const deltaX = startX.current - endX;
     const deltaY = startY.current - endY;
 
-    // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
+    // Only consider horizontal swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha/defensora)
+        // Swipe left (slide left = navigate right/defendant)
         void navigate("/defendant-evidence");
       } else {
-        // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
+        // Swipe right (slide right = navigate left/back)
         void navigate("/dispute-overview");
       }
     }
@@ -105,7 +105,7 @@ export const ClaimantEvidence: React.FC = () => {
     isDragging.current = false;
   }, [navigate]);
 
-  // Limpiar cuando el componente se desmonte
+  // Cleanup when component unmounts
   useEffect(() => {
     const handleMouseUpGlobal = () => {
       isDragging.current = false;
@@ -119,27 +119,27 @@ export const ClaimantEvidence: React.FC = () => {
     };
   }, []);
 
-  // Mock data - en producción vendría del contrato
+  // Mock data - in production would come from the contract
   const claimantData = {
     name: "Julio Banegas",
-    role: "Demandante",
+    role: "Claimant",
     avatar: "/images/profiles-mockup/profile-1.png",
   };
 
   const demandDetail =
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.";
 
-  // Imágenes para el carrusel superior (después del detalle de la demanda)
+  // Images for the top carousel (after the demand detail)
   const topCarouselImages = [
     {
       id: "carousel-1",
       url: "/images/category-amount/evidencia-1.png",
-      description: "Evidencia 1",
+      description: "Evidence 1",
     },
     {
       id: "carousel-2",
       url: "/images/category-amount/evidencia-2.png",
-      description: "Evidencia 2",
+      description: "Evidence 2",
     },
   ];
 
@@ -176,7 +176,7 @@ export const ClaimantEvidence: React.FC = () => {
 
   const audioEvidence = {
     id: "a1",
-    title: "Audio del demandate",
+    title: "Claimant's audio",
     duration: "1:45min",
     progress: 43, // 43% de progreso
   };
@@ -200,7 +200,7 @@ export const ClaimantEvidence: React.FC = () => {
         <DemandDetailSection detail={demandDetail} />
         <EvidenceCarousel images={topCarouselImages} />
         <div className={styles.evidenceSection}>
-          <h3 className={styles.evidenceTitle}>Evidencias que lo demuestran:</h3>
+          <h3 className={styles.evidenceTitle}>Evidence that demonstrates it:</h3>
           <EvidenceList evidenceList={imageEvidenceList} />
           <VideoEvidenceList evidenceList={videoEvidenceList} />
           <AudioEvidenceList audio={audioEvidence} />

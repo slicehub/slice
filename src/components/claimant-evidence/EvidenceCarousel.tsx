@@ -43,13 +43,13 @@ export const EvidenceCarousel: React.FC<EvidenceCarouselProps> = ({ images }) =>
               <div className={styles.imageContainer}>
                 <img
                   src={image.url}
-                  alt={image.description || `Evidencia ${index + 1}`}
+                  alt={image.description || `Evidence ${index + 1}`}
                   className={styles.image}
                 />
                 <button
                   className={styles.fullscreenButton}
                   onClick={() => handleFullscreen(image.url)}
-                  aria-label="Ver en pantalla completa"
+                  aria-label="View fullscreen"
                 >
                   <FullscreenIcon size={16} color="#1b1c23" />
                 </button>

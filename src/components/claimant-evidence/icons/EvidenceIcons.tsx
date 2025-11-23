@@ -30,7 +30,7 @@ export const PictureIcon: React.FC<IconProps> = ({ className, size = 10, color =
 };
 
 /**
- * Fullscreen Icon - Icono de pantalla completa (dos flechas saliendo de un cuadrado)
+ * Fullscreen Icon - Fullscreen icon (two arrows exiting a square)
  */
 export const FullscreenIcon: React.FC<IconProps> = ({
   className,

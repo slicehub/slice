@@ -42,7 +42,7 @@ export const ClaimantInfoCard: React.FC<ClaimantInfoCardProps> = ({ claimant }) 
         )}
       </div>
       <div className={styles.infoSection}>
-        <h2 className={styles.title}>Evidencias de {claimant.name}</h2>
+        <h2 className={styles.title}>Evidence from {claimant.name}</h2>
         <span className={styles.badge}>
           <PersonIcon size={10} color="#8c8fff" />
           {claimant.role}

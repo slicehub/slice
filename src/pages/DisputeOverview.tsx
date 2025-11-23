@@ -19,12 +19,12 @@ export const DisputeOverview: React.FC = () => {
 
   const handleSwipe = useCallback((direction: "left" | "right") => {
     if (direction === "right") {
-      // Navegar a evidencias del demandante (pantalla 1 del carrusel)
+      // Navigate to claimant evidence (screen 1 of carousel)
       navigate("/claimant-evidence");
     }
   }, [navigate]);
 
-  // Mínima distancia para considerar un swipe (50px)
+  // Minimum distance to consider a swipe (50px)
   const minSwipeDistance = 50;
 
   // Touch events
@@ -56,10 +56,10 @@ export const DisputeOverview: React.FC = () => {
     const deltaX = startX.current - endX;
     const deltaY = startY.current - endY;
 
-    // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
+    // Only consider horizontal swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha)
+        // Swipe left (slide left = navigate right)
         handleSwipe("right");
       }
     }
@@ -69,7 +69,7 @@ export const DisputeOverview: React.FC = () => {
     isDragging.current = false;
   }, [handleSwipe]);
 
-  // Mouse events para desarrollo en desktop
+  // Mouse events for desktop development
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     startX.current = e.clientX;
     startY.current = e.clientY;
@@ -89,10 +89,10 @@ export const DisputeOverview: React.FC = () => {
     const deltaX = startX.current - endX;
     const deltaY = startY.current - endY;
 
-    // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
+    // Only consider horizontal swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha)
+        // Swipe left (slide left = navigate right)
         handleSwipe("right");
       }
     }
@@ -102,7 +102,7 @@ export const DisputeOverview: React.FC = () => {
     isDragging.current = false;
   }, [handleSwipe]);
 
-  // Limpiar cuando el componente se desmonte
+  // Cleanup when component unmounts
   useEffect(() => {
     const handleMouseUpGlobal = () => {
       isDragging.current = false;
@@ -116,7 +116,7 @@ export const DisputeOverview: React.FC = () => {
     };
   }, []);
 
-  // Mock data - en producción vendría del contrato
+  // Mock data - in production would come from the contract
   const disputeData = {
     id: "1",
     title: "Stellar Community Fund",

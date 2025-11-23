@@ -21,7 +21,7 @@ export const Vote: React.FC = () => {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
-  // Mock proposal ID - en producción vendría del contexto o props
+  // Mock proposal ID - in production would come from context or props
   const proposalId = 1;
 
   const handleBack = () => {
@@ -35,12 +35,12 @@ export const Vote: React.FC = () => {
 
   const handleSubmitVote = async () => {
     if (!address || !signTransaction) {
-      setMessage({ type: "error", text: "Por favor conecta tu wallet" });
+      setMessage({ type: "error", text: "Please connect your wallet" });
       return;
     }
 
     if (selectedVote === null) {
-      setMessage({ type: "error", text: "Por favor selecciona una opción" });
+      setMessage({ type: "error", text: "Please select an option" });
       return;
     }
 
@@ -98,7 +98,7 @@ export const Vote: React.FC = () => {
       // Show success animation instead of message
       setShowSuccessAnimation(true);
     } catch (error: unknown) {
-      const errorMessage = (error as Error).message || "Error al enviar el voto";
+      const errorMessage = (error as Error).message || "Error sending vote";
       console.error("Failed to vote:", error);
       setMessage({
         type: "error",
@@ -109,7 +109,7 @@ export const Vote: React.FC = () => {
     }
   };
 
-  // Mínima distancia para considerar un swipe (50px)
+  // Minimum distance to consider a swipe (50px)
   const minSwipeDistance = 50;
 
   // Touch events
@@ -141,13 +141,13 @@ export const Vote: React.FC = () => {
     const deltaX = startX.current - endX;
     const deltaY = startY.current - endY;
 
-    // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
+    // Only consider horizontal swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha)
-        // No hay más páginas a la derecha, no hacer nada
+        // Swipe left (slide left = navigate right)
+        // No more pages to the right, do nothing
       } else {
-        // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
+        // Swipe right (slide right = navigate left/back)
         void navigate("/defendant-evidence");
       }
     }
@@ -157,7 +157,7 @@ export const Vote: React.FC = () => {
     isDragging.current = false;
   }, [navigate]);
 
-  // Mouse events para desarrollo en desktop
+  // Mouse events for desktop development
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     startX.current = e.clientX;
     startY.current = e.clientY;
@@ -176,13 +176,13 @@ export const Vote: React.FC = () => {
     const deltaX = startX.current - endX;
     const deltaY = startY.current - endY;
 
-    // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
+    // Only consider horizontal swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha)
-        // No hacer nada
+        // Swipe left (slide left = navigate right)
+        // Do nothing
       } else {
-        // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
+        // Swipe right (slide right = navigate left/back)
         void navigate("/defendant-evidence");
       }
     }
@@ -192,7 +192,7 @@ export const Vote: React.FC = () => {
     isDragging.current = false;
   }, [navigate]);
 
-  // Limpiar cuando el componente se desmonte
+  // Cleanup when component unmounts
   useEffect(() => {
     const handleMouseUpGlobal = () => {
       isDragging.current = false;
@@ -227,7 +227,7 @@ export const Vote: React.FC = () => {
       <TimerCard />
       <div className={styles.scrollableContent}>
         <div className={styles.voteSection}>
-          <h2 className={styles.title}>Votar</h2>
+          <h2 className={styles.title}>Vote</h2>
           <div className={styles.optionsContainer}>
             <button
               className={`${styles.voteOption} ${selectedVote === 1 ? styles.selected : ""}`}
@@ -237,7 +237,7 @@ export const Vote: React.FC = () => {
               <div className={styles.optionContent}>
                 <div className={styles.optionHeader}>
                   <div className={styles.optionInfo}>
-                    <span className={styles.optionRole}>Demandante</span>
+                    <span className={styles.optionRole}>Claimant</span>
                     <span className={styles.optionName}>Julio Banegas</span>
                   </div>
                   <span className={styles.optionBadge}>1</span>
@@ -253,7 +253,7 @@ export const Vote: React.FC = () => {
               <div className={styles.optionContent}>
                 <div className={styles.optionHeader}>
                   <div className={styles.optionInfo}>
-                    <span className={styles.optionRole}>Defensora</span>
+                    <span className={styles.optionRole}>Defendant</span>
                     <span className={styles.optionName}>Micaela Descotte</span>
                   </div>
                   <span className={styles.optionBadge}>0</span>
@@ -273,7 +273,7 @@ export const Vote: React.FC = () => {
             onClick={() => void handleSubmitVote()}
             disabled={isSubmitting || selectedVote === null}
           >
-            {isSubmitting ? "Enviando..." : "Confirmar voto"}
+            {isSubmitting ? "Sending..." : "Confirm vote"}
           </button>
         </div>
       </div>

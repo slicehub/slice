@@ -20,7 +20,7 @@ export const AudioEvidenceList: React.FC<AudioEvidenceListProps> = ({ audio }) =
       <div className={styles.header}>
         <span className={styles.filterBadge}>
           <MicrophoneIcon size={10} color="#1b1c23" />
-          Audios
+          Audio
         </span>
       </div>
       <AudioEvidenceCard audio={audio} />

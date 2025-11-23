@@ -15,7 +15,7 @@ export const CategoryAmount: React.FC = () => {
   };
 
   const handleSwipeComplete = () => {
-    // Navegar a la pantalla de loading
+    // Navigate to loading screen
     navigate("/loading-disputes");
   };
 
@@ -35,10 +35,10 @@ export const CategoryAmount: React.FC = () => {
           />
         </div>
         
-        <h1 className={styles.title}>Selecciona cantidad de dinero</h1>
+        <h1 className={styles.title}>Select amount of money</h1>
         
         <p className={styles.subtitle}>
-          Jugaras con usuarios con una selección de rango monetario como el tuyo
+          You'll play with users with a monetary range selection like yours
         </p>
         
         <AmountSelector 

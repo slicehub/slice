@@ -8,7 +8,7 @@ export const LoadingDisputes: React.FC = () => {
   useEffect(() => {
     // Mínimo 10 segundos de loading
     const timer = setTimeout(() => {
-      // Navegar a la vista general de la disputa asignada
+      // Navigate to overview of assigned dispute
       navigate("/dispute-overview");
     }, 10000);
 
