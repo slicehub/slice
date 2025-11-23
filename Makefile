@@ -260,6 +260,18 @@ guess-verify:
 		--vk_json 00 \
 		--proof_blob 00
 
+simple-demo:
+	$(MAKE) deploy-honk
+	$(MAKE) deploy-slice
+	$(MAKE) slice-add-category
+	$(MAKE) slice-create-dispute
+	$(MAKE) slice-pay-claimer
+	$(MAKE) slice-pay-defender
+	$(MAKE) slice-assign-juror
+	# $(MAKE) slice-commit-vote
+	# -$(MAKE) slice-reveal-vote
+	# -$(MAKE) slice-execute
+
 # ==============================================================================
 # End-to-End (E2E) Demo Flow
 # ==============================================================================
