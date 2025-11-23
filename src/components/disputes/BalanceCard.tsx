@@ -1,13 +1,10 @@
 import React from "react";
-import { useWalletBalance } from "../../hooks/useWalletBalance";
 import { DepositIcon, SendIcon } from "./icons/ActionIcons";
 import styles from "./BalanceCard.module.css";
 
 export const BalanceCard: React.FC = () => {
-  const { balance } = useWalletBalance();
-
-  // Convertir balance a USD (simplificado - en producción usarías una API de conversión)
-  const balanceUSD = balance ? (parseFloat(balance) * 0.12).toFixed(0) : "0";
+  // Mock balance - hardcoded to 1000 USD
+  const balanceUSD = "1000";
 
   return (
     <div className={styles.card}>

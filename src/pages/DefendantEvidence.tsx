@@ -11,7 +11,7 @@ import { AudioEvidenceList } from "../components/claimant-evidence/AudioEvidence
 import { PaginationDots } from "../components/dispute-overview/PaginationDots";
 import styles from "./ClaimantEvidence.module.css";
 
-export const ClaimantEvidence: React.FC = () => {
+export const DefendantEvidence: React.FC = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
@@ -57,11 +57,11 @@ export const ClaimantEvidence: React.FC = () => {
     // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha/defensora)
-        void navigate("/defendant-evidence");
+        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha/votar)
+        void navigate("/vote");
       } else {
         // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
-        void navigate("/dispute-overview");
+        void navigate("/claimant-evidence");
       }
     }
 
@@ -92,11 +92,11 @@ export const ClaimantEvidence: React.FC = () => {
     // Solo considerar swipe horizontal si el movimiento horizontal es mayor que el vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
-        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha/defensora)
-        void navigate("/defendant-evidence");
+        // Swipe izquierda (deslizar hacia la izquierda = navegar a la derecha/votar)
+        void navigate("/vote");
       } else {
         // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
-        void navigate("/dispute-overview");
+        void navigate("/claimant-evidence");
       }
     }
 
@@ -120,10 +120,10 @@ export const ClaimantEvidence: React.FC = () => {
   }, []);
 
   // Mock data - en producción vendría del contrato
-  const claimantData = {
-    name: "Julio Banegas",
-    role: "Demandante",
-    avatar: "/images/profiles-mockup/profile-1.png",
+  const defendantData = {
+    name: "Micaela Descotte",
+    role: "Defensora",
+    avatar: "/images/profiles-mockup/profile-2.png",
   };
 
   const demandDetail =
@@ -133,13 +133,18 @@ export const ClaimantEvidence: React.FC = () => {
   const topCarouselImages = [
     {
       id: "carousel-1",
-      url: "/images/category-amount/evidencia-1.png",
+      url: "/images/category-amount/defensora-1.png",
       description: "Evidencia 1",
     },
     {
       id: "carousel-2",
-      url: "/images/category-amount/evidencia-2.png",
+      url: "/images/category-amount/evidencia-1.png",
       description: "Evidencia 2",
+    },
+    {
+      id: "carousel-3",
+      url: "/images/category-amount/evidencia-2.png",
+      description: "Evidencia 3",
     },
   ];
 
@@ -166,7 +171,7 @@ export const ClaimantEvidence: React.FC = () => {
     {
       id: "v1",
       type: "video" as const,
-      url: "/animations/money.mp4", // Video placeholder - usar un video real si está disponible
+      url: "/animations/money.mp4",
       thumbnail: "/images/category-amount/evidencia-video.png",
       description:
         "Lorem Ipsum is simply dummy text of the printing and typesing industry. Lorem Ipsum has been the industry's standard dummy text ever since the",
@@ -176,9 +181,9 @@ export const ClaimantEvidence: React.FC = () => {
 
   const audioEvidence = {
     id: "a1",
-    title: "Audio del demandate",
+    title: "Audio del defensor",
     duration: "1:45min",
-    progress: 43, // 43% de progreso
+    progress: 43,
   };
 
   return (
@@ -196,7 +201,7 @@ export const ClaimantEvidence: React.FC = () => {
       <DisputeOverviewHeader onBack={handleBack} />
       <DeadlineCard deadline="14/12/2025" />
       <div className={styles.scrollableContent}>
-        <ClaimantInfoCard claimant={claimantData} />
+        <ClaimantInfoCard claimant={defendantData} />
         <DemandDetailSection detail={demandDetail} />
         <EvidenceCarousel images={topCarouselImages} />
         <div className={styles.evidenceSection}>
@@ -206,10 +211,10 @@ export const ClaimantEvidence: React.FC = () => {
           <AudioEvidenceList audio={audioEvidence} />
         </div>
       </div>
-      <PaginationDots currentIndex={1} total={4} />
+      <PaginationDots currentIndex={2} total={4} />
     </div>
   );
 };
 
-export default ClaimantEvidence;
+export default DefendantEvidence;
 

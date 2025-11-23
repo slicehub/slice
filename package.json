@@ -31,6 +31,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "lossless-json": "^4.2.0",
+    "lottie-react": "^2.4.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3",

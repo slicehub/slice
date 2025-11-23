@@ -9,6 +9,8 @@ import CategoryAmount from "./pages/CategoryAmount";
 import LoadingDisputes from "./pages/LoadingDisputes";
 import DisputeOverview from "./pages/DisputeOverview";
 import ClaimantEvidence from "./pages/ClaimantEvidence";
+import DefendantEvidence from "./pages/DefendantEvidence";
+import Vote from "./pages/Vote";
 
 const AppLayout: React.FC = () => (
   <main>
@@ -73,7 +75,20 @@ const PrefetchRoutes: React.FC = () => {
         // Prefetch de la pantalla anterior y siguiente
         await Promise.all([
           import("./pages/DisputeOverview"),
-          // TODO: Prefetch de DefendantEvidence cuando esté implementado
+          import("./pages/DefendantEvidence"),
+        ]);
+      } else if (location.pathname === "/defendant-evidence") {
+        // Prefetch de la pantalla anterior y siguiente
+        await Promise.all([
+          import("./pages/ClaimantEvidence"),
+          import("./pages/DisputeOverview"),
+          import("./pages/Vote"),
+        ]);
+      } else if (location.pathname === "/vote") {
+        // Prefetch de la pantalla anterior
+        await Promise.all([
+          import("./pages/DefendantEvidence"),
+          import("./pages/ClaimantEvidence"),
         ]);
       }
     };
@@ -95,6 +110,8 @@ function App() {
         <Route path="/loading-disputes" element={<LoadingDisputes />} />
         <Route path="/dispute-overview" element={<DisputeOverview />} />
         <Route path="/claimant-evidence" element={<ClaimantEvidence />} />
+        <Route path="/defendant-evidence" element={<DefendantEvidence />} />
+        <Route path="/vote" element={<Vote />} />
         
         {/* Other pages with main layout */}
         <Route element={<AppLayout />}>

@@ -1,0 +1,176 @@
+.container {
+  width: 393px;
+  margin: 0 auto;
+  padding: 0;
+  background: #f5f6f9;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scrollableContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 20px;
+}
+
+.voteSection {
+  margin: 20px 19px 0 19px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1b1c23;
+  letter-spacing: -0.36px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.optionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.voteOption {
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 19px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.voteOption:hover:not(:disabled) {
+  border-color: #8c8fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(140, 143, 255, 0.2);
+}
+
+.voteOption:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.voteOption.selected {
+  border-color: #8c8fff;
+  background: rgba(140, 143, 255, 0.1);
+}
+
+.optionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.optionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.optionRole {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1b1c23;
+  letter-spacing: -0.32px;
+}
+
+.optionName {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #31353b;
+  letter-spacing: -0.28px;
+  opacity: 0.8;
+}
+
+.optionBadge {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  color: #8c8fff;
+  background: rgba(140, 143, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.voteOption.selected .optionBadge {
+  background: #8c8fff;
+  color: white;
+}
+
+.submitButton {
+  background: #8c8fff;
+  color: white;
+  border: none;
+  border-radius: 19px;
+  padding: 16px 24px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #7578d9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(140, 143, 255, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.message {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.message.success {
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+}
+
+.message.error {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+@media (max-width: 393px) {
+  .container {
+    width: 100%;
+  }
+}
+

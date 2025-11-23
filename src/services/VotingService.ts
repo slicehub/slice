@@ -57,17 +57,18 @@ class VotingService {
   async vote(
     _address: string,
     _proposalId: number,
-    _nullifier: string,
     _vote: number,
-    _identitySecret: string,
-    _salt: string,
+    _identitySecret: string | bigint,
+    _salt: string | bigint,
     _signTransaction: SignTransactionFn
   ): Promise<VoteResult> {
     // Implementation would interact with the contract
+    // Generate a mock nullifier for now
+    const mockNullifier = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
     return {
       success: false,
-      nullifier: '',
-      vote: 0,
+      nullifier: mockNullifier,
+      vote: _vote,
     };
   }
 
