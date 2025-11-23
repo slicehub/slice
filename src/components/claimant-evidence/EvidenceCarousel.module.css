@@ -1,0 +1,87 @@
+.carouselContainer {
+  margin: 20px 0 0 0;
+  width: 100%;
+}
+
+.scrollContainer {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 19px;
+  scroll-padding-right: 19px;
+  touch-action: pan-x;
+  cursor: grab;
+  width: 100%;
+}
+
+.scrollContainer:active {
+  cursor: grabbing;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.imagesGrid {
+  display: flex;
+  gap: 16px;
+  padding: 0 19px;
+  width: max-content;
+}
+
+.imageCard {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-width: 273px;
+  width: 273px;
+  height: 196px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  background: #f5f6f9;
+}
+
+.imageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fullscreenButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+  z-index: 2;
+}
+
+.fullscreenButton:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.fullscreenButton:active {
+  background: rgba(255, 255, 255, 0.8);
+}
+

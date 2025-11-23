@@ -20,6 +20,23 @@
   padding-bottom: 20px;
 }
 
+.evidenceSection {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.evidenceTitle {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1b1c23;
+  letter-spacing: -0.32px;
+  line-height: 1.2;
+  margin: 0 19px;
+}
+
 @media (max-width: 393px) {
   .container {
     width: 100%;

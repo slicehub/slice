@@ -4,9 +4,10 @@ import { DisputeOverviewHeader } from "../components/dispute-overview/DisputeOve
 import { DeadlineCard } from "../components/dispute-overview/DeadlineCard";
 import { ClaimantInfoCard } from "../components/claimant-evidence/ClaimantInfoCard";
 import { DemandDetailSection } from "../components/claimant-evidence/DemandDetailSection";
+import { EvidenceCarousel } from "../components/claimant-evidence/EvidenceCarousel";
 import { EvidenceList } from "../components/claimant-evidence/EvidenceList";
 import { VideoEvidenceList } from "../components/claimant-evidence/VideoEvidenceList";
-import { AudioEvidenceCard } from "../components/claimant-evidence/AudioEvidenceCard";
+import { AudioEvidenceList } from "../components/claimant-evidence/AudioEvidenceList";
 import { PaginationDots } from "../components/dispute-overview/PaginationDots";
 import styles from "./ClaimantEvidence.module.css";
 
@@ -18,7 +19,7 @@ export const ClaimantEvidence: React.FC = () => {
   const isDragging = useRef(false);
 
   const handleBack = () => {
-    navigate("/dispute-overview");
+    void navigate("/dispute-overview");
   };
 
   // Mínima distancia para considerar un swipe (50px)
@@ -60,7 +61,7 @@ export const ClaimantEvidence: React.FC = () => {
         // TODO: Navegar a evidencias del demandado cuando esté implementado
       } else {
         // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
-        navigate("/dispute-overview");
+        void navigate("/dispute-overview");
       }
     }
 
@@ -76,7 +77,7 @@ export const ClaimantEvidence: React.FC = () => {
     isDragging.current = true;
   }, []);
 
-  const onMouseMove = useCallback((e: React.MouseEvent) => {
+  const onMouseMove = useCallback(() => {
     if (!isDragging.current) return;
   }, []);
 
@@ -95,7 +96,7 @@ export const ClaimantEvidence: React.FC = () => {
         // TODO: Navegar a evidencias del demandado cuando esté implementado
       } else {
         // Swipe derecha (deslizar hacia la derecha = navegar a la izquierda/atrás)
-        navigate("/dispute-overview");
+        void navigate("/dispute-overview");
       }
     }
 
@@ -128,11 +129,25 @@ export const ClaimantEvidence: React.FC = () => {
   const demandDetail =
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.";
 
+  // Imágenes para el carrusel superior (después del detalle de la demanda)
+  const topCarouselImages = [
+    {
+      id: "carousel-1",
+      url: "/images/category-amount/evidencia-1.png",
+      description: "Evidencia 1",
+    },
+    {
+      id: "carousel-2",
+      url: "/images/category-amount/evidencia-2.png",
+      description: "Evidencia 2",
+    },
+  ];
+
   const imageEvidenceList = [
     {
       id: "1",
       type: "image" as const,
-      url: "https://via.placeholder.com/300x200?text=Evidence+1",
+      url: "/images/category-amount/evidencia-1.png",
       description:
         "Lorem Ipsum is simply dummy text of the printing and typesing industry. Lorem Ipsum has been the industry's standard dummy text ever since the",
       uploadDate: "10/08/2026",
@@ -140,18 +155,10 @@ export const ClaimantEvidence: React.FC = () => {
     {
       id: "2",
       type: "image" as const,
-      url: "https://via.placeholder.com/300x200?text=Evidence+2",
+      url: "/images/category-amount/evidencia-2.png",
       description:
         "Lorem Ipsum is simply dummy text of the printing and typesing industry. Lorem Ipsum has been the industry's standard dummy text ever since the",
       uploadDate: "11/08/2026",
-    },
-    {
-      id: "3",
-      type: "image" as const,
-      url: "https://via.placeholder.com/300x200?text=Evidence+3",
-      description:
-        "Lorem Ipsum is simply dummy text of the printing and typesing industry. Lorem Ipsum has been the industry's standard dummy text ever since the",
-      uploadDate: "12/08/2026",
     },
   ];
 
@@ -159,8 +166,8 @@ export const ClaimantEvidence: React.FC = () => {
     {
       id: "v1",
       type: "video" as const,
-      url: "https://example.com/video1.mp4",
-      thumbnail: "https://via.placeholder.com/300x200?text=Video+1",
+      url: "/animations/money.mp4", // Video placeholder - usar un video real si está disponible
+      thumbnail: "/images/category-amount/evidencia-video.png",
       description:
         "Lorem Ipsum is simply dummy text of the printing and typesing industry. Lorem Ipsum has been the industry's standard dummy text ever since the",
       uploadDate: "10/08/2026",
@@ -191,9 +198,13 @@ export const ClaimantEvidence: React.FC = () => {
       <div className={styles.scrollableContent}>
         <ClaimantInfoCard claimant={claimantData} />
         <DemandDetailSection detail={demandDetail} />
-        <EvidenceList evidenceList={imageEvidenceList} />
-        <VideoEvidenceList evidenceList={videoEvidenceList} />
-        <AudioEvidenceCard audio={audioEvidence} />
+        <EvidenceCarousel images={topCarouselImages} />
+        <div className={styles.evidenceSection}>
+          <h3 className={styles.evidenceTitle}>Evidencias que lo demuestran:</h3>
+          <EvidenceList evidenceList={imageEvidenceList} />
+          <VideoEvidenceList evidenceList={videoEvidenceList} />
+          <AudioEvidenceList audio={audioEvidence} />
+        </div>
       </div>
       <PaginationDots currentIndex={1} total={4} />
     </div>
