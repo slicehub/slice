@@ -34,7 +34,7 @@ interface CircuitAbi {
 export interface CompiledCircuit {
   abi: CircuitAbi;
   bytecode: Uint8Array | number[];
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 export type CircuitInputs = Record<string, number | bigint | string | number[]>;
@@ -98,7 +98,7 @@ export class NoirService {
 
     // Execute the circuit to generate witness
     console.log(`[3/6] Executing circuit with inputs:`, inputs);
-    const { witness } = await noir.execute(inputs);
+    const { witness } = await noir.execute(inputs as any);
     console.log(`[3/6] Witness generated, length:`, witness.length);
 
     // Debug: Check circuit public parameters
@@ -112,7 +112,7 @@ export class NoirService {
 
     // Initialize UltraHonk backend
     console.log(`[4/6] Initializing UltraHonkBackend...`);
-    const backend = new UltraHonkBackend(circuit.bytecode);
+    const backend = new UltraHonkBackend(circuit.bytecode as any);
     console.log(`[4/6] Backend initialized`);
 
     // Generate proof (use keccak oracle hash for Stellar verification)
@@ -257,7 +257,7 @@ export class NoirService {
           publicInputFields.push(field);
         } else {
           throw new Error(
-            `Unsupported public parameter type: ${p.type.kind} for parameter ${p.name}`,
+            `Unsupported public parameter type: ${(p.type as any).kind} for parameter ${p.name}`
           );
         }
       });

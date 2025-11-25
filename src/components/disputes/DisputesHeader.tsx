@@ -1,5 +1,6 @@
 import React from "react";
 import styles from "./DisputesHeader.module.css";
+import { SimpleWalletButton } from "../SimpleWalletButton";
 
 export const DisputesHeader: React.FC = () => {
   return (
@@ -9,7 +10,7 @@ export const DisputesHeader: React.FC = () => {
         alt="Header"
         className={styles.headerImage}
       />
+      <SimpleWalletButton />
     </div>
   );
 };
-

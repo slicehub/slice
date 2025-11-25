@@ -165,7 +165,7 @@ export const Vote: React.FC = () => {
   }, []);
 
   const onMouseMove = useCallback(() => {
-    if (!isDragging.current) return;
+    if (!isDragging.current || startX.current === null || startY.current === null) return;
   }, []);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
@@ -284,4 +284,3 @@ export const Vote: React.FC = () => {
 };
 
 export default Vote;
-

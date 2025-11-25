@@ -2,7 +2,7 @@ import { Button, Icon, Layout } from "@stellar/design-system";
 import ConnectAccount from "./components/ConnectAccount.tsx";
 import { Routes, Route, Outlet, NavLink, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import Home from "./pages/Home";
+import Scaffold from "./pages/Scaffold.tsx";
 import Debugger from "./pages/Debugger.tsx";
 import Disputes from "./pages/Disputes";
 import CategoryAmount from "./pages/CategoryAmount";
@@ -112,10 +112,11 @@ function App() {
         <Route path="/claimant-evidence" element={<ClaimantEvidence />} />
         <Route path="/defendant-evidence" element={<DefendantEvidence />} />
         <Route path="/vote" element={<Vote />} />
-        
+
         {/* Other pages with main layout */}
+        <Route path="/" element={<Disputes />} />
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/scaffold" element={<Scaffold />} />
           <Route path="/debug" element={<Debugger />} />
           <Route path="/debug/:contractName" element={<Debugger />} />
         </Route>

@@ -1,14 +1,18 @@
 .header {
-  padding: 34px 0 0 0;
-  height: 43px;
-  width: 339px;
-  margin: 0 auto 0 27px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 34px 20px 0 20px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .headerImage {
-  width: 339px;
-  height: 43px;
+  height: 48px;
+  width: auto;
   object-fit: contain;
   display: block;
+  flex-shrink: 1;
+  max-width: 60%;
 }
-

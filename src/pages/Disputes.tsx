@@ -15,5 +15,3 @@ export const Disputes: React.FC = () => {
 };
 
 export default Disputes;
-
-

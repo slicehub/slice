@@ -38,7 +38,7 @@ export const ClaimantEvidence: React.FC = () => {
     const touch = e.touches[0];
     const deltaX = Math.abs(touch.clientX - startX.current);
     const deltaY = Math.abs(touch.clientY - (startY.current || 0));
-    
+
     // Only prevent scroll if movement is primarily horizontal
     if (deltaX > deltaY && deltaX > 10) {
       e.preventDefault();
@@ -47,7 +47,7 @@ export const ClaimantEvidence: React.FC = () => {
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
     if (!isDragging.current || !startX.current) return;
-    
+
     const touch = e.changedTouches[0];
     const endX = touch.clientX;
     const endY = touch.clientY;
@@ -78,12 +78,12 @@ export const ClaimantEvidence: React.FC = () => {
   }, []);
 
   const onMouseMove = useCallback(() => {
-    if (!isDragging.current) return;
+    if (!isDragging.current || startX.current === null || startY.current === null) return;
   }, []);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
     if (!isDragging.current || !startX.current) return;
-    
+
     const endX = e.clientX;
     const endY = e.clientY;
     const deltaX = startX.current - endX;
@@ -212,4 +212,3 @@ export const ClaimantEvidence: React.FC = () => {
 };
 
 export default ClaimantEvidence;
-

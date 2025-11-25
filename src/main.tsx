@@ -3,7 +3,7 @@ type GlobalScope = typeof globalThis & { window?: typeof globalThis };
 
 if (typeof window === "undefined" && typeof globalThis !== "undefined") {
   const globalScope: GlobalScope = globalThis;
-  globalScope.window = globalScope;
+  (globalScope as any).window = globalScope;
 }
 
 import { StrictMode } from "react";

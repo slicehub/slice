@@ -29,8 +29,7 @@ const EXAMPLE_SOLUTION = [
   1, 7, 9,
 ];
 
-const createEmptyGrid = (): number[] =>
-  Array.from<number>({ length: 81 }, () => 0);
+const createEmptyGrid = (): number[] => Array.from({ length: 81 }, () => 0);
 const createEmptyIndexSet = (): Set<number> => new Set<number>();
 
 export const Sudoku: React.FC = () => {
@@ -499,7 +498,7 @@ STELLAR VERIFICATION
         });
 
         const cpuInstructions =
-          StellarContractService.extractCpuInstructions(tx);
+          StellarContractService.extractCpuInstructions(tx as any);
         const result = await tx.signAndSend({
           signTransaction: walletSignTransaction,
         });

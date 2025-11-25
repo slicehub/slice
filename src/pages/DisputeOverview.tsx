@@ -40,7 +40,7 @@ export const DisputeOverview: React.FC = () => {
     const touch = e.touches[0];
     const deltaX = Math.abs(touch.clientX - startX.current);
     const deltaY = Math.abs(touch.clientY - (startY.current || 0));
-    
+
     // Solo prevenir scroll si el movimiento es principalmente horizontal
     if (deltaX > deltaY && deltaX > 10) {
       e.preventDefault();
@@ -49,7 +49,7 @@ export const DisputeOverview: React.FC = () => {
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
     if (!isDragging.current || !startX.current) return;
-    
+
     const touch = e.changedTouches[0];
     const endX = touch.clientX;
     const endY = touch.clientY;
@@ -77,13 +77,13 @@ export const DisputeOverview: React.FC = () => {
   }, []);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging.current) return;
+    if (!isDragging.current || startX.current === null || startY.current === null) return;
     e.preventDefault();
   }, []);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
     if (!isDragging.current || !startX.current) return;
-    
+
     const endX = e.clientX;
     const endY = e.clientY;
     const deltaX = startX.current - endX;
@@ -125,12 +125,12 @@ export const DisputeOverview: React.FC = () => {
     actors: [
       {
         name: "Julio Banegas",
-        role: "Claimer",
+        role: "Claimer" as const,
         avatar: "/images/profiles-mockup/profile-1.png",
       },
       {
         name: "Micaela Descotte",
-        role: "Defender",
+        role: "Defender" as const,
         avatar: "/images/profiles-mockup/profile-2.png",
       },
     ],
@@ -161,4 +161,3 @@ export const DisputeOverview: React.FC = () => {
 };
 
 export default DisputeOverview;
-

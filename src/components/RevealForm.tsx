@@ -86,7 +86,7 @@ export const RevealForm: React.FC<RevealFormProps> = ({
   useEffect(() => {
     if (nullifier) {
       void checkRevealedStatus();
-       
+
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nullifier]);
@@ -154,7 +154,7 @@ export const RevealForm: React.FC<RevealFormProps> = ({
         proposalId,
         cleanNullifier,
         voteNum,
-        saltBigInt,
+        saltBigInt.toString(),
         walletSignTransaction
       );
 
@@ -279,4 +279,3 @@ export const RevealForm: React.FC<RevealFormProps> = ({
     </Box>
   );
 };
-
