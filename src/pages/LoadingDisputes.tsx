@@ -8,11 +8,11 @@ export const LoadingDisputes: React.FC = () => {
   const disputeId = id || "1";
 
   useEffect(() => {
-    // Mínimo 10 segundos de loading
+    // Reduced to 4000ms (4s) for better UX
     const timer = setTimeout(() => {
       // Navigate to overview of assigned dispute
       navigate(`/dispute-overview/${disputeId}`);
-    }, 10000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [navigate, disputeId]);

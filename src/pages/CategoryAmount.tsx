@@ -21,16 +21,19 @@ export const CategoryAmount: React.FC = () => {
   };
 
   const handleSwipeComplete = async () => {
-    // 1. Define the category (hardcoded for MVP, or dynamic based on previous selection)
+    // 1. Define the category
     const category = "General";
 
     // 2. Trigger the smart contract interaction
-    // We convert the selected amount to BigInt as required by the contract
     const result = await assignDispute(category, BigInt(selectedAmount));
 
-    // 3. Only navigate if the transaction was successful
+    // 3. Navigate using the returned Dispute ID
     if (result) {
-      navigate("/loading-disputes");
+      // The contract returns a tuple: [dispute_id (u64), juror_address (Address)]
+      // We access the first element (index 0) and convert BigInt to string
+      const disputeId = result[0].toString();
+
+      navigate(`/loading-disputes/${disputeId}`);
     }
   };
 

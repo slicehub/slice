@@ -1,1 +1,25 @@
-{"noir_version":"1.0.0-beta.9+6abff2f16e1c1314ba30708d1cf032a536de3d19","hash":"9540642441182473920","abi":{"parameters":[{"name":"vote","type":{"kind":"integer","sign":"unsigned","width":32},"visibility":"private"}],"return_type":null,"error_types":{}},"bytecode":"H4sIAAAAAAAA/9WVTQ7CIBCFy4+xrm33HgEKtLDzKjbS+x/BGplkgsQNQ9SXkCFAXr+ZTIF1L8l99GnO9iFSfOqS9ju0hgVr1xRVnTShl2IFzibArIEvR15GzdbGZYra6Juawuqdsm6dvfbaeXefvDHRW7+ENSwqaGui3lwwWzJrlTdHBSbyVd9qttoaY17REligwlPBC0JG+QeNKwu+taySjrGYdy0fT3lz4nryH+0d1n1+uXLBmVMWR7RP+Z+A/9DGXx0LOY5oPmR5trjMwQ8uxEP3Lp7twdk+42P0fDpnEYVvgc4pDmgN6vkATCZwQ0oJAAA=","debug_symbols":"nZHBCoMwDIbfJeceplaHvsoYUjVKobSltoMhvvtisZseBmOXP03+fklJFxiwC1Mr9WhmaG4LdE4qJadWmV54aTRVl5VBSlvvEKkEB58oKxxqD40OSjF4CBXipdkKHaMXjtwLA9QDRWo4SoXbaWUf+vId5Ynl9Rsuf6ZLvtNV8Qdd1InmJ/pOmeilO+0KMmgyBnnUIiqHJmdQRq2iXqnpug10UnQK9x2PQfeHlfunTU76FOtMj0NwuI2MHj3iBQ==","file_map":{"50":{"source":"fn main(\n    vote: u32,\n) {\n    assert((vote == 0) | (vote == 1));\n}\n\n#[test]\nfn test_valid_vote_0() {\n    main(0);\n}\n\n#[test]\nfn test_valid_vote_1() {\n    main(1);\n}\n\n#[test(should_fail)]\nfn test_invalid_vote() {\n    main(2);\n}\n","path":"/home/steven/code/slice/circuits/reveal/src/main.nr"}},"names":["main"],"brillig_names":["directive_invert"]}
+{
+  "noir_version": "1.0.0-beta.9+6abff2f16e1c1314ba30708d1cf032a536de3d19",
+  "hash": "9540642441182473920",
+  "abi": {
+    "parameters": [
+      {
+        "name": "vote",
+        "type": { "kind": "integer", "sign": "unsigned", "width": 32 },
+        "visibility": "private"
+      }
+    ],
+    "return_type": null,
+    "error_types": {}
+  },
+  "bytecode": "H4sIAAAAAAAA/9WVTQ7CIBCFy4+xrm33HgEKtLDzKjbS+x/BGplkgsQNQ9SXkCFAXr+ZTIF1L8l99GnO9iFSfOqS9ju0hgVr1xRVnTShl2IFzibArIEvR15GzdbGZYra6Juawuqdsm6dvfbaeXefvDHRW7+ENSwqaGui3lwwWzJrlTdHBSbyVd9qttoaY17REligwlPBC0JG+QeNKwu+taySjrGYdy0fT3lz4nryH+0d1n1+uXLBmVMWR7RP+Z+A/9DGXx0LOY5oPmR5trjMwQ8uxEP3Lp7twdk+42P0fDpnEYVvgc4pDmgN6vkATCZwQ0oJAAA=",
+  "debug_symbols": "nZHBCoMwDIbfJeceplaHvsoYUjVKobSltoMhvvtisZseBmOXP03+fklJFxiwC1Mr9WhmaG4LdE4qJadWmV54aTRVl5VBSlvvEKkEB58oKxxqD40OSjF4CBXipdkKHaMXjtwLA9QDRWo4SoXbaWUf+vId5Ynl9Rsuf6ZLvtNV8Qdd1InmJ/pOmeilO+0KMmgyBnnUIiqHJmdQRq2iXqnpug10UnQK9x2PQfeHlfunTU76FOtMj0NwuI2MHj3iBQ==",
+  "file_map": {
+    "50": {
+      "source": "fn main(\n    vote: u32,\n) {\n    assert((vote == 0) | (vote == 1));\n}\n\n#[test]\nfn test_valid_vote_0() {\n    main(0);\n}\n\n#[test]\nfn test_valid_vote_1() {\n    main(1);\n}\n\n#[test(should_fail)]\nfn test_invalid_vote() {\n    main(2);\n}\n",
+      "path": "/home/steven/code/slice/circuits/reveal/src/main.nr"
+    }
+  },
+  "names": ["main"],
+  "brillig_names": ["directive_invert"]
+}
