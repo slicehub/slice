@@ -1,13 +1,18 @@
 import React, { useRef, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { DisputeOverviewHeader } from "../components/dispute-overview/DisputeOverviewHeader";
 import { DeadlineCard } from "../components/dispute-overview/DeadlineCard";
 import { DisputeInfoCard } from "../components/dispute-overview/DisputeInfoCard";
 import { PaginationDots } from "../components/dispute-overview/PaginationDots";
+import { useGetDispute } from "../hooks/useGetDispute";
 import styles from "./DisputeOverview.module.css";
 
 export const DisputeOverview: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const disputeId = id || "1";
+  const { dispute } = useGetDispute(disputeId);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
@@ -20,9 +25,9 @@ export const DisputeOverview: React.FC = () => {
   const handleSwipe = useCallback((direction: "left" | "right") => {
     if (direction === "right") {
       // Navigate to claimant evidence (screen 1 of carousel)
-      navigate("/claimant-evidence");
+      navigate(`/claimant-evidence/${disputeId}`);
     }
-  }, [navigate]);
+  }, [navigate, disputeId]);
 
   // Minimum distance to consider a swipe (50px)
   const minSwipeDistance = 50;
@@ -48,7 +53,7 @@ export const DisputeOverview: React.FC = () => {
   }, []);
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!isDragging.current || !startX.current) return;
+    if (!isDragging.current || !startX.current || startY.current === null) return;
 
     const touch = e.changedTouches[0];
     const endX = touch.clientX;
@@ -82,7 +87,7 @@ export const DisputeOverview: React.FC = () => {
   }, []);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
-    if (!isDragging.current || !startX.current) return;
+    if (!isDragging.current || !startX.current || startY.current === null) return;
 
     const endX = e.clientX;
     const endY = e.clientY;
@@ -116,8 +121,28 @@ export const DisputeOverview: React.FC = () => {
     };
   }, []);
 
-  // Mock data - in production would come from the contract
-  const disputeData = {
+  // Use real dispute data if available, otherwise fallback to mock
+  const displayDispute = dispute ? {
+    id: dispute.id.toString(),
+    title: `Dispute #${dispute.id}`,
+    logo: "/images/icons/stellar-fund-icon.svg",
+    category: dispute.category,
+    actors: [
+      {
+        name: dispute.claimer.slice(0, 6) + "...",
+        role: "Claimer" as const,
+        avatar: "/images/profiles-mockup/profile-1.png",
+      },
+      {
+        name: dispute.defender.slice(0, 6) + "...",
+        role: "Defender" as const,
+        avatar: "/images/profiles-mockup/profile-2.png",
+      },
+    ],
+    generalContext: "Dispute context from blockchain...",
+    creationDate: "14/08/2026", // Mock date
+    deadline: "19/08/2026", // Mock date
+  } : {
     id: "1",
     title: "Stellar Community Fund",
     logo: "/images/icons/stellar-fund-icon.svg",
@@ -153,8 +178,8 @@ export const DisputeOverview: React.FC = () => {
       onMouseLeave={onMouseUp}
     >
       <DisputeOverviewHeader onBack={handleBack} />
-      <DeadlineCard deadline="14/12/2025" />
-      <DisputeInfoCard dispute={disputeData} />
+      <DeadlineCard deadline={displayDispute.deadline} />
+      <DisputeInfoCard dispute={displayDispute} />
       <PaginationDots currentIndex={0} total={4} />
     </div>
   );

@@ -1,29 +1,27 @@
 import React, { useState } from "react";
-import { Button, Text, Card, Input, Code } from "@stellar/design-system";
+import { Button, Text, Card, Input } from "@stellar/design-system";
 import { Box } from "./layout/Box";
 import { useWallet } from "../hooks/useWallet";
 import { useSliceVoting } from "../hooks/useSliceVoting";
 
 export const VoteComponent: React.FC = () => {
   const { address } = useWallet();
-  const { submitVote, generateSalt, isProcessing, logs, setLogs } =
-    useSliceVoting();
+  const { commitVote, revealVote, isProcessing, logs } = useSliceVoting();
 
   const [selectedVote, setSelectedVote] = useState<number | null>(null);
-  const [salt, setSalt] = useState<string>(() => generateSalt());
   const [disputeId, setDisputeId] = useState<string>("1");
 
   const handleVoteSelect = (vote: number) => {
     setSelectedVote(vote);
-    setSalt(generateSalt());
-    setLogs(""); // Clear previous logs
   };
 
-  const handleSubmit = async () => {
+  const handleCommit = async () => {
     if (selectedVote === null) return;
+    await commitVote(disputeId, selectedVote);
+  };
 
-    // The hook handles the entire flow: Commit -> Generate Proof -> Reveal
-    await submitVote(disputeId, selectedVote, salt);
+  const handleReveal = async () => {
+    await revealVote(disputeId);
   };
 
   return (
@@ -61,30 +59,27 @@ export const VoteComponent: React.FC = () => {
           </Button>
         </Box>
 
-        {selectedVote !== null && (
-          <Box
-            gap="xs"
-            direction="column"
-            style={{ background: "#f3f4f6", padding: 10, borderRadius: 4 }}
+        <Box gap="sm" direction="row">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => void handleCommit()}
+            disabled={isProcessing || selectedVote === null || !address}
+            isLoading={isProcessing}
           >
-            <Text as="span" size="xs" weight="bold">
-              Generated Secret Salt:
-            </Text>
-            <Code size="sm" style={{ wordBreak: "break-all" }}>
-              {salt}
-            </Code>
-          </Box>
-        )}
+            Commit Vote
+          </Button>
 
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={() => void handleSubmit()}
-          disabled={isProcessing || selectedVote === null || !address}
-          isLoading={isProcessing}
-        >
-          {isProcessing ? "Processing Vote..." : "Generate Proof & Vote"}
-        </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => void handleReveal()}
+            disabled={isProcessing || !address}
+            isLoading={isProcessing}
+          >
+            Reveal Vote
+          </Button>
+        </Box>
 
         {logs && (
           <div

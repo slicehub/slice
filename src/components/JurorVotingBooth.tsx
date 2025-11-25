@@ -2,20 +2,18 @@ import { useState } from "react";
 import { useSliceVoting } from "../hooks/useSliceVoting";
 
 export const JurorVotingBooth = ({ disputeId }: { disputeId: string }) => {
-  const { submitVote, generateSalt, isProcessing, logs } = useSliceVoting();
+  const { commitVote, revealVote, isProcessing, logs } = useSliceVoting();
 
   // 0 = Party A, 1 = Party B
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
-  const handleVote = async () => {
+  const handleCommit = async () => {
     if (selectedOption === null) return;
+    await commitVote(disputeId, selectedOption);
+  };
 
-    // 1. Generate a cryptographic salt locally
-    const salt = generateSalt();
-
-    // 2. Trigger the full voting flow
-    // This performs Commit -> Proof Generation -> Reveal sequentially
-    await submitVote(disputeId, selectedOption, salt);
+  const handleReveal = async () => {
+    await revealVote(disputeId);
   };
 
   return (
@@ -24,15 +22,21 @@ export const JurorVotingBooth = ({ disputeId }: { disputeId: string }) => {
       <button onClick={() => setSelectedOption(0)}>Vote Party A</button>
       <button onClick={() => setSelectedOption(1)}>Vote Party B</button>
 
-      <button
-        onClick={() => void handleVote()}
-        disabled={isProcessing || selectedOption === null}
-      >
-        {isProcessing ? "Generating ZK Proof..." : "Submit Verdict"}
-      </button>
+      <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+        <button
+          onClick={() => void handleCommit()}
+          disabled={isProcessing || selectedOption === null}
+        >
+          {isProcessing ? "Processing..." : "1. Commit Vote"}
+        </button>
 
-      {/* Optional: Display progress logs (Commit tx, Proof Gen, Reveal tx) */}
-      <pre>{logs}</pre>
+        <button onClick={() => void handleReveal()} disabled={isProcessing}>
+          {isProcessing ? "Processing..." : "2. Reveal Vote"}
+        </button>
+      </div>
+
+      {/* Optional: Display progress logs */}
+      <pre style={{ fontSize: "10px", marginTop: "10px" }}>{logs}</pre>
     </div>
   );
 };

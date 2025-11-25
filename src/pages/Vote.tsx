@@ -1,31 +1,35 @@
 import React, { useRef, useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { DisputeOverviewHeader } from "../components/dispute-overview/DisputeOverviewHeader";
 import { TimerCard } from "../components/dispute-overview/TimerCard";
 import { PaginationDots } from "../components/dispute-overview/PaginationDots";
 import { SuccessAnimation } from "../components/SuccessAnimation";
 import { useWallet } from "../hooks/useWallet";
-import { votingService } from "../services/VotingService";
-import { generateIdentitySecret, generateSalt, calculateNullifier, bytesToHex } from "../util/votingUtils";
+import { useSliceVoting } from "../hooks/useSliceVoting";
+import { useGetDispute } from "../hooks/useGetDispute";
 import styles from "./Vote.module.css";
 
 export const Vote: React.FC = () => {
   const navigate = useNavigate();
-  const { address, signTransaction } = useWallet();
+  const { address } = useWallet();
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const isDragging = useRef(false);
   const [selectedVote, setSelectedVote] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
-  // Mock proposal ID - in production would come from context or props
-  const proposalId = 1;
+  // 1. Get Dispute ID from URL
+  const { id } = useParams<{ id: string }>();
+  const disputeId = id || "1";
+
+  // 1. Fetch Dispute State
+  const { dispute, refetch } = useGetDispute(disputeId);
+  const { commitVote, revealVote, isProcessing, logs } = useSliceVoting();
 
   const handleBack = () => {
-    void navigate("/defendant-evidence");
+    void navigate(`/defendant-evidence/${disputeId}`);
   };
 
   const handleVoteSelect = (vote: number) => {
@@ -33,81 +37,25 @@ export const Vote: React.FC = () => {
     setMessage(null);
   };
 
-  const handleSubmitVote = async () => {
-    if (!address || !signTransaction) {
-      setMessage({ type: "error", text: "Please connect your wallet" });
-      return;
-    }
-
-    if (selectedVote === null) {
-      setMessage({ type: "error", text: "Please select an option" });
-      return;
-    }
-
-    setIsSubmitting(true);
-    setMessage(null);
-
-    try {
-      const identitySecret = generateIdentitySecret();
-      const salt = generateSalt();
-
-      // Calculate nullifier
-      const nullifierBytes = calculateNullifier(identitySecret, salt, proposalId);
-      const nullifier = `0x${bytesToHex(nullifierBytes)}`;
-
-      // Store in localStorage for later reveal
-      const key = `vote_${address}_${proposalId}`;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          identitySecret: identitySecret.toString(),
-          salt: salt.toString(),
-          proposalId,
-          nullifier,
-          vote: selectedVote,
-        })
-      );
-
-      const walletSignTransaction = async (xdr: string) => {
-        const signed = await signTransaction(xdr);
-        return {
-          signedTxXdr: signed.signedTxXdr,
-          signerAddress: signed.signerAddress ?? address,
-        };
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const result = await votingService.vote(
-        address,
-        proposalId,
-        selectedVote,
-        identitySecret,
-        salt,
-        walletSignTransaction
-      );
-
-      // Update stored data with result
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        const data = JSON.parse(stored);
-        data.nullifier = result.nullifier || nullifier;
-        data.vote = selectedVote;
-        localStorage.setItem(key, JSON.stringify(data));
-      }
-
-      // Show success animation instead of message
-      setShowSuccessAnimation(true);
-    } catch (error: unknown) {
-      const errorMessage = (error as Error).message || "Error sending vote";
-      console.error("Failed to vote:", error);
-      setMessage({
-        type: "error",
-        text: errorMessage,
-      });
-    } finally {
-      setIsSubmitting(false);
+  const handleCommit = async () => {
+    if (selectedVote === null) return;
+    const success = await commitVote(disputeId, selectedVote);
+    if (success) {
+        await refetch(); // Refresh dispute status
+        setMessage({ type: "success", text: "Vote committed. Waiting for Reveal Phase." });
     }
   };
+
+  const handleReveal = async () => {
+    const success = await revealVote(disputeId);
+    if (success) setShowSuccessAnimation(true);
+  };
+
+  // Check if local storage has a vote for this dispute
+  const hasCommittedLocally = localStorage.getItem(`slice_vote_${disputeId}_${address}`);
+
+  // Determine what to show based on Contract Status (0=Created, 1=Commit, 2=Reveal)
+  const isRevealPhase = dispute?.status === 2;
 
   // Minimum distance to consider a swipe (50px)
   const minSwipeDistance = 50;
@@ -133,7 +81,7 @@ export const Vote: React.FC = () => {
   }, []);
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!isDragging.current || !startX.current) return;
+    if (!isDragging.current || !startX.current || startY.current === null) return;
 
     const touch = e.changedTouches[0];
     const endX = touch.clientX;
@@ -148,14 +96,14 @@ export const Vote: React.FC = () => {
         // No more pages to the right, do nothing
       } else {
         // Swipe right (slide right = navigate left/back)
-        void navigate("/defendant-evidence");
+        void navigate(`/defendant-evidence/${disputeId}`);
       }
     }
 
     startX.current = null;
     startY.current = null;
     isDragging.current = false;
-  }, [navigate]);
+  }, [navigate, disputeId]);
 
   // Mouse events for desktop development
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -169,7 +117,7 @@ export const Vote: React.FC = () => {
   }, []);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
-    if (!isDragging.current || !startX.current) return;
+    if (!isDragging.current || !startX.current || startY.current === null) return;
 
     const endX = e.clientX;
     const endY = e.clientY;
@@ -183,14 +131,14 @@ export const Vote: React.FC = () => {
         // Do nothing
       } else {
         // Swipe right (slide right = navigate left/back)
-        void navigate("/defendant-evidence");
+        void navigate(`/defendant-evidence/${disputeId}`);
       }
     }
 
     startX.current = null;
     startY.current = null;
     isDragging.current = false;
-  }, [navigate]);
+  }, [navigate, disputeId]);
 
   // Cleanup when component unmounts
   useEffect(() => {
@@ -232,7 +180,7 @@ export const Vote: React.FC = () => {
             <button
               className={`${styles.voteOption} ${selectedVote === 1 ? styles.selected : ""}`}
               onClick={() => handleVoteSelect(1)}
-              disabled={isSubmitting}
+              disabled={isProcessing || isRevealPhase}
             >
               <div className={styles.optionContent}>
                 <div className={styles.optionHeader}>
@@ -248,7 +196,7 @@ export const Vote: React.FC = () => {
             <button
               className={`${styles.voteOption} ${selectedVote === 0 ? styles.selected : ""}`}
               onClick={() => handleVoteSelect(0)}
-              disabled={isSubmitting}
+              disabled={isProcessing || isRevealPhase}
             >
               <div className={styles.optionContent}>
                 <div className={styles.optionHeader}>
@@ -268,13 +216,32 @@ export const Vote: React.FC = () => {
             </div>
           )}
 
-          <button
-            className={styles.submitButton}
-            onClick={() => void handleSubmitVote()}
-            disabled={isSubmitting || selectedVote === null}
-          >
-            {isSubmitting ? "Sending..." : "Confirm vote"}
-          </button>
+          {/* Display Logs (ZK proof generation takes time) */}
+          {isProcessing && (
+            <div style={{ padding: "10px", background: "#f3f4f6", fontSize: "10px", marginBottom: "10px", whiteSpace: "pre-wrap" }}>
+              {logs || "Initializing..."}
+            </div>
+          )}
+
+          {isRevealPhase ? (
+             /* REVEAL BUTTON */
+             <button
+               className={styles.submitButton}
+               onClick={() => void handleReveal()}
+               disabled={isProcessing || !hasCommittedLocally}
+             >
+               {isProcessing ? "Revealing..." : "Reveal My Vote"}
+             </button>
+          ) : (
+             /* COMMIT BUTTON */
+             <button
+               className={styles.submitButton}
+               onClick={() => void handleCommit()}
+               disabled={isProcessing || selectedVote === null}
+             >
+               {isProcessing ? "Committing..." : "Commit Vote"}
+             </button>
+          )}
         </div>
       </div>
       <PaginationDots currentIndex={3} total={4} />

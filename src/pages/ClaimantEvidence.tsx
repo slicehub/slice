@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { DisputeOverviewHeader } from "../components/dispute-overview/DisputeOverviewHeader";
 import { DeadlineCard } from "../components/dispute-overview/DeadlineCard";
 import { ClaimantInfoCard } from "../components/claimant-evidence/ClaimantInfoCard";
@@ -13,13 +13,16 @@ import styles from "./ClaimantEvidence.module.css";
 
 export const ClaimantEvidence: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const disputeId = id || "1";
+
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const isDragging = useRef(false);
 
   const handleBack = () => {
-    void navigate("/dispute-overview");
+    void navigate(`/dispute-overview/${disputeId}`);
   };
 
   // Minimum distance to consider a swipe (50px)
@@ -46,7 +49,7 @@ export const ClaimantEvidence: React.FC = () => {
   }, []);
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!isDragging.current || !startX.current) return;
+    if (!isDragging.current || !startX.current || startY.current === null) return;
 
     const touch = e.changedTouches[0];
     const endX = touch.clientX;
@@ -58,17 +61,17 @@ export const ClaimantEvidence: React.FC = () => {
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
         // Swipe left (slide left = navigate right/defendant)
-        void navigate("/defendant-evidence");
+        void navigate(`/defendant-evidence/${disputeId}`);
       } else {
         // Swipe right (slide right = navigate left/back)
-        void navigate("/dispute-overview");
+        void navigate(`/dispute-overview/${disputeId}`);
       }
     }
 
     startX.current = null;
     startY.current = null;
     isDragging.current = false;
-  }, [navigate]);
+  }, [navigate, disputeId]);
 
   // Mouse events for desktop development
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -82,7 +85,7 @@ export const ClaimantEvidence: React.FC = () => {
   }, []);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
-    if (!isDragging.current || !startX.current) return;
+    if (!isDragging.current || !startX.current || startY.current === null) return;
 
     const endX = e.clientX;
     const endY = e.clientY;
@@ -93,17 +96,17 @@ export const ClaimantEvidence: React.FC = () => {
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0) {
         // Swipe left (slide left = navigate right/defendant)
-        void navigate("/defendant-evidence");
+        void navigate(`/defendant-evidence/${disputeId}`);
       } else {
         // Swipe right (slide right = navigate left/back)
-        void navigate("/dispute-overview");
+        void navigate(`/dispute-overview/${disputeId}`);
       }
     }
 
     startX.current = null;
     startY.current = null;
     isDragging.current = false;
-  }, [navigate]);
+  }, [navigate, disputeId]);
 
   // Cleanup when component unmounts
   useEffect(() => {

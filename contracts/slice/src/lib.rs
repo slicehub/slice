@@ -341,10 +341,10 @@ impl Slice {
                 break;
             }
         }
-        if all_committed {
+        let jurors_joined = dispute.assigned_jurors.len() as u32;
+        if all_committed && jurors_joined >= dispute.jurors_required {
             dispute.status = DisputeStatus::Reveal;
         }
-
         storage::set_dispute(&env, &dispute);
         Ok(())
     }

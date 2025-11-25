@@ -1,26 +1,28 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import styles from "./LoadingDisputes.module.css";
 
 export const LoadingDisputes: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const disputeId = id || "1";
 
   useEffect(() => {
     // Mínimo 10 segundos de loading
     const timer = setTimeout(() => {
       // Navigate to overview of assigned dispute
-      navigate("/dispute-overview");
+      navigate(`/dispute-overview/${disputeId}`);
     }, 10000);
 
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, disputeId]);
 
   return (
     <div className={styles.container}>
       <div className={styles.loadingContent}>
         <div className={styles.videoContainer}>
-          <video 
-            src="/animations/loading.mp4" 
+          <video
+            src="/animations/loading.mp4"
             autoPlay
             loop
             muted
@@ -35,4 +37,3 @@ export const LoadingDisputes: React.FC = () => {
 };
 
 export default LoadingDisputes;
-

@@ -62,7 +62,7 @@ const PrefetchRoutes: React.FC = () => {
   useEffect(() => {
     // Prefetch de rutas relacionadas basado en la ruta actual
     const prefetchRoutes = async () => {
-      if (location.pathname === "/dispute-overview") {
+      if (location.pathname.includes("/dispute-overview")) {
         // Prefetch de la siguiente pantalla
         await import("./pages/ClaimantEvidence");
         // Preload también los componentes necesarios
@@ -71,20 +71,20 @@ const PrefetchRoutes: React.FC = () => {
           import("./components/claimant-evidence/DemandDetailSection"),
           import("./components/claimant-evidence/EvidenceList"),
         ]);
-      } else if (location.pathname === "/claimant-evidence") {
+      } else if (location.pathname.includes("/claimant-evidence")) {
         // Prefetch de la pantalla anterior y siguiente
         await Promise.all([
           import("./pages/DisputeOverview"),
           import("./pages/DefendantEvidence"),
         ]);
-      } else if (location.pathname === "/defendant-evidence") {
+      } else if (location.pathname.includes("/defendant-evidence")) {
         // Prefetch de la pantalla anterior y siguiente
         await Promise.all([
           import("./pages/ClaimantEvidence"),
           import("./pages/DisputeOverview"),
           import("./pages/Vote"),
         ]);
-      } else if (location.pathname === "/vote") {
+      } else if (location.pathname.includes("/vote")) {
         // Prefetch de la pantalla anterior
         await Promise.all([
           import("./pages/DefendantEvidence"),
@@ -107,11 +107,15 @@ function App() {
         {/* Disputes page without main layout (mobile-first design) */}
         <Route path="/disputes" element={<Disputes />} />
         <Route path="/category-amount" element={<CategoryAmount />} />
-        <Route path="/loading-disputes" element={<LoadingDisputes />} />
-        <Route path="/dispute-overview" element={<DisputeOverview />} />
-        <Route path="/claimant-evidence" element={<ClaimantEvidence />} />
-        <Route path="/defendant-evidence" element={<DefendantEvidence />} />
-        <Route path="/vote" element={<Vote />} />
+
+        {/* Pass ID to loading screen so it knows where to go next */}
+        <Route path="/loading-disputes/:id" element={<LoadingDisputes />} />
+
+        {/* Add IDs to the flow pages */}
+        <Route path="/dispute-overview/:id" element={<DisputeOverview />} />
+        <Route path="/claimant-evidence/:id" element={<ClaimantEvidence />} />
+        <Route path="/defendant-evidence/:id" element={<DefendantEvidence />} />
+        <Route path="/vote/:id" element={<Vote />} />
 
         {/* Other pages with main layout */}
         <Route path="/" element={<Disputes />} />

@@ -12,6 +12,7 @@ export const useSliceVoting = () => {
   const [logs, setLogs] = useState<string>("");
   const noirService = useRef(new NoirService());
 
+  // Helper to generate random salt
   const generateSalt = useCallback(() => {
     const array = new Uint8Array(31);
     crypto.getRandomValues(array);
@@ -23,71 +24,105 @@ export const useSliceVoting = () => {
     );
   }, []);
 
-  const submitVote = useCallback(
-    async (disputeId: string, vote: number, salt: string) => {
+  // Helper to construct the commitment hash
+  const calculateCommitment = (vote: number, salt: string) => {
+    const voteBytes = new Uint8Array(4);
+    new DataView(voteBytes.buffer).setUint32(0, vote, false); // Big Endian
+
+    const saltHex = salt.replace(/^0x/, "");
+    const saltRaw = Buffer.from(saltHex, "hex");
+    const saltBuf32 = Buffer.alloc(32);
+    saltRaw.copy(saltBuf32, 32 - saltRaw.length);
+
+    const preimage = new Uint8Array(36);
+    preimage.set(voteBytes, 0);
+    preimage.set(saltBuf32, 4);
+
+    const commitmentBuf32 = Buffer.alloc(32);
+    Buffer.from(sha256(preimage)).copy(commitmentBuf32);
+
+    return { commitmentBuf32, saltBuf32 };
+  };
+
+  // PHASE 1: COMMIT VOTE
+  const commitVote = useCallback(
+    async (disputeId: string, vote: number) => {
       if (!address || !signTransaction) throw new Error("Wallet not connected");
 
       setIsProcessing(true);
-      setLogs("Computing SHA256 commitment...");
+      setLogs("Generating secure commitment...");
 
       try {
+        const salt = generateSalt();
+        const { commitmentBuf32 } = calculateCommitment(vote, salt);
+
         slice.options.publicKey = address;
 
-        // 1. Compute Commitment = SHA256(vote || salt)
-        const voteBytes = new Uint8Array(4);
-        new DataView(voteBytes.buffer).setUint32(0, vote, false);
+        // Save secrets to LocalStorage so user can reveal later
+        const storageKey = `slice_vote_${disputeId}_${address}`;
+        localStorage.setItem(storageKey, JSON.stringify({ vote, salt }));
 
-        const saltHex = salt.replace(/^0x/, "");
-        const saltRaw = Buffer.from(saltHex, "hex");
-        const saltBuf32 = Buffer.alloc(32);
-        saltRaw.copy(saltBuf32, 32 - saltRaw.length);
-
-        const preimage = new Uint8Array(36);
-        preimage.set(voteBytes, 0);
-        preimage.set(saltBuf32, 4);
-
-        const commitmentBuf32 = Buffer.alloc(32);
-        Buffer.from(sha256(preimage)).copy(commitmentBuf32);
-
-        // Helper for signing
-        const walletSigner = async (xdr: string) => {
-          const signed = await signTransaction(xdr);
-          return {
-            signedTxXdr: signed.signedTxXdr,
-            signerAddress: signed.signerAddress ?? address,
-          };
-        };
-
-        // 2. Commit Vote On-Chain
         setLogs((prev) => prev + "\nSubmitting Commit transaction...");
+
         const commitTx = await slice.commit_vote({
           caller: address,
           dispute_id: BigInt(disputeId),
           commitment: commitmentBuf32,
         });
 
-        const commitRes = await commitTx.signAndSend({
-          signTransaction: walletSigner,
-        });
-        const commitData =
-          StellarContractService.extractTransactionData(commitRes);
+        const walletSigner = async (xdr: string) => {
+          const signed = await signTransaction(xdr);
+          return { signedTxXdr: signed.signedTxXdr, signerAddress: address };
+        };
+
+        const commitRes = await commitTx.signAndSend({ signTransaction: walletSigner });
+        const commitData = StellarContractService.extractTransactionData(commitRes);
+
         if (!commitData.success) throw new Error("Commit transaction failed");
 
-        // 3. Generate ZK Proof
-        setLogs((prev) => prev + "\nGenerating ZK Proof (Reveal)...");
-        const revealProof = await noirService.current.generateProof("reveal", {
-          vote,
-        });
+        setLogs((prev) => prev + "\n✓ Vote Committed! Please wait for other jurors before revealing.");
+        return true;
+      } catch (err) {
+        console.error(err);
+        const msg = err instanceof Error ? err.message : String(err);
+        setLogs((prev) => prev + `\n❌ Error: ${msg}`);
+        return false;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [address, signTransaction, generateSalt]
+  );
 
-        const vkJsonBuffer = StellarContractService.toBuffer(
-          revealProof.vkJson,
-        );
-        const proofBlobBuffer = StellarContractService.toBuffer(
-          revealProof.proofBlob,
-        );
+  // PHASE 2: REVEAL VOTE
+  const revealVote = useCallback(
+    async (disputeId: string) => {
+      if (!address || !signTransaction) throw new Error("Wallet not connected");
 
-        // 4. Reveal Vote On-Chain
+      setIsProcessing(true);
+      setLogs("Retrieving secret vote data...");
+
+      try {
+        // Retrieve secrets
+        const storageKey = `slice_vote_${disputeId}_${address}`;
+        const storedData = localStorage.getItem(storageKey);
+
+        if (!storedData) throw new Error("No local vote data found for this dispute.");
+        const { vote, salt } = JSON.parse(storedData);
+
+        const { saltBuf32 } = calculateCommitment(vote, salt);
+
+        slice.options.publicKey = address;
+
+        // Generate ZK Proof (Required for v2, used as passed-through args here)
+        setLogs((prev) => prev + "\nGenerating ZK Proof...");
+        const revealProof = await noirService.current.generateProof("reveal", { vote });
+
+        const vkJsonBuffer = StellarContractService.toBuffer(revealProof.vkJson);
+        const proofBlobBuffer = StellarContractService.toBuffer(revealProof.proofBlob);
+
         setLogs((prev) => prev + "\nSubmitting Reveal transaction...");
+
         const revealTx = await slice.reveal_vote({
           caller: address,
           dispute_id: BigInt(disputeId),
@@ -97,24 +132,29 @@ export const useSliceVoting = () => {
           proof_blob: proofBlobBuffer,
         });
 
-        const revealRes = await revealTx.signAndSend({
-          signTransaction: walletSigner,
-        });
-        const revealData =
-          StellarContractService.extractTransactionData(revealRes);
+        const walletSigner = async (xdr: string) => {
+          const signed = await signTransaction(xdr);
+          return { signedTxXdr: signed.signedTxXdr, signerAddress: address };
+        };
+
+        const revealRes = await revealTx.signAndSend({ signTransaction: walletSigner });
+        const revealData = StellarContractService.extractTransactionData(revealRes);
+
         if (!revealData.success) throw new Error("Reveal transaction failed");
 
         setLogs((prev) => prev + "\n✓ Vote successfully revealed!");
+        return true;
       } catch (err) {
         console.error(err);
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        setLogs((prev) => prev + `\n❌ Error: ${errorMessage}`);
+        const msg = err instanceof Error ? err.message : String(err);
+        setLogs((prev) => prev + `\n❌ Error: ${msg}`);
+        return false;
       } finally {
         setIsProcessing(false);
       }
     },
-    [address, signTransaction],
+    [address, signTransaction]
   );
 
-  return { submitVote, generateSalt, isProcessing, logs, setLogs };
+  return { commitVote, revealVote, isProcessing, logs };
 };

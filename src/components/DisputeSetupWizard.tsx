@@ -24,7 +24,10 @@ export const DisputeSetupWizard: React.FC = () => {
 
   const handleCreate = async () => {
     if (!address || !defenderAddress) {
-      addNotification("Please connect wallet and enter defender address", "error");
+      addNotification(
+        "Please connect wallet and enter defender address",
+        "error",
+      );
       return;
     }
     setIsLoading(true);
@@ -34,14 +37,16 @@ export const DisputeSetupWizard: React.FC = () => {
       try {
         const catTx = await slice.add_category({ name: "General" });
         await catTx.signAndSend({ signTransaction: getSigner });
-      } catch (e) { /* Ignore */ }
+      } catch (e) {
+        /* Ignore */
+      }
 
       const metaHash = Buffer.alloc(32, 1);
       const tx = await slice.create_dispute({
         claimer: address,
         defender: defenderAddress,
         meta_hash: metaHash,
-        min_amount: BigInt(100),
+        min_amount: BigInt(1),
         max_amount: BigInt(10000),
         category: "General",
         allowed_jurors: undefined,
@@ -95,7 +100,10 @@ export const DisputeSetupWizard: React.FC = () => {
       console.error(err);
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (msg.includes("#7")) {
-        addNotification("Error: This wallet already paid. Switch wallets!", "error");
+        addNotification(
+          "Error: This wallet already paid. Switch wallets!",
+          "error",
+        );
       } else {
         addNotification("Payment failed. Check console.", "error");
       }
@@ -107,11 +115,16 @@ export const DisputeSetupWizard: React.FC = () => {
   return (
     <Card>
       <Box gap="md" direction="column">
-        <Text as="h2" size="lg">Dispute Setup Wizard</Text>
+        <Text as="h2" size="lg">
+          Dispute Setup Wizard
+        </Text>
 
         {step === 1 && (
           <Box gap="sm" direction="column">
-            <Text as="p" size="sm">Step 1: Create a new dispute. You (Connected Wallet) will be the <strong>Claimer</strong>.</Text>
+            <Text as="p" size="sm">
+              Step 1: Create a new dispute. You (Connected Wallet) will be the{" "}
+              <strong>Claimer</strong>.
+            </Text>
             <Input
               id="defender-addr"
               label="Defender Address"
@@ -134,9 +147,16 @@ export const DisputeSetupWizard: React.FC = () => {
 
         {step === 2 && (
           <Box gap="sm" direction="column">
-            <Text as="p" size="sm" style={{color: "#00d4aa"}}>✓ Dispute #{disputeId?.toString()} Created.</Text>
-            <Text as="p" size="sm">Step 2: Fund as <strong>Claimer</strong>.</Text>
-            <Text as="p" size="xs">Ensure you are connected with the Creator wallet: {address?.slice(0,6)}...</Text>
+            <Text as="p" size="sm" style={{ color: "#00d4aa" }}>
+              ✓ Dispute #{disputeId?.toString()} Created.
+            </Text>
+            <Text as="p" size="sm">
+              Step 2: Fund as <strong>Claimer</strong>.
+            </Text>
+            <Text as="p" size="xs">
+              Ensure you are connected with the Creator wallet:{" "}
+              {address?.slice(0, 6)}...
+            </Text>
             <Button
               variant="primary" // Added variant
               size="md" // Added size
@@ -151,37 +171,61 @@ export const DisputeSetupWizard: React.FC = () => {
 
         {step === 3 && (
           <Box gap="sm" direction="column">
-            <Text as="p" size="sm" style={{color: "#00d4aa"}}>✓ Claimer Funded.</Text>
-            <Text as="p" size="sm">Step 3: Fund as <strong>Defender</strong>.</Text>
-            <div style={{background: "#FFF4E5", padding: "10px", borderRadius: "4px"}}>
-              <Text as="p" size="sm" weight="bold">⚠️ ACTION REQUIRED:</Text>
-              <Text as="p" size="xs">Open your wallet extension and <strong>switch to the Defender account</strong>: {defenderAddress.slice(0,6)}...</Text>
+            <Text as="p" size="sm" style={{ color: "#00d4aa" }}>
+              ✓ Claimer Funded.
+            </Text>
+            <Text as="p" size="sm">
+              Step 3: Fund as <strong>Defender</strong>.
+            </Text>
+            <div
+              style={{
+                background: "#FFF4E5",
+                padding: "10px",
+                borderRadius: "4px",
+              }}
+            >
+              <Text as="p" size="sm" weight="bold">
+                ⚠️ ACTION REQUIRED:
+              </Text>
+              <Text as="p" size="xs">
+                Open your wallet extension and{" "}
+                <strong>switch to the Defender account</strong>:{" "}
+                {defenderAddress.slice(0, 6)}...
+              </Text>
             </div>
             {address === defenderAddress ? (
-               <Button
+              <Button
                 variant="primary" // Added variant
                 size="md" // Added size
                 onClick={() => void handleFund()}
                 disabled={isLoading}
                 isLoading={isLoading}
-               >
-                 Deposit 500 XLM (Defender)
-               </Button>
+              >
+                Deposit 500 XLM (Defender)
+              </Button>
             ) : (
-               <Button size="md" disabled variant="secondary">
-                 Waiting for Wallet Switch...
-               </Button>
+              <Button size="md" disabled variant="secondary">
+                Waiting for Wallet Switch...
+              </Button>
             )}
           </Box>
         )}
 
         {step === 4 && (
           <Box gap="md" direction="column" align="center">
-            <Text as="h2" size="lg" style={{color: "#00d4aa"}}>🎉 Setup Complete!</Text>
-            <Text as="p" size="sm">Dispute #{disputeId?.toString()} is funded and ready for jurors.</Text>
+            <Text as="h2" size="lg" style={{ color: "#00d4aa" }}>
+              🎉 Setup Complete!
+            </Text>
+            <Text as="p" size="sm">
+              Dispute #{disputeId?.toString()} is funded and ready for jurors.
+            </Text>
             <Button
               size="md"
-              onClick={() => { setStep(1); setDisputeId(null); setDefenderAddress(""); }}
+              onClick={() => {
+                setStep(1);
+                setDisputeId(null);
+                setDefenderAddress("");
+              }}
               variant="secondary"
             >
               Start Over
