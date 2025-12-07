@@ -31,7 +31,9 @@ export default function LoadingDisputesPage() {
             className="w-full h-full object-contain"
           />
         </div>
-        <p className="text-lg font-medium text-gray-600">Cargando disputas para ti</p>
+        <p className="text-lg font-medium text-gray-600">
+          Cargando disputas para ti
+        </p>
       </div>
     </div>
   );
