@@ -1,6 +1,6 @@
 export const sliceAddress = process.env.NEXT_PUBLIC_SLICE_ADDRESS
   ? process.env.NEXT_PUBLIC_SLICE_ADDRESS
-  : "0x...YOUR_BASE_CONTRACT_ADDRESS..."; // TODO: Update with deployed Base contract address
+  : "0x0DF84bFD1e6eA2125e84cEB935192E3b3D23346f"; // TODO: Update with deployed Base contract address
 
 export const sliceAbi = [
   {

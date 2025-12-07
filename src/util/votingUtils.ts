@@ -1,5 +1,5 @@
-import { solidityPackedKeccak256 } from 'ethers';
-import { keccak_256 } from '@noble/hashes/sha3.js';
+import { solidityPackedKeccak256 } from "ethers";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 /**
  * Generate a random identity secret for voting
@@ -40,7 +40,7 @@ export function generateSalt(): bigint {
 export function calculateCommitment(vote: number, salt: bigint): string {
   // Use ethers.solidityPackedKeccak256 to allow identical hashing in Solidity
   // equivalent to keccak256(abi.encodePacked(vote, salt))
-  return solidityPackedKeccak256(["uint8", "uint256"], [vote, salt]);
+  return solidityPackedKeccak256(["uint256", "uint256"], [vote, salt]);
 }
 
 /**
@@ -50,7 +50,7 @@ export function calculateCommitment(vote: number, salt: bigint): string {
 export function calculateNullifier(
   identitySecret: bigint,
   salt: bigint,
-  proposalId: number
+  proposalId: number,
 ): Uint8Array {
   const identityBytes = new Uint8Array(32);
   let identityValue = identitySecret;
@@ -75,7 +75,9 @@ export function calculateNullifier(
   }
 
   // Concatenate all inputs
-  const input = new Uint8Array(identityBytes.length + saltBytes.length + proposalBytes.length);
+  const input = new Uint8Array(
+    identityBytes.length + saltBytes.length + proposalBytes.length,
+  );
   input.set(identityBytes, 0);
   input.set(saltBytes, identityBytes.length);
   input.set(proposalBytes, identityBytes.length + saltBytes.length);
@@ -89,15 +91,15 @@ export function calculateNullifier(
  */
 export function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /**
  * Convert hex string to Uint8Array
  */
 export function hexToBytes(hex: string): Uint8Array {
-  const hexWithoutPrefix = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const hexWithoutPrefix = hex.startsWith("0x") ? hex.slice(2) : hex;
   const bytes = new Uint8Array(hexWithoutPrefix.length / 2);
   for (let i = 0; i < hexWithoutPrefix.length; i += 2) {
     bytes[i / 2] = parseInt(hexWithoutPrefix.substr(i, 2), 16);

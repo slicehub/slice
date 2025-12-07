@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSliceContract } from "./useSliceContract";
-import { useWallet } from "./useWallet";
 import { calculateCommitment, generateSalt } from "../util/votingUtils";
+import { useXOContracts } from "@/providers/XOContractsProvider";
 
 export const useSliceVoting = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [logs, setLogs] = useState<string>("");
 
   const contract = useSliceContract();
-  const { address } = useWallet();
+  const { address } = useXOContracts();
 
   // Helper to generate a unique storage key for this specific dispute + user
-  const getStorageKey = (disputeId: string) => `slice_vote_${disputeId}_${address}`;
+  const getStorageKey = (disputeId: string) =>
+    `slice_vote_${disputeId}_${address}`;
 
   /**
    * STEP 1: COMMIT VOTE
@@ -43,10 +44,13 @@ export const useSliceVoting = () => {
       const storageData = {
         vote,
         salt: salt.toString(), // Convert BigInt to string for JSON storage
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
-      localStorage.setItem(getStorageKey(disputeId), JSON.stringify(storageData));
+      localStorage.setItem(
+        getStorageKey(disputeId),
+        JSON.stringify(storageData),
+      );
 
       setLogs("Sending commitment to blockchain...");
 
@@ -56,10 +60,11 @@ export const useSliceVoting = () => {
       setLogs("Waiting for confirmation...");
       await tx.wait();
 
-      toast.success("Vote committed successfully! Salt saved to browser storage.");
+      toast.success(
+        "Vote committed successfully! Salt saved to browser storage.",
+      );
       setLogs("Commitment confirmed on-chain.");
       return true;
-
     } catch (error: any) {
       console.error("Commit Error:", error);
       // Handle "User denied transaction" or contract reverts
@@ -91,7 +96,9 @@ export const useSliceVoting = () => {
       const storedDataString = localStorage.getItem(getStorageKey(disputeId));
 
       if (!storedDataString) {
-        throw new Error("No local vote data found for this dispute. Did you clear your cache?");
+        throw new Error(
+          "No local vote data found for this dispute. Did you clear your cache?",
+        );
       }
 
       const { vote, salt } = JSON.parse(storedDataString);
@@ -105,16 +112,19 @@ export const useSliceVoting = () => {
       setLogs("Waiting for confirmation...");
       await tx.wait();
 
-      toast.success("Vote revealed successfully! You are now eligible for rewards.");
+      toast.success(
+        "Vote revealed successfully! You are now eligible for rewards.",
+      );
       setLogs("Vote revealed and counted.");
       return true;
-
     } catch (error: any) {
       console.error("Reveal Error:", error);
       const msg = error.reason || error.message || "Failed to reveal vote";
 
       if (msg.includes("Hash mismatch")) {
-        toast.error("Integrity Error: The saved salt does not match your on-chain commitment.");
+        toast.error(
+          "Integrity Error: The saved salt does not match your on-chain commitment.",
+        );
       } else if (msg.includes("No local vote data")) {
         toast.error(msg);
       } else {

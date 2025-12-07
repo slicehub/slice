@@ -1,53 +1,51 @@
-
 import { useState } from "react";
-import { useWallet } from "./useWallet";
-import { useNotification } from "./useNotification";
-import { MockContractService } from "../services/MockContractService";
-
-import slice from "../contracts/slice";
+import { useSliceContract } from "./useSliceContract";
+import { useXOContracts } from "@/providers/XOContractsProvider";
+import { toast } from "sonner";
 
 export function useExecuteRuling() {
-  const { address, signTransaction } = useWallet();
-  const { addNotification } = useNotification();
+  const { address } = useXOContracts();
   const [isExecuting, setIsExecuting] = useState(false);
+  const contract = useSliceContract();
 
   const executeRuling = async (disputeId: string | number) => {
-    if (!address || !signTransaction) {
-      addNotification("Please connect your wallet", "error");
+    if (!contract || !address) {
+      toast.error("Please connect your wallet");
       return null;
     }
 
     setIsExecuting(true);
 
     try {
-      slice.options.publicKey = address;
+      console.log(`Executing ruling for dispute #${disputeId}...`);
 
-      const tx = await slice.execute({
-        dispute_id: BigInt(disputeId),
-      });
+      // 1. Send Transaction
+      const tx = await contract.executeRuling(disputeId);
 
-      const result = await tx.signAndSend({
-        signTransaction: async (xdr: string) => {
-          const { signedTxXdr } = await signTransaction(xdr);
-          return { signedTxXdr };
-        },
-      });
+      toast.info("Transaction sent. Waiting for confirmation...");
 
-      const txData = MockContractService.extractTransactionData(result);
+      // 2. Wait for confirmation
+      const receipt = await tx.wait();
+      console.log("Ruling executed:", receipt);
 
-      if (txData.success) {
-        // Returns the winner Address
-        const winner = result.result?.unwrap();
-        addNotification(`Ruling executed! Winner: ${winner}`, "success");
-        return winner;
+      // 3. Optional: Parse events to find the winner if needed immediately
+      // For now, we assume success based on receipt status
+      if (receipt.status === 1) {
+        toast.success("Ruling executed successfully!");
+        return true;
       } else {
-        addNotification("Execution failed", "error");
-        return null;
+        throw new Error("Transaction failed on-chain");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Execution Error:", err);
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      addNotification(msg, "error");
+
+      // Handle common contract reverts
+      const msg = err.reason || err.message || "Unknown error";
+      if (msg.includes("Wrong phase")) {
+        toast.error("Cannot execute yet. Dispute is not in Reveal phase.");
+      } else {
+        toast.error(`Execution failed: ${msg}`);
+      }
       return null;
     } finally {
       setIsExecuting(false);

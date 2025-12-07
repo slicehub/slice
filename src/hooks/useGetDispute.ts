@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect } from "react";
-import { useWallet } from "./useWallet";
 
-import slice from "../contracts/slice";
+import { useSliceContract } from "./useSliceContract";
 
 // Types based on your Rust struct
 export interface DisputeData {
@@ -19,32 +18,34 @@ export interface DisputeData {
 }
 
 export function useGetDispute(disputeId: string | number) {
-  const { address } = useWallet();
+  const contract = useSliceContract(); // Get the Ethers contract
   const [dispute, setDispute] = useState<DisputeData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDispute = useCallback(async () => {
-    if (!disputeId) return;
+    if (!contract || !disputeId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
       // Even for read-only, setting the source is good practice in Soroban
-      if (address) slice.options.publicKey = address;
+      const d = await contract.disputes(disputeId);
 
-      // Call the contract
-      const { result } = await slice.get_dispute({
-        dispute_id: BigInt(disputeId),
+      setDispute({
+        id: d.id, // Already a BigInt from Ethers v6
+        claimer: d.claimer,
+        defender: d.defender,
+        status: Number(d.status), // Contract returns BigInt for enums, convert to Number
+        category: d.category,
+        jurors_required: Number(d.jurorsRequired), // Contract returns BigInt
+        deadline_pay_seconds: d.payDeadline, // Stores the timestamp (BigInt)
+        deadline_commit_seconds: d.commitDeadline,
+        deadline_reveal_seconds: d.revealDeadline,
+        assigned_jurors: [], // The default 'disputes' getter does not return the array of jurors
+        winner: d.winner,
       });
-
-      if (result) {
-        // The generated binding usually unwraps Result<T, E> automatically
-        // if the transaction succeeded locally.
-        // We cast it to our interface.
-        setDispute(result.unwrap() as unknown as DisputeData);
-      }
     } catch (err) {
       console.error(`Error fetching dispute ${disputeId}:`, err);
       setError("Dispute not found or contract error");
@@ -52,7 +53,7 @@ export function useGetDispute(disputeId: string | number) {
     } finally {
       setIsLoading(false);
     }
-  }, [disputeId, address]);
+  }, [disputeId]);
 
   // Auto-fetch on mount or ID change
   useEffect(() => {

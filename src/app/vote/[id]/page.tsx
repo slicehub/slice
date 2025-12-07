@@ -2,17 +2,17 @@
 
 import React, { useRef, useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useWallet } from "@/hooks/useWallet";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
 import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOverviewHeader";
 import { TimerCard } from "@/components/dispute-overview/TimerCard";
 import { PaginationDots } from "@/components/dispute-overview/PaginationDots";
 import { SuccessAnimation } from "@/components/SuccessAnimation";
+import { useXOContracts } from "@/providers/XOContractsProvider";
 
 export default function VotePage() {
   const router = useRouter();
-  const { address } = useWallet();
+  const { address } = useXOContracts();
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);

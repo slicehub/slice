@@ -7,7 +7,6 @@ import { XOContractsProvider } from "@/providers/XOContractsProvider";
 import { EmbeddedProvider } from "@/providers/EmbeddedProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TimerProvider } from "@/contexts/TimerContext";
-import { WalletProvider } from "@/providers/WalletProvider";
 
 export const metadata: Metadata = {
   title: "Slice",
@@ -41,11 +40,9 @@ export default async function RootLayout({
           <ContextProvider cookies={cookies}>
             <XOContractsProvider>
               <TimerProvider>
-                <WalletProvider>
-                  <div className="w-full max-w-[430px] min-h-screen bg-white shadow-2xl relative flex flex-col">
-                    {children}
-                  </div>
-                </WalletProvider>
+                <div className="w-full max-w-[430px] min-h-screen bg-white shadow-2xl relative flex flex-col">
+                  {children}
+                </div>
               </TimerProvider>
             </XOContractsProvider>
           </ContextProvider>
