@@ -40,15 +40,15 @@ export function useCreateDispute() {
 
       // 1. Call the contract function
       const time = 60 * 60 * 24;
-      const tx = await contract.createDispute(
-        defenderAddress,
-        category, // <--- Key for subcourts
-        ipfsHash, // <--- Key for UI content
-        BigInt(jurorsRequired),
-        BigInt(time), // paySeconds
-        BigInt(time), // commitSeconds
-        BigInt(time), // revealSeconds
-      );
+      const tx = await contract.createDispute({
+        defender: defenderAddress,
+        category: category,
+        ipfsHash: ipfsHash,
+        jurorsRequired: BigInt(jurorsRequired),
+        paySeconds: BigInt(time),
+        commitSeconds: BigInt(time),
+        revealSeconds: BigInt(time),
+      });
 
       console.log("Transaction sent:", tx.hash);
       toast.info("Transaction sent. Waiting for confirmation...");

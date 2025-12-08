@@ -1,6 +1,6 @@
 export const sliceAddress = process.env.NEXT_PUBLIC_SLICE_ADDRESS
   ? process.env.NEXT_PUBLIC_SLICE_ADDRESS
-  : "0x9deDB079b88442E48Df54479fa6Ee377dCbAF187";
+  : "0x557070a0490763E85b9802428A1117e474FF2712";
 
 export const sliceAbi = [
   {
@@ -175,39 +175,70 @@ export const sliceAbi = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
         internalType: "address",
-        name: "_defender",
+        name: "",
         type: "address",
       },
+    ],
+    name: "commitments",
+    outputs: [
       {
-        internalType: "string",
-        name: "_category",
-        type: "string",
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
       },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
       {
-        internalType: "string",
-        name: "_ipfsHash",
-        type: "string",
-      },
-      {
-        internalType: "uint256",
-        name: "_jurorsRequired",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "_paySeconds",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "_commitSeconds",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "_revealSeconds",
-        type: "uint256",
+        components: [
+          {
+            internalType: "address",
+            name: "defender",
+            type: "address",
+          },
+          {
+            internalType: "string",
+            name: "category",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "ipfsHash",
+            type: "string",
+          },
+          {
+            internalType: "uint256",
+            name: "jurorsRequired",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "paySeconds",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "commitSeconds",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "revealSeconds",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct Slice.DisputeConfig",
+        name: "_config",
+        type: "tuple",
       },
     ],
     name: "createDispute",
@@ -222,6 +253,152 @@ export const sliceAbi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "disputeCount",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "disputeCountView",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "disputeJurors",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_id",
+        type: "uint256",
+      },
+    ],
+    name: "disputes",
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "id",
+            type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "claimer",
+            type: "address",
+          },
+          {
+            internalType: "address",
+            name: "defender",
+            type: "address",
+          },
+          {
+            internalType: "string",
+            name: "category",
+            type: "string",
+          },
+          {
+            internalType: "uint256",
+            name: "requiredStake",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "jurorStake",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "jurorsRequired",
+            type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "ipfsHash",
+            type: "string",
+          },
+          {
+            internalType: "enum Slice.DisputeStatus",
+            name: "status",
+            type: "uint8",
+          },
+          {
+            internalType: "bool",
+            name: "claimerPaid",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "defenderPaid",
+            type: "bool",
+          },
+          {
+            internalType: "address",
+            name: "winner",
+            type: "address",
+          },
+          {
+            internalType: "uint256",
+            name: "payDeadline",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "commitDeadline",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "revealDeadline",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct Slice.Dispute",
+        name: "",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -232,6 +409,30 @@ export const sliceAbi = [
     name: "executeRuling",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "hasRevealed",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -284,141 +485,24 @@ export const sliceAbi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "disputeCount",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "uint256",
         name: "",
         type: "uint256",
       },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
     ],
-    name: "disputes",
+    name: "revealedVotes",
     outputs: [
       {
         internalType: "uint256",
-        name: "id",
+        name: "",
         type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "claimer",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "defender",
-        type: "address",
-      },
-      {
-        internalType: "string",
-        name: "category",
-        type: "string",
-      },
-      {
-        internalType: "uint256",
-        name: "requiredStake",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "jurorStake",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "jurorsRequired",
-        type: "uint256",
-      },
-      {
-        internalType: "enum Slice.DisputeStatus",
-        name: "status",
-        type: "uint8",
-      },
-      {
-        internalType: "bool",
-        name: "claimerPaid",
-        type: "bool",
-      },
-      {
-        internalType: "bool",
-        name: "defenderPaid",
-        type: "bool",
-      },
-      {
-        internalType: "address",
-        name: "winner",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "payDeadline",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "commitDeadline",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "revealDeadline",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_id",
-        type: "uint256",
-      },
-    ],
-    name: "getDisputeDetails",
-    outputs: [
-      {
-        internalType: "address",
-        name: "claimer",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "defender",
-        type: "address",
-      },
-      {
-        internalType: "enum Slice.DisputeStatus",
-        name: "status",
-        type: "uint8",
-      },
-      {
-        internalType: "uint256",
-        name: "jurorsJoined",
-        type: "uint256",
-      },
-      {
-        internalType: "bool",
-        name: "isClaimerPaid",
-        type: "bool",
-      },
-      {
-        internalType: "bool",
-        name: "isDefenderPaid",
-        type: "bool",
       },
     ],
     stateMutability: "view",
