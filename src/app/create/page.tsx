@@ -2,11 +2,19 @@
 
 import React, { useState } from "react";
 import { useCreateDispute } from "@/hooks/useCreateDispute";
-import { Loader2, UploadCloud, ShieldAlert, Users } from "lucide-react";
+import {
+  Loader2,
+  UploadCloud,
+  ShieldAlert,
+  Users,
+  ArrowLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function CreateDisputePage() {
+  const router = useRouter();
   const { createDispute, isCreating } = useCreateDispute();
 
   // Form State
@@ -15,8 +23,6 @@ export default function CreateDisputePage() {
   const [description, setDescription] = useState("");
   const [defenderAddress, setDefenderAddress] = useState("");
   const [evidenceLink, setEvidenceLink] = useState("");
-
-  // NEW: State for number of jurors
   const [jurorsRequired, setJurorsRequired] = useState(3);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,22 +47,30 @@ export default function CreateDisputePage() {
       created_at: new Date().toISOString(),
     };
 
-    // Pass jurorsRequired as the 4th argument
     await createDispute(defenderAddress, category, disputeData, jurorsRequired);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col p-4">
-      <div className="mb-6 mt-4">
-        <h1 className="text-2xl font-extrabold text-[#1b1c23]">
-          Create Dispute
-        </h1>
-        <p className="text-sm text-gray-500">Initiate a new claim on-chain.</p>
+      <div className="flex items-center gap-4 mb-6 mt-4">
+        <button
+          onClick={() => router.back()}
+          className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+        >
+          <ArrowLeft className="w-5 h-5 text-[#1b1c23]" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#1b1c23]">
+            Create Dispute
+          </h1>
+          <p className="text-sm text-gray-500">
+            Initiate a new claim on-chain.
+          </p>
+        </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[18px] p-6 shadow-sm border border-gray-100 flex flex-col gap-6 overflow-y-auto">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* ... [Title Input] ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-[#1b1c23]">
               Dispute Title
