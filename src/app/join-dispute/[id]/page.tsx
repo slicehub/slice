@@ -90,7 +90,7 @@ export default function JoinDisputePage() {
           <button
             onClick={handleConfirm}
             disabled={isJoining}
-            className="w-full py-4 bg-[#1b1c23] text-white rounded-xl font-manrope font-bold text-sm hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98]"
+            className="w-full py-4 bg-[#1b1c23] text-white rounded-xl font-manrope font-semibold hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98]"
           >
             {isJoining ? (
               <>
@@ -99,7 +99,7 @@ export default function JoinDisputePage() {
               </>
             ) : (
               <>
-                Confirm & Join Jury
+                Join Jury
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

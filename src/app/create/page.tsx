@@ -12,10 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function CreateDisputePage() {
   const router = useRouter();
   const { createDispute, isCreating } = useCreateDispute();
+  // 2. Initialize client
+  const queryClient = useQueryClient();
 
   // Form State
   const [title, setTitle] = useState("");
@@ -33,7 +36,6 @@ export default function CreateDisputePage() {
       return;
     }
 
-    // Basic validation for odd number of jurors to prevent ties
     if (jurorsRequired % 2 === 0) {
       toast.error("Please select an odd number of jurors to prevent ties.");
       return;
@@ -55,12 +57,14 @@ export default function CreateDisputePage() {
     );
 
     if (success) {
+      // 3. Invalidate the 'disputeCount' query so Profile page refetches instantly
+      await queryClient.invalidateQueries({ queryKey: ["disputeCount"] });
       router.push("/profile");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col p-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col p-4 pb-[90px]">
       <div className="flex items-center gap-4 mb-6 mt-4">
         <button
           onClick={() => router.back()}
@@ -94,7 +98,6 @@ export default function CreateDisputePage() {
             />
           </div>
 
-          {/* ... [Category Select] ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-[#1b1c23]">Category</label>
             <select
@@ -110,7 +113,6 @@ export default function CreateDisputePage() {
             </select>
           </div>
 
-          {/* ... [Defender Address Input] ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-[#1b1c23]">
               Defendant Address
@@ -125,7 +127,6 @@ export default function CreateDisputePage() {
             />
           </div>
 
-          {/* NEW: Jurors Required Input */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-[#1b1c23] flex justify-between">
               <span>Jurors Needed</span>
@@ -139,7 +140,7 @@ export default function CreateDisputePage() {
                 type="range"
                 min="1"
                 max="11"
-                step="2" // Steps of 2 ensures odd numbers (3, 5, 7, 9, 11)
+                step="2"
                 value={jurorsRequired}
                 onChange={(e) => setJurorsRequired(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#8c8fff]"
@@ -151,7 +152,6 @@ export default function CreateDisputePage() {
             </p>
           </div>
 
-          {/* ... [Description Textarea] ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-[#1b1c23]">
               Description
@@ -165,7 +165,6 @@ export default function CreateDisputePage() {
             />
           </div>
 
-          {/* ... [Evidence Input] ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-[#1b1c23]">
               Evidence Link (Optional)

@@ -224,7 +224,7 @@ export default function RevealPage() {
             )}
 
             <button
-              className="w-full py-4 px-4 bg-[#1b1c23] text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-4 shadow-lg hover:bg-[#2c2d33] transition-colors active:scale-[0.98]"
+              className="w-full py-4 px-4 bg-[#1b1c23] text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed mt-4 shadow-lg hover:bg-[#2c2d33] transition-colors active:scale-[0.98]"
               onClick={() => void handleReveal()}
               disabled={isProcessing || !hasLocalData}
             >

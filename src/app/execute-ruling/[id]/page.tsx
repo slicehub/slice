@@ -1,13 +1,11 @@
 "use client";
-
 import React, { useRef, useCallback, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOverviewHeader";
 import { DisputeInfoCard } from "@/components/dispute-overview/DisputeInfoCard";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { useExecuteRuling } from "@/hooks/useExecuteRuling";
 import { SuccessAnimation } from "@/components/SuccessAnimation";
-import { Loader2, Gavel } from "lucide-react";
+import { Loader2, Gavel, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ExecuteRulingPage() {
@@ -19,7 +17,7 @@ export default function ExecuteRulingPage() {
   const { executeRuling, isExecuting } = useExecuteRuling();
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Aesthetic: Swipe/Touch Handling (Consistent with other pages)
+  // Aesthetic: Swipe/Touch Handling
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const isDragging = useRef(false);
@@ -49,7 +47,7 @@ export default function ExecuteRulingPage() {
     router.push("/profile");
   };
 
-  // --- Swipe Logic (Optional for consistency) ---
+  // --- Swipe Logic ---
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     isDragging.current = true;
@@ -108,15 +106,25 @@ export default function ExecuteRulingPage() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <DisputeOverviewHeader onBack={handleBack} />
-
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
-        {/* Status Header */}
-        <div className="mx-[19px] mt-4">
-          <h1 className="text-2xl font-extrabold text-[#1b1c23] mb-2 flex items-center gap-2">
-            <Gavel className="w-6 h-6 text-[#8c8fff]" />
+      {/* 3. NEW STICKY HEADER */}
+      <div className="pt-12 px-6 pb-4 bg-white shadow-[0px_2px_4px_0px_rgba(27,28,35,0.02)] z-10 sticky top-0">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleBack}
+            className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors shrink-0 shadow-sm border border-gray-100"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#1b1c23]" />
+          </button>
+          <h1 className="text-lg font-extrabold text-[#1b1c23] flex items-center gap-2">
+            <Gavel className="w-5 h-5 text-[#8c8fff]" />
             Execute Ruling
           </h1>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+        {/* Description Section (Moved Title to Header) */}
+        <div className="mx-[19px] mt-2">
           <p className="text-sm text-gray-500">
             Tally votes, determine the winner, and distribute stakes.
           </p>
@@ -132,7 +140,7 @@ export default function ExecuteRulingPage() {
         )}
 
         {/* Action Section */}
-        <div className="mx-[19px] bg-white rounded-[18px] p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-4">
+        <div className="mx-[19px] bg-white rounded-[18px] p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-4 mb-24">
           {dispute?.status === 3 ? (
             // Status 3 = Finished
             <div className="flex flex-col items-center gap-2">
@@ -181,7 +189,7 @@ export default function ExecuteRulingPage() {
                 onClick={() => void handleExecute()}
                 disabled={isExecuting || !dispute || dispute.status !== 2}
                 className={`
-                  w-full py-4 rounded-xl font-manrope font-extrabold text-sm tracking-tight
+                  w-full py-4 rounded-xl font-manrope font-semibold tracking-tight
                   flex items-center justify-center gap-2 transition-all
                   ${
                     isExecuting || !dispute || dispute.status !== 2
@@ -196,7 +204,7 @@ export default function ExecuteRulingPage() {
                     Executing...
                   </>
                 ) : (
-                  "EXECUTE RULING"
+                  "Execute Ruling"
                 )}
               </button>
             </>

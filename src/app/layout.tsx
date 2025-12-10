@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-
-import { headers } from "next/headers"; // added
+import { headers } from "next/headers";
 import "./globals.css";
 import ContextProvider from "@/contexts";
 import { XOContractsProvider } from "@/providers/XOContractsProvider";
 import { EmbeddedProvider } from "@/providers/EmbeddedProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TimerProvider } from "@/contexts/TimerContext";
+import { BottomNavigation } from "@/components/layout/BottomNavigation"; // Import added
 
 export const metadata: Metadata = {
   title: "Slice",
-  description: "Get paid for doing justice", // Updated description text
+  description: "Get paid for doing justice",
   icons: {
     icon: "/images/slice-logo-light.svg",
   },
@@ -43,8 +43,19 @@ export default async function RootLayout({
           <ContextProvider cookies={cookies}>
             <XOContractsProvider>
               <TimerProvider>
+                {/* Updated Structure:
+                  1. relative: allows absolute positioning inside if needed
+                  2. flex flex-col: enables the "sticky footer" layout
+                */}
                 <div className="w-full max-w-[430px] min-h-screen bg-white shadow-2xl relative flex flex-col">
-                  {children}
+                  {/* Content grows to fill space, pushing nav to bottom */}
+                  {/* The pb adds a safe zone at the bottom of every page so content */}
+                  <div className="flex-1 flex flex-col pb-[70px]">
+                    {children}
+                  </div>
+
+                  {/* Persistent Bottom Navigation */}
+                  <BottomNavigation />
                 </div>
               </TimerProvider>
             </XOContractsProvider>

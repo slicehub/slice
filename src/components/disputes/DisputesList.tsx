@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { DisputeCard } from "./DisputeCard";
 import { BarChartIcon } from "./icons/Icon";
 import { FilterIcon } from "./icons/BadgeIcons";
-import styles from "./DisputesList.module.css";
 import { Gavel, Eye } from "lucide-react";
 import { useXOContracts } from "@/providers/XOContractsProvider";
 
@@ -109,7 +108,6 @@ export const DisputesList: React.FC = () => {
 
       if (joinedDisputes.length > 0) {
         // 2. FIND MOST RELEVANT: For now, we take the highest ID (latest one joined)
-        // In a real app, you might check statuses to see which one actually needs a vote.
         const myLatestId = Math.max(...joinedDisputes);
         setActiveDisputeId(myLatestId.toString());
       } else {
@@ -123,13 +121,16 @@ export const DisputesList: React.FC = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.titleSection}>
-          <div className={styles.icon}>
+    <div className="px-5 mt-10 w-full box-border">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-5 w-full">
+        <div className="flex items-center gap-[11px]">
+          <div className="w-5 h-5 flex items-center justify-center shrink-0 overflow-hidden rounded-[6px]">
             <BarChartIcon />
           </div>
-          <h2 className={styles.title}>My disputes:</h2>
+          <h2 className="font-manrope font-extrabold text-[15px] leading-none text-[#1b1c23] tracking-[-0.3px] m-0">
+            My disputes:
+          </h2>
         </div>
 
         <div className="flex items-center gap-2">
@@ -177,21 +178,39 @@ export const DisputesList: React.FC = () => {
             />
           </button>
 
-          <button className={styles.filterButton}>
+          {/* Filter Button */}
+          <button className="bg-white border-none rounded-[13.5px] px-[14px] py-[6px] flex items-center gap-2 cursor-pointer font-manrope font-extrabold text-[11px] text-[#1b1c23] tracking-[-0.22px] transition-opacity duration-200 hover:opacity-80">
             <span>Filter</span>
             <FilterIcon size={12} />
           </button>
         </div>
       </div>
 
-      <div className={styles.disputesContainer}>
-        {/* Ideally, we would also filter this list to show the real disputes you joined */}
+      {/* Disputes List */}
+      <div className="flex flex-col gap-[25px] mb-10">
         {mockDisputes.map((dispute) => (
           <DisputeCard key={dispute.id} dispute={dispute} />
         ))}
       </div>
 
-      <button className={styles.justiceButton} onClick={handleJusticeClick}>
+      {/* Floating Action Button - Corrected Styling */}
+      {/* Updated: Uses explicit '#1b1c23' color to match design system exactly.
+          Added: hover:text-white to ensure contrast on hover state.
+      */}
+      <button
+        onClick={handleJusticeClick}
+        className="
+          fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50
+          w-[241px] max-w-[calc(100%-76px)] h-10
+          bg-white text-[#1b1c23]
+          border-2 border-[#8c8fff] rounded-[14px]
+          shadow-[0px_0px_10px_0px_rgba(140,143,255,0.5)]
+          font-manrope font-semibold tracking-[-0.28px]
+          cursor-pointer transition-all duration-200
+          hover:bg-[#8c8fff] hover:text-white
+          flex items-center justify-center
+        "
+      >
         Make Justice
       </button>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -15,35 +15,29 @@ import {
 } from "lucide-react";
 import ConnectButton from "@/components/ConnectButton";
 import { useSliceContract } from "@/hooks/useSliceContract";
+import { useQuery } from "@tanstack/react-query";
 
 export default function ProfilePage() {
   const router = useRouter();
-  // const { address } = useXOContracts();
   const contract = useSliceContract();
 
-  // State for the "Test Tools" input
   const [targetDisputeId, setTargetDisputeId] = useState("");
-  const [latestDisputeId, setLatestDisputeId] = useState<number | null>(null);
-  const [loadingLatest, setLoadingLatest] = useState(false);
 
-  // Fetch the latest dispute count when contract is ready
-  const fetchLatestId = useCallback(async () => {
-    if (!contract) return;
-    setLoadingLatest(true);
-    try {
+  const {
+    data: latestDisputeId,
+    isLoading: loadingLatest,
+    refetch,
+  } = useQuery({
+    queryKey: ["disputeCount"],
+    queryFn: async () => {
+      if (!contract) return null;
       const count = await contract.disputeCount();
-      setLatestDisputeId(Number(count));
-    } catch (error) {
-      console.error("Failed to fetch dispute count", error);
-    } finally {
-      setLoadingLatest(false);
-    }
-  }, [contract]); // 3. Add dependencies 'contract' needs here
+      return Number(count);
+    },
+    enabled: !!contract,
+    staleTime: 0,
+  });
 
-  // 4. Now you can safely add it to useEffect
-  useEffect(() => {
-    void fetchLatestId();
-  }, [fetchLatestId]);
   const handleNavigation = (path: string) => {
     if (path.includes("[id]")) {
       if (!targetDisputeId) return;
@@ -54,13 +48,13 @@ export default function ProfilePage() {
   };
 
   const autofillLatest = () => {
-    if (latestDisputeId !== null) {
+    if (latestDisputeId !== null && latestDisputeId !== undefined) {
       setTargetDisputeId(latestDisputeId.toString());
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 pb-[90px]">
       {/* --- Header --- */}
       <div className="w-full px-5 pt-9 pb-4 flex items-center justify-between bg-white shadow-sm z-10 sticky top-0">
         <button
@@ -110,7 +104,7 @@ export default function ProfilePage() {
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                 Rank
               </span>
-              <span className="text-lg font-extrabold text-[#1b1c23]">
+              <span className="text-lg font-semibold text-[#1b1c23]">
                 Justice Lvl 5
               </span>
             </div>
@@ -118,7 +112,7 @@ export default function ProfilePage() {
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                 Earnings
               </span>
-              <span className="text-lg font-extrabold text-[#1b1c23]">
+              <span className="text-lg font-semibold text-[#1b1c23]">
                 $1,240
               </span>
             </div>
@@ -151,7 +145,7 @@ export default function ProfilePage() {
         </div>
 
         {/* --- Testing Tools Zone --- */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pb-8">
           <div className="flex justify-between items-center ml-1">
             <h3 className="font-manrope font-bold text-sm text-[#8c8fff] uppercase tracking-wider flex items-center gap-2">
               Dev Tools{" "}
@@ -159,54 +153,51 @@ export default function ProfilePage() {
                 TESTNET
               </span>
             </h3>
-            <div className="flex gap-3">
+
+            {/* 2. Updated Header Actions (Debug + Refresh) */}
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push("/debug")}
-                className="w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg px-3"
+                className="py-1.5 px-3 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center shadow-sm active:scale-95"
+                title="Open Debugger"
               >
-                <Bug className="w-4 h-4 text-[#8c8fff]" />
+                <Bug className="w-3.5 h-3.5 text-[#8c8fff]" />
               </button>
               <button
-                onClick={() => void fetchLatestId()}
+                onClick={() => void refetch()}
                 disabled={loadingLatest}
-                className="text-[#8c8fff] hover:bg-[#8c8fff]/10 p-1 rounded-full transition-colors"
+                className="text-[#8c8fff] hover:bg-[#8c8fff]/10 p-1.5 rounded-full transition-colors active:scale-95"
+                title="Refresh Data"
               >
                 <RefreshCw
-                  className={`w-3.5 h-3.5 ${loadingLatest ? "animate-spin" : ""}`}
+                  className={`w-4 h-4 ${loadingLatest ? "animate-spin" : ""}`}
                 />
               </button>
             </div>
           </div>
 
           <div className="bg-white p-5 rounded-[18px] border border-gray-100 shadow-sm flex flex-col gap-4">
-            {/* Latest Dispute Info Box */}
-            {latestDisputeId !== null && (
-              <div className="bg-[#f0f9ff] border border-[#bae6fd] rounded-xl p-3 flex justify-between items-center">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-[#0284c7] uppercase tracking-wider">
-                    Latest Created
-                  </span>
-                  <span className="text-sm font-bold text-[#0c4a6e]">
-                    Dispute #{latestDisputeId}
-                  </span>
-                </div>
-                <button
-                  onClick={autofillLatest}
-                  className="px-3 py-1.5 bg-[#0ea5e9] text-white text-xs font-bold rounded-lg hover:bg-[#0284c7] transition-colors"
-                >
-                  Use ID
-                </button>
-              </div>
-            )}
+            {/* 3. Removed the big black "Contract Debugger" button here */}
 
+            {/* Latest Dispute Info Box */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#1b1c23] uppercase flex items-center gap-1">
-                <Hash className="w-3 h-3" />
-                Target Dispute ID
+              <label className="text-xs font-bold text-[#1b1c23] uppercase flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Hash className="w-3 h-3" /> Target Dispute ID
+                </span>
+                {latestDisputeId !== null && latestDisputeId !== undefined && (
+                  <button
+                    onClick={autofillLatest}
+                    className="text-[14px] text-[#8c8fff] hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    Latest:{" "}
+                    <span className="font-bold">#{latestDisputeId}</span>
+                  </button>
+                )}
               </label>
               <input
                 type="text"
-                placeholder="e.g. 1, 2, 42..."
+                placeholder="e.g. 1"
                 className="w-full bg-[#f5f6f9] p-3 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#8c8fff]"
                 value={targetDisputeId}
                 onChange={(e) => setTargetDisputeId(e.target.value)}
@@ -236,14 +227,6 @@ export default function ProfilePage() {
                 </span>
               </button>
             </div>
-
-            <button
-              onClick={() => handleNavigation("/reveal/[id]")}
-              disabled={!targetDisputeId}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 text-xs font-bold hover:border-[#8c8fff] hover:text-[#8c8fff] transition-colors disabled:opacity-50"
-            >
-              DEBUG: FORCE REVEAL PAGE
-            </button>
           </div>
         </div>
       </div>

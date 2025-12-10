@@ -119,7 +119,7 @@ export default function PayDisputePage() {
         <InfoCard />
       </div>
 
-      <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4 z-10">
+      <div className="fixed bottom-[80px] left-0 right-0 flex justify-center px-4 z-10">
         {isPaying ? (
           <div className="bg-[#1b1c23] text-white px-6 py-3 rounded-2xl font-manrope font-bold animate-pulse flex items-center gap-2">
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -144,7 +144,7 @@ export default function VotePage() {
                   </div>
                   {/* Vote ID Style */}
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-colors ${
                       selectedVote === 1
                         ? "bg-[#1b1c23] text-white"
                         : "bg-[#f5f6f9] text-gray-400 group-hover:bg-[#1b1c23]/10"
@@ -178,7 +178,7 @@ export default function VotePage() {
                   </div>
                   {/* Vote ID Style */}
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-colors ${
                       selectedVote === 0
                         ? "bg-[#1b1c23] text-white"
                         : "bg-[#f5f6f9] text-gray-400 group-hover:bg-[#1b1c23]/10"
@@ -201,7 +201,7 @@ export default function VotePage() {
             {/* 1. Commit Button */}
             <button
               className={`
-                w-full py-4 px-4 rounded-xl font-bold text-sm transition-all
+                w-full py-4 px-4 rounded-xl font-semibold transition-all
                 flex items-center justify-center gap-2
                 ${
                   isCommitDisabled
@@ -220,18 +220,18 @@ export default function VotePage() {
               onClick={() => router.push(`/reveal/${disputeId}`)}
               disabled={isRevealDisabled}
               className={`
-                  w-full py-4 px-4 rounded-xl font-bold text-sm transition-all
+                  w-full py-4 px-4 rounded-xl font-semibold transition-all
                   flex items-center justify-center gap-2
                   ${
                     isRevealDisabled
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-[#1b1c23] text-white hover:bg-[#2c2d33] shadow-lg active:scale-[0.98]"
+                      : "bg-[#1b1c23] flex justify-center items-center text-white hover:bg-[#2c2d33] shadow-lg active:scale-[0.98]"
                   }
                 `}
             >
               <Eye className="w-4 h-4" />
               <span>Go to Reveal Page</span>
-              {!isRevealDisabled && <ArrowRight className="w-4 h-4 ml-auto" />}
+              {!isRevealDisabled && <ArrowRight className="w-4 h-4" />}
             </button>
           </div>
         </div>
