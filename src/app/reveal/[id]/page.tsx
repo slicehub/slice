@@ -74,7 +74,7 @@ export default function RevealPage() {
 
   const handleAnimationComplete = () => {
     setShowSuccessAnimation(false);
-    router.push(`/disputes/${disputeId}`);
+    router.push("/disputes");
   };
 
   return (
