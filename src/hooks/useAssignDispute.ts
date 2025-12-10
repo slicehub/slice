@@ -1,76 +1,122 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useSliceContract } from "./useSliceContract";
 import { useXOContracts } from "@/providers/XOContractsProvider";
-import { parseEther } from "ethers"; // ethers v6 top-level import
+import { parseEther } from "ethers";
 import { toast } from "sonner";
 
+// Note: saves the dispute we join to local storage
 export function useAssignDispute() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isFinding, setIsFinding] = useState(false);
   const contract = useSliceContract();
   const { address } = useXOContracts();
 
-  const assignDispute = async (category: string, stakeAmount: bigint) => {
+  // 1. MATCHMAKER: Find a random active dispute ID
+  const findActiveDispute = useCallback(async (): Promise<number | null> => {
+    if (!contract) return null;
+    setIsFinding(true);
+
+    try {
+      const countBigInt = await contract.disputeCount();
+      const totalDisputes = Number(countBigInt);
+
+      if (totalDisputes === 0) {
+        toast.error("No disputes created yet.");
+        return null;
+      }
+
+      console.log(`Searching ${totalDisputes} disputes for active cases...`);
+
+      const availableIds: number[] = [];
+
+      // Scan for Active disputes (Status 0=Created or 1=Commit)
+      // We skip Status 2 (Reveal) and 3 (Executed)
+      for (let i = 1; i <= totalDisputes; i++) {
+        try {
+          const d = await contract.disputes(i);
+          const status = Number(d.status);
+
+          // 1. Check On-Chain Status (Must be Commit Phase)
+          // If you want to avoid unpaid disputes, strictly require Status 1.
+          // If Status 0 is allowed, keep "status < 2".
+          const isActiveStatus = status === 1;
+
+          // 2. Check Timestamps
+          // Contract returns seconds, JS needs milliseconds
+          const commitDeadline = Number(d.commitDeadline) * 1000;
+          const now = Date.now();
+          const isWithinTime = now < commitDeadline;
+
+          // 3. Optional: Check Funding Explicitly
+          // (If status is 1, they should be paid, but safe to check)
+          const isFunded = d.claimerPaid && d.defenderPaid;
+
+          // Only add if it's active
+          if (isActiveStatus && isWithinTime && isFunded) {
+            availableIds.push(i);
+          }
+        } catch (e) {
+          console.warn(`Skipping dispute #${i}`, e);
+        }
+      }
+      // Random Selection
+      const randomIndex = Math.floor(Math.random() * availableIds.length);
+      return availableIds[randomIndex];
+    } catch (error) {
+      console.error("Error finding dispute:", error);
+      toast.error("Error searching for disputes");
+      return null;
+    } finally {
+      setIsFinding(false);
+    }
+  }, [contract]);
+
+  // 2. ACTION: Join a specific dispute
+  const joinDispute = async (disputeId: number, stakeAmountEth: string) => {
     if (!contract || !address) {
       toast.error("Wallet not connected");
-      return null;
+      return false;
     }
 
     setIsLoading(true);
 
     try {
-      // 1. "Matchmaking": Find a dispute to join.
-      // For this demo, we simply try to join the most recently created dispute.
-      const count = await contract.disputeCount();
+      console.log(`Joining Dispute #${disputeId} with ${stakeAmountEth} ETH`);
 
-      if (Number(count) === 0) {
-        toast.error("No disputes available to join");
-        setIsLoading(false);
-        return null;
-      }
-
-      const latestDisputeId = count; // IDs usually 1-based or 0-based depending on contract logic
-
-      console.log(
-        `Attempting to join dispute #${latestDisputeId} with ${stakeAmount} ETH stake`,
-      );
-
-      // 2. Send Transaction (Payable)
-      // We convert the stake amount to a string for parseEther.
-      // Assuming 'stakeAmount' from UI is in full units (e.g. "20" MATIC), not Wei.
-      const _ethAmount = stakeAmount.toString();
-
-      // In Ethers v6, overrides like { value } are passed as the last argument
-      const tx = await contract.joinDispute(latestDisputeId, {
-        // TODO! Add dynamic pricing for both smart contract and app
-        value: parseEther("0.00005"),
+      const tx = await contract.joinDispute(disputeId, {
+        value: parseEther(stakeAmountEth),
       });
 
-      toast.info("Staking transaction sent...");
+      toast.info("Transaction sent...");
+      await tx.wait();
 
-      // 3. Wait for confirmation
-      const receipt = await tx.wait();
-      console.log("Joined successfully:", receipt);
+      // Save Joined Status Locally
+      // We use a Set-like structure in localStorage to track joined IDs
+      const storageKey = `slice_joined_disputes_${address}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (!existing.includes(disputeId)) {
+        existing.push(disputeId);
+        localStorage.setItem(storageKey, JSON.stringify(existing));
+      }
 
-      toast.success(`Successfully joined Dispute #${latestDisputeId}!`);
-
-      // 4. Return format expected by the UI: [disputeId, jurorAddress]
-      return [latestDisputeId, address];
+      toast.success(`Successfully joined Dispute #${disputeId}!`);
+      return true;
     } catch (error: any) {
       console.error("Error joining dispute:", error);
+      const msg = error.reason || error.message || "Transaction failed";
 
-      // Handle common Reverts (e.g. "Already joined", "Wrong status")
-      if (error.message.includes("revert")) {
+      if (msg.includes("revert")) {
         toast.error(
-          "Transaction reverted. You may have already joined or the dispute is closed.",
+          "Transaction reverted. You may have already joined this dispute.",
         );
       } else {
-        toast.error("Failed to assign dispute");
+        toast.error("Failed to join dispute.");
       }
-      return null;
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { assignDispute, isLoading };
+  return { findActiveDispute, joinDispute, isLoading, isFinding };
 }

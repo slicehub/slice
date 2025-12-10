@@ -47,7 +47,16 @@ export default function CreateDisputePage() {
       created_at: new Date().toISOString(),
     };
 
-    await createDispute(defenderAddress, category, disputeData, jurorsRequired);
+    const success = await createDispute(
+      defenderAddress,
+      category,
+      disputeData,
+      jurorsRequired,
+    );
+
+    if (success) {
+      router.push("/profile");
+    }
   };
 
   return (

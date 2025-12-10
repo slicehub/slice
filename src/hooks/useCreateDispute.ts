@@ -9,25 +9,23 @@ export function useCreateDispute() {
 
   const createDispute = async (
     defenderAddress: string,
-    category: string, // PASSED SEPARATELY for on-chain subcourt logic
+    category: string,
     disputeData: {
       title: string;
       description: string;
       evidence?: string[];
     },
     jurorsRequired: number = 3,
-  ) => {
+  ): Promise<boolean> => {
     if (!contract) {
       toast.error("Wallet not connected");
-      return;
+      return false;
     }
 
     setIsCreating(true);
     try {
       toast.info("Uploading evidence to IPFS...");
 
-      // 1. Upload Rich Metadata to IPFS
-      // We include category here too just for redundancy/display convenience
       const ipfsHash = await uploadJSONToIPFS({
         ...disputeData,
         category,
@@ -35,6 +33,7 @@ export function useCreateDispute() {
       if (!ipfsHash) {
         throw new Error("Failed to upload to IPFS");
       }
+
       console.log("IPFS Hash created:", ipfsHash);
       toast.info("Creating dispute on-chain...");
 
@@ -55,12 +54,14 @@ export function useCreateDispute() {
 
       // 2. Wait for the transaction to be mined
       const receipt = await tx.wait();
-
       console.log("Transaction confirmed:", receipt);
+
       toast.success("Dispute created successfully!");
+      return true; // SUCCESS
     } catch (error) {
       console.error("Error creating dispute:", error);
       toast.error("Failed to create dispute");
+      return false; // FAILURE
     } finally {
       setIsCreating(false);
     }

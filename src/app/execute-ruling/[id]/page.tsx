@@ -15,12 +15,11 @@ export default function ExecuteRulingPage() {
   const params = useParams();
   const disputeId = (params?.id as string) || "1";
 
-  // Hooks
   const { dispute, refetch } = useGetDispute(disputeId);
   const { executeRuling, isExecuting } = useExecuteRuling();
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // --- Aesthetic: Swipe/Touch Handling (Consistent with other pages) ---
+  // Aesthetic: Swipe/Touch Handling (Consistent with other pages)
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const isDragging = useRef(false);
@@ -47,7 +46,7 @@ export default function ExecuteRulingPage() {
 
   const handleAnimationComplete = () => {
     setShowSuccess(false);
-    router.push(`/disputes/${disputeId}`);
+    router.push("/profile");
   };
 
   // --- Swipe Logic (Optional for consistency) ---

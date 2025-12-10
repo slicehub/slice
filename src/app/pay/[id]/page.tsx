@@ -27,7 +27,7 @@ export default function PayDisputePage() {
     if (dispute) {
       // 1. Check Status: If status > 0 (Created), payment is already done
       if (dispute.status > 0) {
-        router.replace(`/disputes/${disputeId}`);
+        router.replace("/profile");
         return;
       }
 
@@ -56,7 +56,7 @@ export default function PayDisputePage() {
 
     if (success) {
       refetch(); // Refresh local state
-      router.push(`/disputes/${disputeId}`);
+      router.push("/profile");
     }
   };
 

@@ -1,22 +1,28 @@
-import { useAssignDispute } from "../hooks/useAssignDispute";
+import { useAssignDispute } from "@/hooks/useAssignDispute";
 
 export const AssignJurorButton = () => {
-  const { assignDispute, isLoading } = useAssignDispute();
+  const { findActiveDispute, joinDispute, isLoading, isFinding } =
+    useAssignDispute();
 
   const handleClick = async () => {
-    const category = "General";
-    const stakeAmount = BigInt(200); // 200 units of the token
+    // 1. Find a valid dispute
+    const disputeId = await findActiveDispute();
 
-    await assignDispute(category, stakeAmount);
+    if (disputeId) {
+      // 2. Join it with a default stake (Testnet amount)
+      await joinDispute(disputeId, "0.00005");
+    }
   };
+
+  const isBusy = isLoading || isFinding;
 
   return (
     <button
       className="btn btn-primary"
       onClick={() => void handleClick()}
-      disabled={isLoading}
+      disabled={isBusy}
     >
-      {isLoading ? "Assigning..." : "Assign as Juror"}
+      {isBusy ? "Processing..." : "Assign as Juror (Random)"}
     </button>
   );
 };
