@@ -1,10 +1,11 @@
 "use client";
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { DisputeInfoCard } from "@/components/dispute-overview/DisputeInfoCard";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { useExecuteRuling } from "@/hooks/useExecuteRuling";
 import { SuccessAnimation } from "@/components/SuccessAnimation";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture"; //
 import { Loader2, Gavel, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,14 +18,20 @@ export default function ExecuteRulingPage() {
   const { executeRuling, isExecuting } = useExecuteRuling();
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Aesthetic: Swipe/Touch Handling
+  // We still keep the ref for the container structure
   const containerRef = useRef<HTMLDivElement>(null);
-  const startX = useRef<number | null>(null);
-  const isDragging = useRef(false);
 
   const handleBack = () => {
     router.back();
   };
+
+  // --- FIX: Use the standardized hook instead of manual listeners ---
+  const { handlers } = useSwipeGesture({
+    onSwipeRight: () => {
+      // Swipe Right -> Go Back
+      handleBack();
+    },
+  });
 
   const handleExecute = async () => {
     if (!dispute) return;
@@ -46,32 +53,6 @@ export default function ExecuteRulingPage() {
     setShowSuccess(false);
     router.push("/profile");
   };
-
-  // --- Swipe Logic ---
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-    isDragging.current = true;
-  }, []);
-
-  const handleBackCallback = useCallback(() => {
-    router.back();
-  }, [router]);
-
-  const onTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isDragging.current || !startX.current) return;
-      const endX = e.changedTouches[0].clientX;
-      const deltaX = startX.current - endX;
-
-      // Swipe Right -> Back
-      if (deltaX < -50) {
-        handleBackCallback();
-      }
-      isDragging.current = false;
-      startX.current = null;
-    },
-    [handleBackCallback],
-  );
 
   // --- Display Data ---
   const displayDispute = dispute
@@ -103,10 +84,9 @@ export default function ExecuteRulingPage() {
     <div
       ref={containerRef}
       className="flex flex-col h-screen bg-gray-50 relative overflow-hidden"
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
+      {...handlers} // FIX: Spread the hook handlers here instead of manual props
     >
-      {/* 3. NEW STICKY HEADER */}
+      {/* 3. STICKY HEADER */}
       <div className="pt-12 px-6 pb-4 bg-white shadow-[0px_2px_4px_0px_rgba(27,28,35,0.02)] z-10 sticky top-0">
         <div className="flex items-center gap-4">
           <button
@@ -123,7 +103,7 @@ export default function ExecuteRulingPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
-        {/* Description Section (Moved Title to Header) */}
+        {/* Description Section */}
         <div className="mx-[19px] mt-2">
           <p className="text-sm text-gray-500">
             Tally votes, determine the winner, and distribute stakes.
