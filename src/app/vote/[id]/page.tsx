@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useGetDispute } from "@/hooks/useGetDispute";
+import { useSliceContract } from "@/hooks/useSliceContract";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
+import { getVoteData } from "@/util/votingStorage";
 import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOverviewHeader";
 import { TimerCard } from "@/components/dispute-overview/TimerCard";
 import { PaginationDots } from "@/components/dispute-overview/PaginationDots";
@@ -29,6 +31,7 @@ export default function VotePage() {
 
   const params = useParams();
   const disputeId = (params?.id as string) || "1";
+  const contract = useSliceContract();
 
   const { dispute, refetch } = useGetDispute(disputeId);
   const { commitVote, isProcessing, logs } = useSliceVoting();
@@ -43,22 +46,25 @@ export default function VotePage() {
     },
   });
 
-  // Load vote from local storage if available
+  // Load vote from local storage
   useEffect(() => {
-    if (typeof window !== "undefined" && address) {
-      const stored = localStorage.getItem(`slice_vote_${disputeId}_${address}`);
+    // Wait for contract to be ready so we have the address
+    if (typeof window !== "undefined" && address && contract && contract.target) {
+      const contractAddr = contract.target as string;
+
+      // --- FIX: Use utility ---
+      const stored = getVoteData(contractAddr, disputeId, address);
+
       if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setHasCommittedLocally(true);
-          // Set the previously selected vote so it stays highlighted
-          setSelectedVote(parsed.vote);
-        } catch (error) {
-          console.error("Failed to parse local vote data:", error);
-        }
+        setHasCommittedLocally(true);
+        setSelectedVote(stored.vote);
+      } else {
+        // Reset state if no data found for this specific contract
+        setHasCommittedLocally(false);
+        setSelectedVote(null);
       }
     }
-  }, [address, disputeId]);
+  }, [address, disputeId, contract]); // Contract dependency ensures re-run on connection
 
   const handleVoteSelect = (vote: number) => {
     // Prevent changing selection if already committed

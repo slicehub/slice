@@ -15,6 +15,7 @@ import {
 import { fetchJSONFromIPFS } from "@/util/ipfs";
 import { useSliceContract } from "@/hooks/useSliceContract";
 import { useXOContracts } from "@/providers/XOContractsProvider";
+import { hasLocalVote } from "@/util/votingStorage";
 
 interface Task {
   id: string;
@@ -37,7 +38,8 @@ export default function MyVotesPage() {
 
   useEffect(() => {
     const fetchJurorTasks = async () => {
-      if (!address || !contract) return;
+      if (!address || !contract || !contract.target) return;
+      const contractAddr = contract.target as string;
       setIsLoading(true);
 
       try {
@@ -63,9 +65,7 @@ export default function MyVotesPage() {
             // C. Determine User Status
             const hasRevealed = await contract.hasRevealed(id, address);
             // Check local storage only for the "Secret" needed to reveal
-            const localSecret = localStorage.getItem(
-              `slice_vote_${id}_${address}`,
-            );
+            const localSecretExists = hasLocalVote(contractAddr, id, address);
 
             // D. Calculate Phase
             let phase: Task["phase"] = "WAITING";
@@ -74,7 +74,7 @@ export default function MyVotesPage() {
             if (status === 1) {
               // Commit Phase
               deadline = Number(d.commitDeadline);
-              phase = localSecret ? "WAITING" : "VOTE"; // If secret exists, they voted
+              phase = localSecretExists ? "WAITING" : "VOTE"; // If secret exists, they voted
             } else if (status === 2) {
               // Reveal Phase
               deadline = Number(d.revealDeadline);

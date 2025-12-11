@@ -69,7 +69,6 @@ export const BottomNavigation = () => {
               className={`w-5 h-5 ${isProfile ? "stroke-[2.5px] fill-gray-100" : "stroke-2"}`}
             />
           </div>
-          {isProfile && <ActiveDot />}
         </Link>
       </div>
     </div>
