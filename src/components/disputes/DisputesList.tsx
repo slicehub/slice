@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { DisputeCard } from "./DisputeCard";
 import { BarChartIcon } from "./icons/Icon";
 import { FilterIcon } from "./icons/BadgeIcons";
-import { Gavel, Eye } from "lucide-react";
 import { useXOContracts } from "@/providers/XOContractsProvider";
 import { useSliceContract } from "@/hooks/useSliceContract";
 import { fetchJSONFromIPFS } from "@/util/ipfs";
@@ -18,27 +17,23 @@ export interface Dispute {
   votesCount: number;
   totalVotes: number;
   prize: string;
-  status: number; // Added: 0=Created, 1=Commit, 2=Reveal, 3=Finished
-  userVote?: "approve" | "reject";
-  voters: Array<{
-    name: string;
-    avatar?: string;
-    vote: "approve" | "reject";
-  }>;
+  status: number;
+  voters: any[]; // Simplified for portfolio view
 }
 
 export const DisputesList: React.FC = () => {
   const router = useRouter();
   const { address } = useXOContracts();
   const contract = useSliceContract();
-  const [myDisputes, setMyDisputes] = useState<Dispute[]>([]);
-  // 2. Track the full active dispute object, not just ID
-  const [activeDispute, setActiveDispute] = useState<Dispute | null>(null);
+
+  const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const loadMyDisputes = async () => {
+    const loadDisputes = async () => {
       if (!contract || !address) return;
-
+      setIsLoading(true);
       try {
         const jurorIds = await contract.getJurorDisputes(address);
 
@@ -46,13 +41,10 @@ export const DisputesList: React.FC = () => {
           jurorIds.map(async (idBg: bigint) => {
             const id = idBg.toString();
             const d = await contract.disputes(id);
-
             let title = `Dispute #${id}`;
             if (d.ipfsHash) {
               const meta = await fetchJSONFromIPFS(d.ipfsHash);
-              if (meta) {
-                title = meta.title || title;
-              }
+              if (meta?.title) title = meta.title;
             }
 
             return {
@@ -62,125 +54,92 @@ export const DisputesList: React.FC = () => {
               votesCount: 0,
               totalVotes: Number(d.jurorsRequired),
               prize: "Rewards Pending",
-              status: Number(d.status), // 3. Capture the status
+              status: Number(d.status),
               voters: [],
             };
           }),
         );
 
-        const sorted = loaded.reverse();
-        setMyDisputes(sorted);
-
-        if (sorted.length > 0) {
-          setActiveDispute(sorted[0]);
-        }
+        setDisputes(loaded.reverse());
       } catch (e) {
-        console.error("Error loading disputes", e);
+        console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    loadMyDisputes();
+    loadDisputes();
   }, [contract, address]);
 
-  const handleJusticeClick = () => {
-    router.push("/category-amount");
-  };
-
-  // 4. Logic Helper: Is button enabled?
-  const canVote = activeDispute && activeDispute.status === 1; // Commit Phase
-  const canReveal = activeDispute && activeDispute.status === 2; // Reveal Phase
+  // Filter based on Tabs
+  const displayedDisputes = disputes.filter((d) => {
+    if (activeTab === "active") return d.status < 3; // Created, Commit, Reveal
+    return d.status === 3; // Executed/Finished
+  });
 
   return (
-    <div className="px-5 mt-10 w-full box-border">
+    <div className="px-5 mt-8 w-full box-border pb-32">
+      {/* TABS */}
+      <div className="flex gap-6 border-b border-gray-100 mb-6">
+        <button
+          onClick={() => setActiveTab("active")}
+          className={`pb-3 text-sm font-bold transition-all ${
+            activeTab === "active"
+              ? "text-[#1b1c23] border-b-2 border-[#1b1c23]"
+              : "text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          Active Cases
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`pb-3 text-sm font-bold transition-all ${
+            activeTab === "history"
+              ? "text-[#1b1c23] border-b-2 border-[#1b1c23]"
+              : "text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          Past History
+        </button>
+      </div>
+
       <div className="flex justify-between items-center mb-5 w-full">
         <div className="flex items-center gap-[11px]">
           <div className="w-5 h-5 flex items-center justify-center shrink-0 overflow-hidden rounded-[6px]">
             <BarChartIcon />
           </div>
-          <h2 className="font-manrope font-extrabold text-[15px] leading-none text-[#1b1c23] tracking-[-0.3px] m-0">
-            My disputes:
+          <h2 className="font-manrope font-extrabold text-[15px] text-[#1b1c23]">
+            {activeTab === "active" ? "Current Portfolio" : "Resolved Cases"}
           </h2>
         </div>
-
-        <div className="flex items-center gap-2">
-          {/* VOTE BUTTON (Only active in Phase 1) */}
-          <button
-            onClick={() =>
-              activeDispute && router.push(`/vote/${activeDispute.id}`)
-            }
-            disabled={!canVote}
-            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
-              canVote
-                ? "bg-blue-50 border-blue-100 hover:bg-blue-100 cursor-pointer"
-                : "bg-gray-100 border-gray-200 opacity-30 cursor-not-allowed"
-            }`}
-            title={
-              canVote
-                ? `Vote on Dispute #${activeDispute?.id}`
-                : "Voting not active (Wrong phase)"
-            }
-          >
-            <Gavel
-              className={`w-4 h-4 ${canVote ? "text-blue-600" : "text-gray-400"}`}
-            />
-          </button>
-
-          {/* REVEAL BUTTON (Only active in Phase 2) */}
-          <button
-            onClick={() =>
-              activeDispute && router.push(`/reveal/${activeDispute.id}`)
-            }
-            disabled={!canReveal}
-            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
-              canReveal
-                ? "bg-purple-50 border-purple-100 hover:bg-purple-100 cursor-pointer"
-                : "bg-gray-100 border-gray-200 opacity-30 cursor-not-allowed"
-            }`}
-            title={
-              canReveal
-                ? `Reveal for Dispute #${activeDispute?.id}`
-                : "Reveal not active (Wrong phase)"
-            }
-          >
-            <Eye
-              className={`w-4 h-4 ${canReveal ? "text-purple-600" : "text-gray-400"}`}
-            />
-          </button>
-
-          <button className="bg-white border-none rounded-[13.5px] px-[14px] py-[6px] flex items-center gap-2 cursor-pointer font-manrope font-extrabold text-[11px] text-[#1b1c23] tracking-[-0.22px] transition-opacity duration-200 hover:opacity-80">
-            <span>Filter</span>
-            <FilterIcon size={12} />
-          </button>
-        </div>
+        <button className="bg-white rounded-[13.5px] px-[14px] py-[6px] flex items-center gap-2 font-extrabold text-[11px] text-[#1b1c23] hover:opacity-80">
+          <span>Filter</span>
+          <FilterIcon size={12} />
+        </button>
       </div>
 
       <div className="flex flex-col gap-[25px] mb-10">
-        {myDisputes.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-10 text-gray-400 text-xs">
+            Loading...
+          </div>
+        ) : displayedDisputes.length === 0 ? (
           <div className="text-gray-400 text-sm text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
-            No disputes found. Join one to get started!
+            {activeTab === "active"
+              ? "No active cases. Check 'Inbox' for tasks or find new ones."
+              : "No history yet."}
           </div>
         ) : (
-          myDisputes.map((dispute) => (
+          displayedDisputes.map((dispute) => (
             <DisputeCard key={dispute.id} dispute={dispute} />
           ))
         )}
       </div>
 
       <button
-        onClick={handleJusticeClick}
-        className="
-          fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50
-          w-[241px] max-w-[calc(100%-76px)] h-10
-          bg-white text-[#1b1c23]
-          border-2 border-[#8c8fff] rounded-[14px]
-          shadow-[0px_0px_10px_0px_rgba(140,143,255,0.5)]
-          font-manrope font-semibold tracking-[-0.28px]
-          cursor-pointer transition-all duration-200
-          hover:bg-[#8c8fff] hover:text-white
-          flex items-center justify-center
-        "
+        onClick={() => router.push("/category-amount")}
+        className="fixed bottom-[90px] left-1/2 -translate-x-1/2 z-40 w-[241px] h-10 bg-white text-[#1b1c23] border-2 border-[#8c8fff] rounded-[14px] shadow-lg font-bold hover:bg-[#8c8fff] hover:text-white flex items-center justify-center transition-all"
       >
-        Make Justice
+        Do Justice, Get Paid
       </button>
     </div>
   );

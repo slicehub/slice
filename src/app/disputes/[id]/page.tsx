@@ -28,22 +28,31 @@ export default function DisputeOverviewPage() {
     },
   });
 
+  // Calculate winner logic
+  const isFinished = dispute?.status === 3;
+  const winnerAddress = dispute?.winner?.toLowerCase();
+  
   const displayDispute = dispute
     ? {
         id: dispute.id.toString(),
         title: dispute.title || `Dispute #${dispute.id}`,
         logo: "/images/icons/stellar-fund-icon.svg",
         category: dispute.category,
+        status: ["Created", "Commit", "Reveal", "Executed"][dispute.status] || "Unknown",
+        votesCount: 0, // Currently mocked as 0 in other lists, or could be fetched
+        totalVotes: dispute.jurors_required,
         actors: [
           {
             name: `${dispute.claimer.slice(0, 6)}...${dispute.claimer.slice(-4)}`,
             role: "Claimer" as const,
             avatar: "/images/profiles-mockup/profile-1.png",
+            isWinner: isFinished && winnerAddress === dispute.claimer.toLowerCase()
           },
           {
             name: `${dispute.defender.slice(0, 6)}...${dispute.defender.slice(-4)}`,
             role: "Defender" as const,
             avatar: "/images/profiles-mockup/profile-2.png",
+            isWinner: isFinished && winnerAddress === dispute.defender.toLowerCase()
           },
         ],
         generalContext: dispute.description || "No description provided.",

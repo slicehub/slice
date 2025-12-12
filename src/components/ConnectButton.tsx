@@ -85,7 +85,7 @@ const XOConnectButton = () => {
           <Button
             variant="outline"
             onClick={handleAccountClick}
-            className="h-11 gap-3 rounded-2xl border-gray-200 bg-white px-5 text-[#1b1c23] shadow-md hover:bg-gray-50 hover:text-[#1b1c23]"
+            className="h-11 gap-3 rounded-2xl border-gray-200 bg-white px-5 text-[#1b1c23] shadow-sm transition-all duration-200 hover:bg-gray-50 hover:text-[#1b1c23] hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
           >
             <div className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#8c8fff] opacity-75"></span>

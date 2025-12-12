@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "next/navigation"; // 1. Import useRouter
 import type { Dispute } from "./DisputesList";
 import { CrowdfundingIcon, PersonIcon, VoteIcon } from "./icons/BadgeIcons";
 import { ApproveIcon, RejectIcon } from "./icons/Icon";
@@ -8,7 +9,6 @@ interface DisputeCardProps {
   dispute: Dispute;
 }
 
-
 const getIconByCategory = (category: string) => {
   const cat = (category || "").toLowerCase();
   if (cat.includes("tech")) return "/images/icons/bar-chart-icon.svg";
@@ -17,11 +17,17 @@ const getIconByCategory = (category: string) => {
 };
 
 export const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
+  const router = useRouter(); // 2. Initialize router
+
+  const handleReadDispute = () => {
+    // 3. Navigate to the detailed view
+    router.push(`/disputes/${dispute.id}`);
+  };
+
   return (
     <div className="bg-white rounded-[18px] shadow-[0px_2px_4px_0px_rgba(27,28,35,0.1)] p-[22px] relative w-full h-[261px] flex flex-col justify-between box-border shrink-0">
       {/* Header */}
       <div className="flex items-start gap-[17px] mb-5 shrink-0">
-        {/* Icon Container */}
         <div className="w-[55px] h-[55px] shrink-0">
           {dispute.icon ? (
             <img
@@ -40,7 +46,6 @@ export const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
           )}
         </div>
 
-        {/* Title Section */}
         <div className="flex-1 min-w-0">
           <h3 className="font-manrope font-extrabold text-[15px] leading-none text-[#1b1c23] tracking-[-0.3px] m-0 mb-2.5">
             {dispute.title}
@@ -116,7 +121,12 @@ export const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
           <StarIcon size={15} className="shrink-0" />
           <span>{dispute.prize}</span>
         </div>
-        <button className="bg-[#8c8fff] text-white border-none rounded-[12.5px] px-4 py-2 h-[25px] font-manrope font-extrabold text-[11px] tracking-[-0.33px] cursor-pointer transition-opacity duration-200 flex items-center justify-center whitespace-nowrap hover:opacity-90">
+        
+        {/* 4. Update Button Logic */}
+        <button 
+          onClick={handleReadDispute}
+          className="bg-[#8c8fff] text-white border-none rounded-[12.5px] px-4 py-2 h-[25px] font-manrope font-extrabold text-[11px] tracking-[-0.33px] cursor-pointer transition-all duration-200 flex items-center justify-center whitespace-nowrap hover:opacity-90 hover:scale-105 active:scale-95 shadow-md"
+        >
           Read Dispute
         </button>
       </div>
