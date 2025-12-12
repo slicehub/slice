@@ -43,7 +43,7 @@ export const BalanceCard: React.FC = () => {
         </div>
 
         {/* 4. Update Action Buttons Container */}
-        <div className={styles.actionButtons} style={{ gap: "6px" }}>
+        <div className={styles.actionButtons} style={{ gap: "12px" }}>
           <button className={styles.actionButton} onClick={handleDeposit}>
             <DepositIcon className={styles.actionIcon} />
             <span className={styles.actionLabel}>Deposit</span>
