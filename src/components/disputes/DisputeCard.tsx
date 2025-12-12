@@ -1,9 +1,10 @@
 import React from "react";
-import { useRouter } from "next/navigation"; // 1. Import useRouter
+import { useRouter } from "next/navigation";
 import type { Dispute } from "./DisputesList";
 import { CrowdfundingIcon, PersonIcon, VoteIcon } from "./icons/BadgeIcons";
 import { ApproveIcon, RejectIcon } from "./icons/Icon";
 import { StarIcon } from "./icons/BadgeIcons";
+import { Wallet } from "lucide-react";
 
 interface DisputeCardProps {
   dispute: Dispute;
@@ -17,12 +18,21 @@ const getIconByCategory = (category: string) => {
 };
 
 export const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
-  const router = useRouter(); // 2. Initialize router
+  const router = useRouter();
 
   const handleReadDispute = () => {
-    // 3. Navigate to the detailed view
     router.push(`/disputes/${dispute.id}`);
   };
+
+  const handleWithdraw = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/execute-ruling/${dispute.id}`);
+  };
+
+  // We enable withdrawal if Status is 2 (Reveal Phase).
+  // We do NOT check the deadline here. This allows early execution
+  // if the contract logic "all jurors revealed" is met.
+  const isReadyForWithdrawal = dispute.status === 2;
 
   return (
     <div className="bg-white rounded-[18px] shadow-[0px_2px_4px_0px_rgba(27,28,35,0.1)] p-[22px] relative w-full h-[261px] flex flex-col justify-between box-border shrink-0">
@@ -121,14 +131,27 @@ export const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
           <StarIcon size={15} className="shrink-0" />
           <span>{dispute.prize}</span>
         </div>
-        
-        {/* 4. Update Button Logic */}
-        <button 
-          onClick={handleReadDispute}
-          className="bg-[#8c8fff] text-white border-none rounded-[12.5px] px-4 py-2 h-[25px] font-manrope font-extrabold text-[11px] tracking-[-0.33px] cursor-pointer transition-all duration-200 flex items-center justify-center whitespace-nowrap hover:opacity-90 hover:scale-105 active:scale-95 shadow-md"
-        >
-          Read Dispute
-        </button>
+
+        {/* Button Logic:
+          If in Reveal Phase (Status 2), show Withdraw.
+          This allows early withdrawal if all jurors revealed.
+        */}
+        {isReadyForWithdrawal ? (
+          <button
+            onClick={handleWithdraw}
+            className="bg-[#1b1c23] text-white border-none rounded-[12.5px] px-4 py-2 h-[25px] font-manrope font-extrabold text-[11px] tracking-[-0.33px] cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap hover:opacity-90 hover:scale-105 active:scale-95 shadow-md animate-pulse"
+          >
+            <Wallet size={12} />
+            Withdraw Funds
+          </button>
+        ) : (
+          <button
+            onClick={handleReadDispute}
+            className="bg-[#8c8fff] text-white border-none rounded-[12.5px] px-4 py-2 h-[25px] font-manrope font-extrabold text-[11px] tracking-[-0.33px] cursor-pointer transition-all duration-200 flex items-center justify-center whitespace-nowrap hover:opacity-90 hover:scale-105 active:scale-95 shadow-md"
+          >
+            Read Dispute
+          </button>
+        )}
       </div>
     </div>
   );

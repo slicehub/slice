@@ -11,6 +11,7 @@ import {
   Wallet,
   CheckCircle2,
   FileText,
+  Banknote,
 } from "lucide-react";
 import { fetchJSONFromIPFS } from "@/util/ipfs";
 import { useSliceContract } from "@/hooks/useSliceContract";
@@ -21,7 +22,7 @@ interface Task {
   id: string;
   title: string;
   category: string;
-  phase: "VOTE" | "REVEAL";
+  phase: "VOTE" | "REVEAL" | "WITHDRAW"; // Added WITHDRAW phase
   deadlineLabel: string;
   statusColor: string;
   bgColor: string;
@@ -54,6 +55,7 @@ export default function MyVotesPage() {
             // --- FILTERING LOGIC: Is this actionable? ---
             const hasRevealed = await contract.hasRevealed(id, address);
             const localSecretExists = hasLocalVote(contractAddr, id, address);
+            const now = Math.floor(Date.now() / 1000);
 
             let isActionable = false;
             let phase: Task["phase"] = "VOTE"; // Default
@@ -71,6 +73,12 @@ export default function MyVotesPage() {
               phase = "REVEAL";
               deadline = Number(d.revealDeadline);
             }
+            // CASE 3: READY TO EXECUTE/WITHDRAW (Status 2 & Reveal Deadline Passed)
+            else if (status === 2 && now > Number(d.revealDeadline)) {
+              isActionable = true;
+              phase = "WITHDRAW";
+              deadline = Number(d.revealDeadline); // Show as expired/ready
+            }
 
             // If not actionable, return null (to be filtered out)
             if (!isActionable) return null;
@@ -82,24 +90,40 @@ export default function MyVotesPage() {
               if (meta?.title) title = meta.title;
             }
 
-            const now = Math.floor(Date.now() / 1000);
             const diff = deadline - now;
-            const deadlineLabel =
-              diff > 0 ? `${Math.ceil(diff / 3600)}h remaining` : "Ending soon";
+            let deadlineLabel = "";
 
-            // Styling
-            const style =
-              phase === "VOTE"
-                ? {
-                    color: "text-blue-600",
-                    bg: "bg-blue-50",
-                    icon: <Gavel className="w-5 h-5" />,
-                  }
-                : {
-                    color: "text-purple-600",
-                    bg: "bg-purple-50",
-                    icon: <Eye className="w-5 h-5" />,
-                  };
+            if (phase === "WITHDRAW") {
+              deadlineLabel = "Ready to Withdraw";
+            } else {
+              deadlineLabel =
+                diff > 0
+                  ? `${Math.ceil(diff / 3600)}h remaining`
+                  : "Ending soon";
+            }
+
+            // Styling based on phase
+            let style = { color: "", bg: "", icon: null as React.ReactNode };
+
+            if (phase === "VOTE") {
+              style = {
+                color: "text-blue-600",
+                bg: "bg-blue-50",
+                icon: <Gavel className="w-5 h-5" />,
+              };
+            } else if (phase === "REVEAL") {
+              style = {
+                color: "text-purple-600",
+                bg: "bg-purple-50",
+                icon: <Eye className="w-5 h-5" />,
+              };
+            } else if (phase === "WITHDRAW") {
+              style = {
+                color: "text-green-600",
+                bg: "bg-green-50",
+                icon: <Banknote className="w-5 h-5" />,
+              };
+            }
 
             return {
               id,
@@ -114,7 +138,7 @@ export default function MyVotesPage() {
           }),
         );
 
-        // Filter nulls and sort by deadline urgency (closest first)
+        // Filter nulls
         const activeTasks = loadedTasks.filter((t): t is Task => t !== null);
         setTasks(activeTasks);
       } catch (e) {
@@ -129,7 +153,9 @@ export default function MyVotesPage() {
 
   const handleAction = (task: Task) => {
     if (task.phase === "VOTE") router.push(`/vote/${task.id}`);
-    else router.push(`/reveal/${task.id}`);
+    else if (task.phase === "REVEAL") router.push(`/reveal/${task.id}`);
+    else if (task.phase === "WITHDRAW")
+      router.push(`/execute-ruling/${task.id}`);
   };
 
   const handleDetails = (id: string) => {
@@ -221,12 +247,14 @@ export default function MyVotesPage() {
                   <div
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide ${task.bgColor} ${task.statusColor}`}
                   >
-                    {task.phase} NOW
+                    {task.phase === "WITHDRAW" ? "CLAIM" : task.phase} NOW
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-red-500">
+                  <div
+                    className={`flex items-center gap-1.5 text-xs font-bold ${task.phase === "WITHDRAW" ? "text-green-600" : "text-red-500"}`}
+                  >
                     <AlertCircle className="w-3.5 h-3.5" />
                     {task.deadlineLabel}
                   </div>
@@ -243,10 +271,16 @@ export default function MyVotesPage() {
                       className={`px-5 py-2 rounded-xl text-xs font-extrabold text-white shadow-md transition-all hover:scale-105 active:scale-95 ${
                         task.phase === "REVEAL"
                           ? "bg-[#8c8fff]"
-                          : "bg-[#1b1c23]"
+                          : task.phase === "WITHDRAW"
+                            ? "bg-[#1b1c23]" // Use primary black for money/withdraw
+                            : "bg-[#1b1c23]"
                       }`}
                     >
-                      {task.phase === "REVEAL" ? "Reveal" : "Vote"}
+                      {task.phase === "REVEAL"
+                        ? "Reveal"
+                        : task.phase === "WITHDRAW"
+                          ? "Withdraw"
+                          : "Vote"}
                     </button>
                   </div>
                 </div>

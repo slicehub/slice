@@ -18,7 +18,8 @@ export interface Dispute {
   totalVotes: number;
   prize: string;
   status: number;
-  voters: any[]; // Simplified for portfolio view
+  revealDeadline: number;
+  voters: any[];
 }
 
 export const DisputesList: React.FC = () => {
@@ -51,10 +52,11 @@ export const DisputesList: React.FC = () => {
               id,
               title,
               category: d.category,
-              votesCount: 0,
+              votesCount: 0, // In production, you would fetch revealedVotes count here
               totalVotes: Number(d.jurorsRequired),
               prize: "Rewards Pending",
               status: Number(d.status),
+              revealDeadline: Number(d.revealDeadline),
               voters: [],
             };
           }),
@@ -72,8 +74,9 @@ export const DisputesList: React.FC = () => {
 
   // Filter based on Tabs
   const displayedDisputes = disputes.filter((d) => {
-    if (activeTab === "active") return d.status < 3; // Created, Commit, Reveal
-    return d.status === 3; // Executed/Finished
+    // Status 3 = Executed/Finished. Everything else is "Active"
+    if (activeTab === "active") return d.status < 3;
+    return d.status === 3;
   });
 
   return (
