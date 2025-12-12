@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useXOContracts } from "@/providers/XOContractsProvider";
+import { settings } from "@/util/config"; // Import settings to get the Chain ID
 import { toast } from "sonner";
 import { X, Copy, Check } from "lucide-react";
 
@@ -19,9 +20,12 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
 
   if (!isOpen || !address) return null;
 
-  // Use a public API for the QR code to avoid heavy dependencies.
-  // For production, you might prefer installing 'react-qr-code'
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${address}&bgcolor=ffffff`;
+  // Append the Chain ID (e.g., @8453).
+  // This tells the wallet specifically to look at Base, not Ethereum Mainnet.
+  const chainId = settings.chain.chainId;
+  const paymentUri = `ethereum:${address}@${chainId}`;
+
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUri)}&bgcolor=ffffff`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(address);
@@ -85,8 +89,9 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
             <div className="w-1.5 h-1.5 bg-[#8c8fff] rounded-full" />
           </div>
           <p className="text-[11px] font-bold text-[#1b1c23] leading-tight">
-            Only send assets on the <span className="underline">Base</span>{" "}
-            network. Sending other assets may result in permanent loss.
+            This QR code works on the{" "}
+            <strong>{settings.chain.supportedChains[0].chainName}</strong>{" "}
+            network (Chain ID: {chainId}).
           </p>
         </div>
       </div>

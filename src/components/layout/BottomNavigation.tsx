@@ -22,13 +22,8 @@ export const BottomNavigation = () => {
       isActive ? "text-[#1b1c23]" : "text-gray-400 hover:text-[#8c8fff]"
     }`;
 
-  // Indicator Dot
-  const ActiveDot = () => (
-    <span className="absolute -bottom-1.5 w-1 h-1 bg-[#1b1c23] rounded-full animate-in fade-in zoom-in duration-200" />
-  );
-
   return (
-    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100]">
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-100">
       <div className="flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-sm border border-gray-100/50 rounded-full shadow-[0_4px_20px_rgb(0,0,0,0.06)] transition-all hover:shadow-[0_6px_25px_rgb(0,0,0,0.1)]">
         {/* Disputes / Home */}
         <Link href="/disputes" className={navItemClass(isHome)}>
@@ -39,11 +34,10 @@ export const BottomNavigation = () => {
               className={`w-5 h-5 ${isHome ? "stroke-[2.5px] fill-gray-100" : "stroke-2"}`}
             />
           </div>
-          {isHome && <ActiveDot />}
         </Link>
 
         {/* Vertical Divider */}
-        <div className="w-[1px] h-4 bg-gray-200 mx-2" />
+        <div className="w-px h-4 bg-gray-200 mx-2" />
 
         {/* My Votes (Central Action) */}
         <Link href="/my-votes" className={navItemClass(isVotes)}>
@@ -54,11 +48,10 @@ export const BottomNavigation = () => {
               className={`w-5 h-5 ${isVotes ? "stroke-[2.5px] fill-gray-100" : "stroke-2"}`}
             />
           </div>
-          {isVotes && <ActiveDot />}
         </Link>
 
         {/* Vertical Divider */}
-        <div className="w-[1px] h-4 bg-gray-200 mx-2" />
+        <div className="w-px h-4 bg-gray-200 mx-2" />
 
         {/* Profile */}
         <Link href="/profile" className={navItemClass(isProfile)}>
