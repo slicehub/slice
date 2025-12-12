@@ -11,6 +11,8 @@ import { TimerCard } from "@/components/dispute-overview/TimerCard";
 import { PaginationDots } from "@/components/dispute-overview/PaginationDots";
 import { SuccessAnimation } from "@/components/SuccessAnimation";
 import { Clock } from "lucide-react";
+import { getVoteData } from "@/util/votingStorage";
+import { useSliceContract } from "@/hooks/useSliceContract";
 
 export default function RevealPage() {
   const router = useRouter();
@@ -18,6 +20,8 @@ export default function RevealPage() {
   const disputeId = (params?.id as string) || "1";
 
   const { address } = useXOContracts();
+  // 2. Get contract to access the address for the key
+  const contract = useSliceContract();
   const { revealVote, isProcessing, logs } = useSliceVoting();
   const { dispute } = useGetDispute(disputeId);
 
@@ -35,30 +39,29 @@ export default function RevealPage() {
   const isRevealOpen = dispute ? dispute.status === 2 : false;
   const isFinished = dispute ? dispute.status > 2 : false;
 
-  // --- 1. Swipe Gesture Hook ---
   const { handlers } = useSwipeGesture({
     onSwipeRight: () => {
-      // Swipe Right -> Go back to the Vote Page
       router.push(`/vote/${disputeId}`);
     },
   });
 
-  // --- 2. Check for local vote data ---
+  // --- 3. FIXED: Use utility to fetch data ---
   useEffect(() => {
-    if (address) {
-      const key = `slice_vote_${disputeId}_${address}`;
-      const dataString = localStorage.getItem(key);
-      if (dataString) {
-        try {
-          const data = JSON.parse(dataString);
-          setLocalVote(data.vote);
-          setHasLocalData(true);
-        } catch (e) {
-          console.error("Failed to parse local vote data", e);
-        }
+    // We need contract.target (address) to form the correct key
+    if (address && contract && contract.target) {
+      const contractAddress = contract.target as string;
+
+      // Use the utility that matches the saving logic
+      const storedData = getVoteData(contractAddress, disputeId, address);
+
+      if (storedData) {
+        setLocalVote(storedData.vote);
+        setHasLocalData(true);
+      } else {
+        setHasLocalData(false);
       }
     }
-  }, [address, disputeId]);
+  }, [address, disputeId, contract]);
 
   const handleReveal = async () => {
     const success = await revealVote(disputeId);
@@ -78,10 +81,7 @@ export default function RevealPage() {
   };
 
   return (
-    <div
-      className="flex flex-col h-screen bg-gray-50"
-      {...handlers} // Spread the gesture handlers
-    >
+    <div className="flex flex-col h-screen bg-gray-50" {...handlers}>
       <DisputeOverviewHeader onBack={() => router.back()} />
       <TimerCard />
 
@@ -125,8 +125,8 @@ export default function RevealPage() {
                   ⚠️ Missing Data
                 </span>
                 <span>
-                  No local vote data found. You cannot reveal if you switched
-                  devices or cleared your cache.
+                  No local vote data found. If you voted on a different device
+                  or browser, the secret salt is missing.
                 </span>
               </div>
             )}
@@ -146,7 +146,9 @@ export default function RevealPage() {
                       Claimant
                     </span>
                     <span className="text-lg font-bold text-[#1b1c23]">
-                      Julio Banegas
+                      {dispute?.claimer
+                        ? `${dispute.claimer.slice(0, 6)}...`
+                        : "Claimant"}
                     </span>
                   </div>
                   <span
@@ -182,7 +184,9 @@ export default function RevealPage() {
                       Defendant
                     </span>
                     <span className="text-lg font-bold text-[#1b1c23]">
-                      Micaela Descotte
+                      {dispute?.defender
+                        ? `${dispute.defender.slice(0, 6)}...`
+                        : "Defendant"}
                     </span>
                   </div>
                   <span

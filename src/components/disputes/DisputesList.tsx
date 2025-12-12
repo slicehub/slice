@@ -18,6 +18,7 @@ export interface Dispute {
   votesCount: number;
   totalVotes: number;
   prize: string;
+  status: number; // Added: 0=Created, 1=Commit, 2=Reveal, 3=Finished
   userVote?: "approve" | "reject";
   voters: Array<{
     name: string;
@@ -31,14 +32,14 @@ export const DisputesList: React.FC = () => {
   const { address } = useXOContracts();
   const contract = useSliceContract();
   const [myDisputes, setMyDisputes] = useState<Dispute[]>([]);
-  const [activeDisputeId, setActiveDisputeId] = useState<string | null>(null);
+  // 2. Track the full active dispute object, not just ID
+  const [activeDispute, setActiveDispute] = useState<Dispute | null>(null);
 
   useEffect(() => {
     const loadMyDisputes = async () => {
       if (!contract || !address) return;
 
       try {
-        // 1. Get IDs where I am involved (Juror)
         const jurorIds = await contract.getJurorDisputes(address);
 
         const loaded = await Promise.all(
@@ -46,7 +47,6 @@ export const DisputesList: React.FC = () => {
             const id = idBg.toString();
             const d = await contract.disputes(id);
 
-            // Fetch IPFS for Title/Icon
             let title = `Dispute #${id}`;
             if (d.ipfsHash) {
               const meta = await fetchJSONFromIPFS(d.ipfsHash);
@@ -55,26 +55,24 @@ export const DisputesList: React.FC = () => {
               }
             }
 
-            // Calculate basic stats (mocked for list view as needed)
             return {
               id,
               title,
               category: d.category,
               votesCount: 0,
               totalVotes: Number(d.jurorsRequired),
-              prize: "Rewards Pending", // Could calc from d.jurorStake
+              prize: "Rewards Pending",
+              status: Number(d.status), // 3. Capture the status
               voters: [],
             };
           }),
         );
 
-        // Sort by ID descending
         const sorted = loaded.reverse();
         setMyDisputes(sorted);
 
-        // Set active dispute to the most recent one if any
         if (sorted.length > 0) {
-          setActiveDisputeId(sorted[0].id);
+          setActiveDispute(sorted[0]);
         }
       } catch (e) {
         console.error("Error loading disputes", e);
@@ -88,9 +86,12 @@ export const DisputesList: React.FC = () => {
     router.push("/category-amount");
   };
 
+  // 4. Logic Helper: Is button enabled?
+  const canVote = activeDispute && activeDispute.status === 1; // Commit Phase
+  const canReveal = activeDispute && activeDispute.status === 2; // Reveal Phase
+
   return (
     <div className="px-5 mt-10 w-full box-border">
-      {/* Header Section */}
       <div className="flex justify-between items-center mb-5 w-full">
         <div className="flex items-center gap-[11px]">
           <div className="w-5 h-5 flex items-center justify-center shrink-0 overflow-hidden rounded-[6px]">
@@ -102,51 +103,50 @@ export const DisputesList: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Vote Button */}
+          {/* VOTE BUTTON (Only active in Phase 1) */}
           <button
             onClick={() =>
-              activeDisputeId && router.push(`/vote/${activeDisputeId}`)
+              activeDispute && router.push(`/vote/${activeDispute.id}`)
             }
-            disabled={!activeDisputeId}
+            disabled={!canVote}
             className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
-              activeDisputeId
+              canVote
                 ? "bg-blue-50 border-blue-100 hover:bg-blue-100 cursor-pointer"
                 : "bg-gray-100 border-gray-200 opacity-30 cursor-not-allowed"
             }`}
             title={
-              activeDisputeId
-                ? `Vote on Dispute #${activeDisputeId}`
-                : "No active disputes"
+              canVote
+                ? `Vote on Dispute #${activeDispute?.id}`
+                : "Voting not active (Wrong phase)"
             }
           >
             <Gavel
-              className={`w-4 h-4 ${activeDisputeId ? "text-blue-600" : "text-gray-400"}`}
+              className={`w-4 h-4 ${canVote ? "text-blue-600" : "text-gray-400"}`}
             />
           </button>
 
-          {/* Reveal Button */}
+          {/* REVEAL BUTTON (Only active in Phase 2) */}
           <button
             onClick={() =>
-              activeDisputeId && router.push(`/reveal/${activeDisputeId}`)
+              activeDispute && router.push(`/reveal/${activeDispute.id}`)
             }
-            disabled={!activeDisputeId}
+            disabled={!canReveal}
             className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
-              activeDisputeId
+              canReveal
                 ? "bg-purple-50 border-purple-100 hover:bg-purple-100 cursor-pointer"
                 : "bg-gray-100 border-gray-200 opacity-30 cursor-not-allowed"
             }`}
             title={
-              activeDisputeId
-                ? `Reveal for Dispute #${activeDisputeId}`
-                : "No active disputes"
+              canReveal
+                ? `Reveal for Dispute #${activeDispute?.id}`
+                : "Reveal not active (Wrong phase)"
             }
           >
             <Eye
-              className={`w-4 h-4 ${activeDisputeId ? "text-purple-600" : "text-gray-400"}`}
+              className={`w-4 h-4 ${canReveal ? "text-purple-600" : "text-gray-400"}`}
             />
           </button>
 
-          {/* Filter Button */}
           <button className="bg-white border-none rounded-[13.5px] px-[14px] py-[6px] flex items-center gap-2 cursor-pointer font-manrope font-extrabold text-[11px] text-[#1b1c23] tracking-[-0.22px] transition-opacity duration-200 hover:opacity-80">
             <span>Filter</span>
             <FilterIcon size={12} />
@@ -154,7 +154,6 @@ export const DisputesList: React.FC = () => {
         </div>
       </div>
 
-      {/* Disputes List */}
       <div className="flex flex-col gap-[25px] mb-10">
         {myDisputes.length === 0 ? (
           <div className="text-gray-400 text-sm text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
@@ -167,7 +166,6 @@ export const DisputesList: React.FC = () => {
         )}
       </div>
 
-      {/* Floating Action Button */}
       <button
         onClick={handleJusticeClick}
         className="
