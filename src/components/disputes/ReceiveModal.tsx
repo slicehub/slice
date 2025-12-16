@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useXOContracts } from "@/providers/XOContractsProvider";
-import { settings } from "@/util/config"; // Import settings to get the Chain ID
+import { DEFAULT_CHAIN } from "@/config/chains"; // Import settings to get the Chain ID
 import { toast } from "sonner";
 import { X, Copy, Check } from "lucide-react";
 
@@ -22,7 +22,7 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
 
   // Append the Chain ID (e.g., @8453).
   // This tells the wallet specifically to look at Base, not Ethereum Mainnet.
-  const chainId = settings.chain.chainId;
+  const chainId = DEFAULT_CHAIN.chain.id;
   const paymentUri = `ethereum:${address}@${chainId}`;
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUri)}&bgcolor=ffffff`;
@@ -90,7 +90,7 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
           </div>
           <p className="text-[11px] font-bold text-[#1b1c23] leading-tight">
             This QR code works on the{" "}
-            <strong>{settings.chain.supportedChains[0].chainName}</strong>{" "}
+            <strong>{DEFAULT_CHAIN.chain.name}</strong>{" "}
             network (Chain ID: {chainId}).
           </p>
         </div>

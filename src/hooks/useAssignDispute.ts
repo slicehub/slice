@@ -3,7 +3,7 @@ import { Contract } from "ethers";
 import { useSliceContract } from "./useSliceContract";
 import { useXOContracts } from "@/providers/XOContractsProvider";
 import { toast } from "sonner";
-import { USDC_ADDRESS } from "@/config";
+import { getContractsForChain } from "@/config/contracts";
 import { sliceAddress } from "@/contracts/slice-abi";
 
 const ERC20_ABI = [
@@ -94,7 +94,15 @@ export function useAssignDispute() {
     try {
       const disputeData = await contract!.disputes(disputeId);
       const amountToApprove = disputeData.jurorStake;
-      const usdcContract = new Contract(USDC_ADDRESS, ERC20_ABI, signer);
+
+      let chainId = 0;
+      if (signer?.provider) {
+        const net = await signer.provider.getNetwork();
+        chainId = Number(net.chainId);
+      }
+      const { usdcToken } = getContractsForChain(chainId);
+
+      const usdcContract = new Contract(usdcToken, ERC20_ABI, signer);
 
       toast.info("Approving Stake...");
       const approveTx = await usdcContract.approve(

@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { parseUnits, isAddress } from "ethers";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { erc20Abi } from "viem"; // or import from your local abi file
-import { USDC_ADDRESS } from "@/config";
+import { getContractsForChain } from "@/config/contracts";
+import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { Loader2, X } from "lucide-react";
 
@@ -19,6 +20,7 @@ export const SendModal: React.FC<SendModalProps> = ({ isOpen, onClose }) => {
 
   // Wagmi Hooks for writing to contract
   const { data: hash, writeContract, isPending, error } = useWriteContract();
+  const { chainId } = useAccount();
 
   // Watch for transaction completion
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -56,9 +58,10 @@ export const SendModal: React.FC<SendModalProps> = ({ isOpen, onClose }) => {
     try {
       // USDC has 6 decimals
       const value = parseUnits(amount, 6);
+      const { usdcToken } = getContractsForChain(chainId || 0);
 
       writeContract({
-        address: USDC_ADDRESS as `0x${string}`,
+        address: usdcToken as `0x${string}`,
         abi: erc20Abi,
         functionName: "transfer",
         args: [recipient as `0x${string}`, value],

@@ -4,15 +4,18 @@ import React, { useState } from "react";
 import { DepositIcon, SendIcon, ReceiveIcon } from "./icons/ActionIcons";
 import styles from "./BalanceCard.module.css";
 import { useXOContracts } from "@/providers/XOContractsProvider";
-import { USDC_ADDRESS } from "@/config";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useAppKit } from "@reown/appkit/react";
 import { SendModal } from "./SendModal";
 import { ReceiveModal } from "./ReceiveModal";
+import { useChainId } from "wagmi";
+import { getContractsForChain } from "@/config/contracts";
 
 export const BalanceCard: React.FC = () => {
+  const chainId = useChainId();
   const { address } = useXOContracts();
-  const { formatted, isLoading } = useTokenBalance(USDC_ADDRESS);
+  const { usdcToken } = getContractsForChain(chainId);
+  const { formatted, isLoading } = useTokenBalance(usdcToken);
   const { open } = useAppKit();
 
   const [isSendOpen, setIsSendOpen] = useState(false);
@@ -22,7 +25,7 @@ export const BalanceCard: React.FC = () => {
   const displayBalance = React.useMemo(() => {
     if (!address) return "---";
     if (isLoading) return "Loading...";
-    if (formatted === undefined || formatted === null) return "Error";
+    if (formatted === undefined || formatted === null) return "N/A";
     const balance = parseFloat(formatted).toFixed(2);
     return `${balance} USDC`;
   }, [address, isLoading, formatted]);

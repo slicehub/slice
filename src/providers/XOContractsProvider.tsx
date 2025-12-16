@@ -12,10 +12,11 @@ import React, {
 import { toast } from "sonner";
 import { BrowserProvider, Signer } from "ethers";
 import { useEmbedded } from "./EmbeddedProvider";
-import { settings } from "@/util/config";
+import { DEFAULT_CHAIN } from "@/config/chains";
 import { useWalletClient, useDisconnect } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { walletClientToSigner } from "@/util/ethers-adapter";
+import { toHex } from "viem";
 
 interface Provider {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
@@ -49,7 +50,7 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
   const { disconnect: wagmiDisconnect } = useDisconnect();
   const { open } = useAppKit();
 
-  const activeChain = settings.chain.supportedChains[0];
+  const activeChain = DEFAULT_CHAIN.chain;
 
   // 1. XO Connection Logic
   // Added 'silent' parameter to suppress toasts on auto-connect
@@ -59,9 +60,10 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { XOConnectProvider } = await import("xo-connect");
 
+        const chainIdHex = toHex(activeChain.id);
         const provider: Provider = new XOConnectProvider({
-          rpcs: { [activeChain.chainId]: activeChain.rpcUrls[0] },
-          defaultChainId: activeChain.chainId,
+          rpcs: { [chainIdHex]: activeChain.rpcUrls.default.http[0] },
+          defaultChainId: chainIdHex,
         });
 
         await provider.request({ method: "eth_requestAccounts" });
