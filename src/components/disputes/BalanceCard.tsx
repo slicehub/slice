@@ -12,9 +12,14 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { SendModal } from "./SendModal";
 import { ReceiveModal } from "./ReceiveModal";
 import { getContractsForChain } from "@/config/contracts";
+import { DEFAULT_CHAIN } from "@/config/chains";
+import { useEmbedded } from "@/providers/EmbeddedProvider";
 
 export const BalanceCard: React.FC = () => {
-  const chainId = useChainId();
+  const { isEmbedded } = useEmbedded();
+  const wagmiChainId = useChainId();
+  const chainId = isEmbedded ? DEFAULT_CHAIN.chain.id : wagmiChainId;
+
   const { address } = useXOContracts();
   const { usdcToken } = getContractsForChain(chainId);
 

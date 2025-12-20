@@ -10,6 +10,7 @@ import {
 import { erc20Abi } from "viem";
 import { toast } from "sonner";
 import { getContractsForChain } from "@/config/contracts";
+import { DEFAULT_CHAIN } from "@/config/chains";
 import { useEmbedded } from "@/providers/EmbeddedProvider";
 import { useXOContracts } from "@/providers/XOContractsProvider";
 
@@ -69,7 +70,8 @@ export function useSendFunds(onSuccess?: () => void) {
     try {
       const value = parseUnits(amount, 6); // USDC has 6 decimals
       // Determine active chain ID (Default to Base Sepolia 84532 if undefined)
-      const activeChainId = isEmbedded ? 84532 : wagmiChainId || 84532;
+      // Determine active chain ID
+      const activeChainId = isEmbedded ? DEFAULT_CHAIN.chain.id : wagmiChainId || DEFAULT_CHAIN.chain.id;
       const { usdcToken } = getContractsForChain(activeChainId);
 
       if (isEmbedded) {
