@@ -13,7 +13,7 @@ import ConnectButton from "@/components/ConnectButton";
 import { useSliceContract } from "@/hooks/useSliceContract";
 import { useXOContracts } from "@/providers/XOContractsProvider";
 
-export default function JurorProfilePage() {
+export default function ProfilePage() {
   const router = useRouter();
   const contract = useSliceContract();
   const { address } = useXOContracts();
