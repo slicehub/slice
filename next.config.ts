@@ -16,6 +16,11 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   webpack: (config) => {
+    // These aliases mark React Native / Solana-related modules as "unresolvable"
+    // in the browser bundle. This prevents webpack from trying to include
+    // Node- or React Native–only dependencies that are incompatible with Next.js
+    // on the client, and preserves React Native compatibility without breaking
+    // the web build.
     config.resolve.alias = {
       ...config.resolve.alias,
       "@react-native-async-storage/async-storage": false,
