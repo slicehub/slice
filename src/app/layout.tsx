@@ -6,7 +6,8 @@ import { XOContractsProvider } from "@/providers/XOContractsProvider";
 import { EmbeddedProvider } from "@/providers/EmbeddedProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TimerProvider } from "@/contexts/TimerContext";
-import { BottomNavigation } from "@/components/layout/BottomNavigation"; // Import added
+import { BottomNavigation } from "@/components/layout/BottomNavigation";
+import { ConsoleOverlay } from "@/components/debug/ConsoleOverlay";
 
 export const metadata: Metadata = {
   title: "Slice",
@@ -58,6 +59,9 @@ export default async function RootLayout({
 
                   {/* Persistent Bottom Navigation */}
                   <BottomNavigation />
+
+                  {/* Debug Overlay */}
+                  {process.env.NEXT_PUBLIC_IS_EMBEDDED === 'true' && <ConsoleOverlay />}
                 </div>
               </TimerProvider>
             </XOContractsProvider>

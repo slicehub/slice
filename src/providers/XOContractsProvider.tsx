@@ -58,8 +58,14 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
     async (silent = false) => {
       setIsConnecting(true);
       try {
+        console.log("🚀 Starting XO Connection..."); // Added log
+        console.log("📦 Importing xo-connect...");
         const { XOConnectProvider } = await import("xo-connect");
+
         const chainIdHex = toHex(activeChain.id);
+        console.log(`🔗 Chain ID: ${activeChain.id} (${chainIdHex})`);
+        console.log(`📡 RPC: ${activeChain.rpcUrls.default.http[0]}`);
+
         const provider: Provider = new XOConnectProvider({
           rpcs: {
             [chainIdHex]: activeChain.rpcUrls.default.http[0],
@@ -67,20 +73,34 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
           defaultChainId: chainIdHex,
         });
 
+        console.log("🙏 Requesting accounts...");
         await provider.request({ method: "eth_requestAccounts" });
+
+        console.log("🛠 Creating Ethers Provider...");
         const ethersProvider = new BrowserProvider(provider);
+
+        console.log("✍️ Getting Signer...");
         const newSigner = await ethersProvider.getSigner();
+
+        console.log("🆔 Getting Address...");
         const addr = await newSigner.getAddress();
 
+        console.log(`✅ Success! Connected to ${addr}`);
         setXoSigner(newSigner);
         setXoAddress(addr);
         if (!silent) {
           toast.success(`Connected via XO`);
         }
-      } catch (err) {
-        console.error("XO Connection Failed:", err);
+      } catch (err: any) {
+        // This will now show up in your Red Debug Overlay
+        console.error("❌ XO Connection Failed Details:", {
+          message: err.message,
+          stack: err.stack,
+          fullError: err
+        });
+
         if (!silent) {
-          toast.error("Failed to connect XO");
+          toast.error(`Failed to connect XO: ${err.message}`);
         }
       } finally {
         setIsConnecting(false);

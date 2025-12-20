@@ -46,6 +46,7 @@ export function useTokenBalance(tokenAddress: string | undefined) {
     const fetchEmbeddedBalance = async () => {
       setIsEmbeddedLoading(true);
       try {
+        console.log(`💰 Fetching balance for ${address} on token ${tokenAddress}`);
         const contract = new Contract(tokenAddress, erc20Abi, signer);
 
         // Fetch balance, decimals, and symbol in parallel
@@ -58,7 +59,9 @@ export function useTokenBalance(tokenAddress: string | undefined) {
         // Format using the actual decimals from the contract
         setEmbeddedBalance(formatUnits(balance, decimals));
         setEmbeddedSymbol(symbol);
+        console.log("💰 Raw balance result:", formatUnits(balance, decimals));
       } catch (error) {
+        console.error("❌ Balance Fetch Failed:", error);
         console.error("Failed to fetch embedded balance", error);
         setEmbeddedBalance(null);
         // ADD THIS: Show detailed error in toast
