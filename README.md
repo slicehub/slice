@@ -1,6 +1,6 @@
 # ⚖️ Slice Protocol Application
 
-This project is the frontend implementation for **Slice**, a **neutral, on-chain dispute resolution protocol** built on Next.js and integrated with **Reown AppKit** and **Wagmi**.
+This project is the frontend implementation for **Slice**, a **neutral, on-chain dispute resolution protocol** built on Next.js and integrated with **Privy** and **Wagmi**.
 
 ---
 
