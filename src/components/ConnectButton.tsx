@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { useEmbedded } from "@/providers/EmbeddedProvider";
 import { toast } from "sonner";
 import { Loader2, Copy, Check, Wallet, LogOut, User } from "lucide-react";
@@ -15,7 +15,7 @@ import {
 
 const ConnectButton = () => {
   const { isEmbedded } = useEmbedded();
-  const { connect, disconnect, address } = useXOContracts();
+  const { connect, disconnect, address } = useContracts();
   const { login, logout } = usePrivy();
 
   const [copied, setCopied] = useState(false);

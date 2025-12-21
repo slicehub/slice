@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DisputeCard } from "./DisputeCard";
 import { BarChartIcon } from "./icons/Icon";
 import { FilterIcon } from "./icons/BadgeIcons";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { useSliceContract } from "@/hooks/useSliceContract";
 import { fetchJSONFromIPFS } from "@/util/ipfs";
 
@@ -24,7 +24,7 @@ export interface Dispute {
 
 export const DisputesList: React.FC = () => {
   const router = useRouter();
-  const { address } = useXOContracts();
+  const { address } = useContracts();
   const contract = useSliceContract();
 
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");

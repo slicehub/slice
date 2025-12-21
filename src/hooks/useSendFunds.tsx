@@ -12,12 +12,12 @@ import { toast } from "sonner";
 import { getContractsForChain } from "@/config/contracts";
 import { DEFAULT_CHAIN } from "@/config/chains";
 import { useEmbedded } from "@/providers/EmbeddedProvider";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 
 export function useSendFunds(onSuccess?: () => void) {
   // --- 1. Contexts & State ---
   const { isEmbedded } = useEmbedded();
-  const { signer } = useXOContracts();
+  const { signer } = useContracts();
   const { chainId: wagmiChainId } = useAccount();
 
   // Wagmi Hooks
@@ -91,25 +91,42 @@ export function useSendFunds(onSuccess?: () => void) {
 
         // 2. CONSTRUCT TRANSACTION (Without Sending)
         console.log("🏗️ Populating Transaction...");
-        const populatedTx = await tokenContract.transfer.populateTransaction(recipient, value);
+        const populatedTx = await tokenContract.transfer.populateTransaction(
+          recipient,
+          value,
+        );
 
         // Log the RAW payload Ethers wants to send
-        console.log("📦 RAW TX PAYLOAD:", JSON.stringify({
-          to: populatedTx.to,
-          from: populatedTx.from,
-          data: populatedTx.data,
-          chainId: populatedTx.chainId?.toString(),
-          value: populatedTx.value?.toString(),
-          type: populatedTx.type
-        }, null, 2));
+        console.log(
+          "📦 RAW TX PAYLOAD:",
+          JSON.stringify(
+            {
+              to: populatedTx.to,
+              from: populatedTx.from,
+              data: populatedTx.data,
+              chainId: populatedTx.chainId?.toString(),
+              value: populatedTx.value?.toString(),
+              type: populatedTx.type,
+            },
+            null,
+            2,
+          ),
+        );
 
         // 3. CHECK FOR EIP-1559 COMPATIBILITY
         const feeData = await signer.provider?.getFeeData();
-        console.log("⛽ Chain Fee Data:", JSON.stringify({
-          gasPrice: feeData?.gasPrice?.toString(),
-          maxFeePerGas: feeData?.maxFeePerGas?.toString(),
-          maxPriorityFeePerGas: feeData?.maxPriorityFeePerGas?.toString()
-        }, null, 2));
+        console.log(
+          "⛽ Chain Fee Data:",
+          JSON.stringify(
+            {
+              gasPrice: feeData?.gasPrice?.toString(),
+              maxFeePerGas: feeData?.maxFeePerGas?.toString(),
+              maxPriorityFeePerGas: feeData?.maxPriorityFeePerGas?.toString(),
+            },
+            null,
+            2,
+          ),
+        );
 
         // 4. MANUAL ESTIMATION (Raw Call)
         console.log("🧮 Attempting Raw Estimation...");
@@ -142,7 +159,6 @@ export function useSendFunds(onSuccess?: () => void) {
         await tx.wait();
         toast.success("Transfer successful!");
         onSuccess?.();
-
       } catch (err: any) {
         console.error("💥 CRITICAL FAILURE:", err);
         console.log("Error Keys:", Object.keys(err));

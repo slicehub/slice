@@ -7,7 +7,7 @@ import { RefreshCw, AlertCircle } from "lucide-react";
 
 import { DepositIcon, SendIcon, ReceiveIcon } from "./icons/ActionIcons";
 import styles from "./BalanceCard.module.css";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { SendModal } from "./SendModal";
 import { ReceiveModal } from "./ReceiveModal";
@@ -20,7 +20,7 @@ export const BalanceCard: React.FC = () => {
   const wagmiChainId = useChainId();
   const chainId = isEmbedded ? DEFAULT_CHAIN.chain.id : wagmiChainId;
 
-  const { address } = useXOContracts();
+  const { address } = useContracts();
   const { usdcToken } = getContractsForChain(chainId);
 
   const { formatted, isLoading, error, refetch } = useTokenBalance(usdcToken);

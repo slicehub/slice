@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOverviewHeader";
@@ -19,7 +19,7 @@ export default function RevealPage() {
   const params = useParams();
   const disputeId = (params?.id as string) || "1";
 
-  const { address } = useXOContracts();
+  const { address } = useContracts();
   // 2. Get contract to access the address for the key
   const contract = useSliceContract();
   const { revealVote, isProcessing, logs } = useSliceVoting();

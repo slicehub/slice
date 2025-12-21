@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Contract } from "ethers";
 import { useSliceContract } from "./useSliceContract";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { toast } from "sonner";
 import { getContractsForChain } from "@/config/contracts";
 import { useEmbedded } from "@/providers/EmbeddedProvider";
@@ -33,7 +33,7 @@ export function useAssignDispute() {
   const [isFinding, setIsFinding] = useState(false);
   const { isEmbedded } = useEmbedded(); // Get context
   const contract = useSliceContract();
-  const { address, signer } = useXOContracts();
+  const { address, signer } = useContracts();
 
   const isReady = !!(contract && address && signer);
 
@@ -153,7 +153,11 @@ export function useAssignDispute() {
       return true;
     } catch (error: any) {
       console.error("Join Error:", error);
-      const msg = error.reason || error.shortMessage || error.message || "Transaction failed";
+      const msg =
+        error.reason ||
+        error.shortMessage ||
+        error.message ||
+        "Transaction failed";
 
       // Update generic error to include details
       if (msg.includes("user rejected")) {

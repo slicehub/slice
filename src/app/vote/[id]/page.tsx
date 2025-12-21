@@ -10,7 +10,7 @@ import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOver
 import { TimerCard } from "@/components/dispute-overview/TimerCard";
 import { PaginationDots } from "@/components/dispute-overview/PaginationDots";
 import { SuccessAnimation } from "@/components/SuccessAnimation";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { ArrowRight, RefreshCw, Eye } from "lucide-react";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ const STATUS_REVEAL = 2;
 
 export default function VotePage() {
   const router = useRouter();
-  const { address } = useXOContracts();
+  const { address } = useContracts();
 
   const [selectedVote, setSelectedVote] = useState<number | null>(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -49,7 +49,12 @@ export default function VotePage() {
   // Load vote from local storage
   useEffect(() => {
     // Wait for contract to be ready so we have the address
-    if (typeof window !== "undefined" && address && contract && contract.target) {
+    if (
+      typeof window !== "undefined" &&
+      address &&
+      contract &&
+      contract.target
+    ) {
       const contractAddr = contract.target as string;
 
       // --- FIX: Use utility ---

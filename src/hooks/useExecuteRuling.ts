@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useSliceContract } from "./useSliceContract";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { toast } from "sonner";
 
 export function useExecuteRuling() {
-  const { address } = useXOContracts();
+  const { address } = useContracts();
   const [isExecuting, setIsExecuting] = useState(false);
   const contract = useSliceContract();
 
@@ -38,7 +38,8 @@ export function useExecuteRuling() {
       }
     } catch (err: any) {
       console.error("Execution Error:", err);
-      const msg = err.reason || err.shortMessage || err.message || "Unknown error";
+      const msg =
+        err.reason || err.shortMessage || err.message || "Unknown error";
       toast.error(`Execution Failed: ${msg}`);
       return null;
     } finally {

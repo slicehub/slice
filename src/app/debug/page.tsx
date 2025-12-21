@@ -8,7 +8,7 @@ import { formatUnits } from "ethers";
 
 // Hooks
 import { useSliceContract } from "@/hooks/useSliceContract";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
 import { useCreateDispute } from "@/hooks/useCreateDispute";
 import { usePayDispute } from "@/hooks/usePayDispute";
@@ -21,11 +21,16 @@ import { CryptoToolsCard } from "@/components/debug/CryptoToolsCard";
 
 export default function DebugPage() {
   const router = useRouter();
-  const { address } = useXOContracts();
+  const { address } = useContracts();
   const contract = useSliceContract();
 
   // Logic Hooks
-  const { commitVote, revealVote, isProcessing: isVoting, logs } = useSliceVoting();
+  const {
+    commitVote,
+    revealVote,
+    isProcessing: isVoting,
+    logs,
+  } = useSliceVoting();
   const { createDispute, isCreating } = useCreateDispute();
   const { payDispute, isPaying } = usePayDispute();
 
@@ -75,7 +80,9 @@ export default function DebugPage() {
         hasRevealed = await contract.hasRevealed(targetId, address);
       } catch (e) {
         console.error("hasRevealed check failed", e);
-        toast.warning?.("Unable to load on-chain reveal status. Displaying status as not revealed.");
+        toast.warning?.(
+          "Unable to load on-chain reveal status. Displaying status as not revealed.",
+        );
       }
 
       setRawDisputeData({
@@ -88,16 +95,31 @@ export default function DebugPage() {
         jurorsRequired: d.jurorsRequired.toString(),
         requiredStake: formatUnits(d.requiredStake, 6) + " USDC",
         payDeadline: new Date(Number(d.payDeadline) * 1000).toLocaleString(),
-        commitDeadline: new Date(Number(d.commitDeadline) * 1000).toLocaleString(),
-        revealDeadline: new Date(Number(d.revealDeadline) * 1000).toLocaleString(),
+        commitDeadline: new Date(
+          Number(d.commitDeadline) * 1000,
+        ).toLocaleString(),
+        revealDeadline: new Date(
+          Number(d.revealDeadline) * 1000,
+        ).toLocaleString(),
         ipfsHash: d.ipfsHash || "None",
-        winner: d.winner === "0x0000000000000000000000000000000000000000" ? "Pending/None" : d.winner,
-        userRole: isClaimer ? "Claimer" : isDefender ? "Defender" : "None/Juror",
+        winner:
+          d.winner === "0x0000000000000000000000000000000000000000"
+            ? "Pending/None"
+            : d.winner,
+        userRole: isClaimer
+          ? "Claimer"
+          : isDefender
+            ? "Defender"
+            : "None/Juror",
         hasRevealedOnChain: hasRevealed,
       });
 
       if (contract.target && address) {
-        const stored = getVoteData(contract.target as string, targetId, address);
+        const stored = getVoteData(
+          contract.target as string,
+          targetId,
+          address,
+        );
         setLocalStorageData(stored);
       }
     } catch (e) {
@@ -120,9 +142,9 @@ export default function DebugPage() {
       {
         title: `Debug Dispute ${Date.now()}`,
         description: "This is a test dispute created via the Debug Console.",
-        evidence: []
+        evidence: [],
       },
-      3 // Jurors required
+      3, // Jurors required
     );
 
     if (success) {
@@ -164,7 +186,7 @@ export default function DebugPage() {
       const btn = document.getElementById("btn-fetch");
       if (btn) btn.click();
     }, 100);
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 font-manrope pb-20">
@@ -226,7 +248,9 @@ export default function DebugPage() {
           data={rawDisputeData}
           localStorageData={localStorageData}
           onJoin={handleJoin}
-          onPay={() => payDispute(targetId, "1.0").then(() => fetchRawDispute())}
+          onPay={() =>
+            payDispute(targetId, "1.0").then(() => fetchRawDispute())
+          }
           onVote={(val) => commitVote(targetId, val)}
           onReveal={() => revealVote(targetId)}
           onExecute={handleExecute}

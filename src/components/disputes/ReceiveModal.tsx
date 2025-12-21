@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { DEFAULT_CHAIN } from "@/config/chains"; // Import settings to get the Chain ID
 import { toast } from "sonner";
 import { X, Copy, Check } from "lucide-react";
@@ -15,7 +15,7 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { address } = useXOContracts();
+  const { address } = useContracts();
   const [copied, setCopied] = useState(false);
 
   if (!isOpen || !address) return null;
@@ -90,8 +90,8 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
           </div>
           <p className="text-[11px] font-bold text-[#1b1c23] leading-tight">
             This QR code works on the{" "}
-            <strong>{DEFAULT_CHAIN.chain.name}</strong>{" "}
-            network (Chain ID: {chainId}).
+            <strong>{DEFAULT_CHAIN.chain.name}</strong> network (Chain ID:{" "}
+            {chainId}).
           </p>
         </div>
       </div>

@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 import ContextProvider from "@/contexts";
-import { XOContractsProvider } from "@/providers/XOContractsProvider";
+import { ConnectProvider } from "@/providers/ConnectProvider";
 import { EmbeddedProvider } from "@/providers/EmbeddedProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TimerProvider } from "@/contexts/TimerContext";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { ConsoleOverlay } from "@/components/debug/ConsoleOverlay";
+import { NetworkDebugger } from "@/components/debug/NetworkDebugger";
 
 export const metadata: Metadata = {
   title: "Slice",
@@ -44,7 +45,7 @@ export default async function RootLayout({
       >
         <EmbeddedProvider>
           <ContextProvider cookies={cookies}>
-            <XOContractsProvider>
+            <ConnectProvider>
               <TimerProvider>
                 {/* Updated Structure:
                   1. relative: allows absolute positioning inside if needed
@@ -61,10 +62,13 @@ export default async function RootLayout({
                   <BottomNavigation />
 
                   {/* Debug Overlay */}
-                  {process.env.NEXT_PUBLIC_IS_EMBEDDED === 'true' && <ConsoleOverlay />}
+                  {process.env.NEXT_PUBLIC_IS_EMBEDDED === "true" && (
+                    <ConsoleOverlay />
+                  )}
+                  <NetworkDebugger />
                 </div>
               </TimerProvider>
-            </XOContractsProvider>
+            </ConnectProvider>
           </ContextProvider>
         </EmbeddedProvider>
       </body>

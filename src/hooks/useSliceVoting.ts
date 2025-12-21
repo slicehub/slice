@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSliceContract } from "./useSliceContract";
 import { calculateCommitment, generateSalt } from "../util/votingUtils";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 // 1. Import the utility
 import { saveVoteData, getVoteData } from "../util/votingStorage";
 
@@ -11,7 +11,7 @@ export const useSliceVoting = () => {
   const [logs, setLogs] = useState<string>("");
 
   const contract = useSliceContract();
-  const { address } = useXOContracts();
+  const { address } = useContracts();
 
   // --- COMMIT VOTE ---
   const commitVote = async (disputeId: string, vote: number) => {
@@ -45,7 +45,11 @@ export const useSliceVoting = () => {
       return true;
     } catch (error: any) {
       console.error("Commit Error:", error);
-      const msg = (error as any).reason || (error as any).shortMessage || (error as any).message || "Failed to commit vote";
+      const msg =
+        (error as any).reason ||
+        (error as any).shortMessage ||
+        (error as any).message ||
+        "Failed to commit vote";
       toast.error(`Commit Error: ${msg}`);
       setLogs(`Error: ${msg}`);
       return false;
@@ -70,7 +74,9 @@ export const useSliceVoting = () => {
       const storedData = getVoteData(contractAddress, disputeId, address);
 
       if (!storedData) {
-        throw new Error("No local vote data found for this dispute deployment.");
+        throw new Error(
+          "No local vote data found for this dispute deployment.",
+        );
       }
 
       const { vote, salt } = storedData;
@@ -86,7 +92,11 @@ export const useSliceVoting = () => {
       return true;
     } catch (error: any) {
       console.error("Reveal Error:", error);
-      const msg = (error as any).reason || (error as any).shortMessage || (error as any).message || "Failed to reveal vote";
+      const msg =
+        (error as any).reason ||
+        (error as any).shortMessage ||
+        (error as any).message ||
+        "Failed to reveal vote";
       toast.error(`Reveal Error: ${msg}`);
       setLogs(`Error: ${msg}`);
 

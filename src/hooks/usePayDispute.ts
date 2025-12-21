@@ -3,14 +3,14 @@ import { Contract } from "ethers";
 import { useChainId } from "wagmi";
 import { toast } from "sonner";
 import { useSliceContract } from "./useSliceContract";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { getContractsForChain } from "@/config/contracts";
 import { erc20Abi } from "@/contracts/erc20-abi";
 import { useEmbedded } from "@/providers/EmbeddedProvider";
 import { DEFAULT_CHAIN } from "@/config/chains";
 
 export function usePayDispute() {
-  const { address, signer } = useXOContracts();
+  const { address, signer } = useContracts();
   const { isEmbedded } = useEmbedded(); // Get context
   const [isPaying, setIsPaying] = useState(false);
 
@@ -84,7 +84,8 @@ export function usePayDispute() {
     } catch (err: any) {
       console.error("Pay Dispute Error:", err);
 
-      const msg = err.reason || err.shortMessage || err.message || "Unknown error";
+      const msg =
+        err.reason || err.shortMessage || err.message || "Unknown error";
 
       // Keep your specific checks but append the raw error for debugging
       if (msg.includes("exceeds allowance")) {

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { fetchJSONFromIPFS } from "@/util/ipfs";
 import { useSliceContract } from "@/hooks/useSliceContract";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { hasLocalVote } from "@/util/votingStorage";
 
 interface Task {
@@ -31,7 +31,7 @@ interface Task {
 
 export default function MyVotesPage() {
   const router = useRouter();
-  const { address, connect } = useXOContracts();
+  const { address, connect } = useContracts();
   const contract = useSliceContract();
 
   const [tasks, setTasks] = useState<Task[]>([]);

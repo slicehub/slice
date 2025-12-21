@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { useBalance } from "wagmi";
 import { Contract, formatUnits } from "ethers";
 import { useEmbedded } from "@/providers/EmbeddedProvider";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 import { erc20Abi } from "@/contracts/erc20-abi";
 import { toast } from "sonner";
 
+import { defaultChain } from "@/config/chains"; // Import your default chain config
+
 export function useTokenBalance(tokenAddress: string | undefined) {
   const { isEmbedded } = useEmbedded();
-  const { address, signer } = useXOContracts();
+  const { address, signer } = useContracts();
 
   // --- 1. Standard Mode (Wagmi) ---
   const {
@@ -21,6 +23,7 @@ export function useTokenBalance(tokenAddress: string | undefined) {
   } = useBalance({
     address: address as `0x${string}`,
     token: isEmbedded ? undefined : (tokenAddress as `0x${string}`),
+    chainId: defaultChain.id, // <--- CRITICAL FIX: Force query on Base, not Ethereum
     query: {
       enabled: !isEmbedded && !!address && !!tokenAddress,
       retry: 2,
@@ -46,7 +49,9 @@ export function useTokenBalance(tokenAddress: string | undefined) {
     const fetchEmbeddedBalance = async () => {
       setIsEmbeddedLoading(true);
       try {
-        console.log(`💰 Fetching balance for ${address} on token ${tokenAddress}`);
+        console.log(
+          `💰 Fetching balance for ${address} on token ${tokenAddress}`,
+        );
         const contract = new Contract(tokenAddress, erc20Abi, signer);
 
         // Fetch balance, decimals, and symbol in parallel
@@ -65,7 +70,9 @@ export function useTokenBalance(tokenAddress: string | undefined) {
         console.error("Failed to fetch embedded balance", error);
         setEmbeddedBalance(null);
         // ADD THIS: Show detailed error in toast
-        toast.error(`Balance Fetch Error: ${(error as any).reason || (error as any).message || error}`);
+        toast.error(
+          `Balance Fetch Error: ${(error as any).reason || (error as any).message || error}`,
+        );
       } finally {
         setIsEmbeddedLoading(false);
       }

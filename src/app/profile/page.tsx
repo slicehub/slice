@@ -2,27 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Terminal,
-  Bug,
-  Coins,
-  Wallet
-} from "lucide-react";
+import { ArrowLeft, Terminal, Bug, Coins, Wallet } from "lucide-react";
 import ConnectButton from "@/components/ConnectButton";
 import { useSliceContract } from "@/hooks/useSliceContract";
-import { useXOContracts } from "@/providers/XOContractsProvider";
+import { useContracts } from "@/providers/ConnectProvider";
 
 export default function ProfilePage() {
   const router = useRouter();
   const contract = useSliceContract();
-  const { address } = useXOContracts();
+  const { address } = useContracts();
 
   // --- State ---
   const [stats, setStats] = useState({
     coherence: 100, // Mock default
     totalCases: 0,
-    streak: 3       // Mock default
+    streak: 3, // Mock default
   });
   const [earnings, setEarnings] = useState("0");
 
@@ -34,7 +28,7 @@ export default function ProfilePage() {
         // We only need the count of disputes now, not the full history
         const ids = await contract.getJurorDisputes(address);
 
-        setStats(prev => ({
+        setStats((prev) => ({
           ...prev,
           totalCases: ids.length,
           // In a real app, calculate coherence/streak from the dispute outcomes here
@@ -49,7 +43,8 @@ export default function ProfilePage() {
   }, [contract, address]);
 
   // --- Dev Tools Logic ---
-  const openConsole = () => window.dispatchEvent(new Event("open-debug-console"));
+  const openConsole = () =>
+    window.dispatchEvent(new Event("open-debug-console"));
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 pb-[90px]">
@@ -68,7 +63,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
-
         {/* --- 1. Hero / Reputation Card --- */}
         <div className="bg-[#1b1c23] rounded-3xl p-6 shadow-lg text-white flex flex-col items-center gap-4 relative overflow-hidden">
           {/* Background decoration */}
@@ -99,16 +93,26 @@ export default function ProfilePage() {
           {/* Gamification Stats */}
           <div className="grid grid-cols-3 divide-x divide-white/10 w-full mt-2 bg-white/5 rounded-2xl p-3 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Accuracy</span>
-              <span className="text-sm font-bold text-[#4ade80]">{stats.coherence}%</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                Accuracy
+              </span>
+              <span className="text-sm font-bold text-[#4ade80]">
+                {stats.coherence}%
+              </span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Cases</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                Cases
+              </span>
               <span className="text-sm font-bold">{stats.totalCases}</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Streak</span>
-              <span className="text-sm font-bold text-[#8c8fff]">🔥 {stats.streak}</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                Streak
+              </span>
+              <span className="text-sm font-bold text-[#8c8fff]">
+                🔥 {stats.streak}
+              </span>
             </div>
           </div>
         </div>
@@ -120,8 +124,12 @@ export default function ProfilePage() {
           </h3>
           <div className="bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-xs text-gray-400 font-bold uppercase">Lifetime Earnings</span>
-              <div className="text-2xl font-extrabold text-[#1b1c23] mt-1">${earnings}</div>
+              <span className="text-xs text-gray-400 font-bold uppercase">
+                Lifetime Earnings
+              </span>
+              <div className="text-2xl font-extrabold text-[#1b1c23] mt-1">
+                ${earnings}
+              </div>
             </div>
             <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
               <Coins className="w-6 h-6" />
@@ -150,7 +158,6 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
