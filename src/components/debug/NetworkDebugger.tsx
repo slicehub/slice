@@ -2,11 +2,23 @@
 
 import { useAccount } from "wagmi";
 import { useConnect } from "@/providers/ConnectProvider";
+import { useEmbedded } from "@/providers/EmbeddedProvider"; // Import this
 import { defaultChain } from "@/config/chains";
 
 export const NetworkDebugger = () => {
   const { chain } = useAccount();
   const { signer, address } = useConnect();
+  const { isEmbedded } = useEmbedded(); // Get embedded state
+
+  // Logic: If embedded, we rely on the Default Chain (XO enforces this).
+  // If web (Wagmi), we use the detected chain from the wallet.
+  const actualChainId = isEmbedded
+    ? address
+      ? defaultChain.id
+      : "N/A"
+    : chain?.id || "N/A";
+
+  const isMatch = actualChainId === defaultChain.id;
 
   // Note: Visibility is handled by the parent (DebugToggle)
   if (!address) return null;
@@ -25,6 +37,14 @@ export const NetworkDebugger = () => {
 
       <div className="space-y-2.5">
         <div className="flex justify-between items-center">
+          <span className="text-gray-500 uppercase tracking-tighter">Mode</span>
+          <span className="bg-white/5 px-1.5 py-0.5 rounded text-gray-300">
+            {isEmbedded ? "EMBEDDED (XO)" : "WEB (WAGMI)"}
+          </span>
+        </div>
+        <div className="h-[1px] bg-white/5 w-full" />
+
+        <div className="flex justify-between items-center">
           <span className="text-gray-500 uppercase tracking-tighter">
             Target_ID
           </span>
@@ -37,9 +57,11 @@ export const NetworkDebugger = () => {
             Actual_ID
           </span>
           <span
-            className={`bg-white/5 px-1.5 py-0.5 rounded ${chain?.id === defaultChain.id ? "text-indigo-400" : "text-red-400"}`}
+            className={`bg-white/5 px-1.5 py-0.5 rounded ${
+              isMatch ? "text-indigo-400" : "text-red-400"
+            }`}
           >
-            {chain?.id || "N/A"}
+            {actualChainId}
           </span>
         </div>
         <div className="h-[1px] bg-white/5 w-full" />
