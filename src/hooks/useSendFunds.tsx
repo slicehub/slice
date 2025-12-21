@@ -143,16 +143,7 @@ export function useSendFunds(onSuccess?: () => void) {
 
         // 5. ATTEMPT SIGNING (The Moment of Truth)
         console.log("🚀 Sending Transaction...");
-
-        // FORCE LEGACY TYPE (Optional Debugging Step)
-        delete populatedTx.maxFeePerGas;
-        delete populatedTx.maxPriorityFeePerGas;
-        // Ensure we explicitly set a gasPrice (fallback to feeData or a default)
-        // If feeData.gasPrice is null, we can try to get it again or rely on the provider
-        const legacyFeeData = await signer.provider?.getFeeData();
-        populatedTx.gasPrice = legacyFeeData?.gasPrice || undefined;
-
-        populatedTx.type = 0;
+        
         const tx = await signer.sendTransaction(populatedTx);
 
         console.log("✅ Transaction Sent! Hash:", tx.hash);
