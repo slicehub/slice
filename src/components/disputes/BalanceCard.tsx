@@ -6,7 +6,6 @@ import { useFundWallet } from "@privy-io/react-auth";
 import { RefreshCw, AlertCircle } from "lucide-react";
 
 import { DepositIcon, SendIcon, ReceiveIcon } from "./icons/ActionIcons";
-import styles from "./BalanceCard.module.css";
 import { useConnect } from "@/providers/ConnectProvider";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { SendModal } from "./SendModal";
@@ -53,15 +52,20 @@ export const BalanceCard: React.FC = () => {
 
   return (
     <>
-      <div className={styles.card}>
-        <div className={styles.leftSection}>
-          <div className={styles.balanceSection}>
-            <div className={styles.balanceLabel}>Balance</div>
+      <div className="bg-[#1b1c23] rounded-[21px] pt-[26px] px-[28px] pb-6 mt-[50px] mx-5 w-auto min-h-[110px] flex flex-row justify-between items-end text-white box-border">
+        {/* Left Section */}
+        <div className="flex flex-col gap-2.5 items-start flex-1 justify-start">
+          <div className="flex flex-col gap-[9px] w-auto mb-0">
+            <div className="font-manrope font-semibold text-[13px] leading-none opacity-70 tracking-[-0.26px] text-white">
+              Balance
+            </div>
 
             <div className="flex items-center gap-2">
-              <div className={styles.balanceAmount}>{displayBalance}</div>
+              <div className="font-manrope font-bold text-2xl leading-none tracking-[-0.48px] text-white">
+                {displayBalance}
+              </div>
 
-              {/* Retry Button: Visible on error or stuck N/A state */}
+              {/* Retry Button */}
               {(error || (displayBalance === "N/A" && !isLoading)) && (
                 <button
                   onClick={() => refetch()}
@@ -81,29 +85,41 @@ export const BalanceCard: React.FC = () => {
               </div>
             )}
           </div>
-          <button className={styles.billingButton}>Billing Profile</button>
+          <button className="bg-[#8c8fff] text-[#1b1c23] border-none rounded-[12.5px] px-[18px] py-[9px] h-7 flex items-center justify-center font-manrope font-extrabold text-xs tracking-[-0.36px] cursor-pointer hover:opacity-90 whitespace-nowrap shrink-0 mt-0 transition-opacity">
+            Billing Profile
+          </button>
         </div>
 
-        <div className={styles.actionButtons} style={{ gap: "12px" }}>
-          <button className={styles.actionButton} onClick={handleDeposit}>
-            <DepositIcon className={styles.actionIcon} />
-            <span className={styles.actionLabel}>Deposit</span>
+        {/* Action Buttons */}
+        <div className="flex gap-[26px] items-center shrink-0 self-end">
+          <button
+            className="flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group"
+            onClick={handleDeposit}
+          >
+            <DepositIcon className="shrink-0 block w-[40.5px] h-[40.5px] group-hover:opacity-80 transition-opacity" />
+            <span className="font-manrope font-semibold text-xs tracking-[-0.12px] leading-none">
+              Deposit
+            </span>
           </button>
 
           <button
-            className={styles.actionButton}
+            className="flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group"
             onClick={() => setIsReceiveOpen(true)}
           >
-            <ReceiveIcon className={styles.actionIcon} />
-            <span className={styles.actionLabel}>Receive</span>
+            <ReceiveIcon className="shrink-0 block w-[40.5px] h-[40.5px] group-hover:opacity-80 transition-opacity" />
+            <span className="font-manrope font-semibold text-xs tracking-[-0.12px] leading-none">
+              Receive
+            </span>
           </button>
 
           <button
-            className={styles.actionButton}
+            className="flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group"
             onClick={() => setIsSendOpen(true)}
           >
-            <SendIcon className={styles.actionIcon} />
-            <span className={styles.actionLabel}>Send</span>
+            <SendIcon className="shrink-0 block w-[40.5px] h-[40.5px] group-hover:opacity-80 transition-opacity" />
+            <span className="font-manrope font-semibold text-xs tracking-[-0.12px] leading-none">
+              Send
+            </span>
           </button>
         </div>
       </div>

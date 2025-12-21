@@ -54,8 +54,8 @@ export default function JoinDisputePage() {
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center relative overflow-hidden">
           {/* Header Icon */}
-          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-4">
-            <Gavel className="w-8 h-8 text-green-600" />
+          <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+            <Gavel className="w-8 h-8 text-indigo-600" />
           </div>
 
           <h2 className="text-2xl font-extrabold text-[#1b1c23] mb-2">

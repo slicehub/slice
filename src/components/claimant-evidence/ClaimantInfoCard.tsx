@@ -1,6 +1,7 @@
 import React from "react";
 import { PersonIcon } from "../disputes/icons/BadgeIcons";
 import styles from "./ClaimantInfoCard.module.css";
+import { shortenAddress } from '@/util/wallet';
 
 interface Claimant {
   name: string;
@@ -42,7 +43,7 @@ export const ClaimantInfoCard: React.FC<ClaimantInfoCardProps> = ({ claimant }) 
         )}
       </div>
       <div className={styles.infoSection}>
-        <h2 className={styles.title}>Evidence from {claimant.name}</h2>
+        <h2 className={styles.title}>Evidence from {shortenAddress(claimant.name)}</h2>
         <span className={styles.badge}>
           <PersonIcon size={10} color="#8c8fff" />
           {claimant.role}

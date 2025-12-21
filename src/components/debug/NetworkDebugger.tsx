@@ -15,9 +15,8 @@ export const NetworkDebugger = () => {
   const actualChainId = isEmbedded
     ? address
       ? defaultChain.id
-      : "N/A"
-    : chain?.id || "N/A";
-
+      : "N/A" // embedded
+    : chain?.id || "N/A"; // web
   const isMatch = actualChainId === defaultChain.id;
 
   // Note: Visibility is handled by the parent (DebugToggle)

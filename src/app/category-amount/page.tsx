@@ -24,7 +24,7 @@ export default function CategoryAmountPage() {
     <div className="flex flex-col h-screen bg-gray-50 p-4">
       <CategoryAmountHeader onBack={handleBack} />
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col items-center text-center mb-4">
+      <div className="bg-white rounded-2xl p-8 shadow-sm flex flex-col items-center text-center mb-4">
         <div className="w-24 h-24 mb-4">
           <video
             src="/animations/money.mp4"
@@ -35,9 +35,9 @@ export default function CategoryAmountPage() {
             className="w-full h-full object-contain"
           />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Select amount of money</h1>
+        <h1 className="text-2xl font-bold mb-2">Choose your stake</h1>
         <p className="text-gray-500 text-sm mb-6">
-          You&apos;ll play with users with a monetary range selection like yours
+          You&apos;ll be matched with disputes in the same reward range.{" "}
         </p>
         <AmountSelector
           selectedAmount={selectedAmount}
@@ -49,7 +49,7 @@ export default function CategoryAmountPage() {
 
       <div className="mt-auto flex justify-center pb-8">
         <SwipeButton onSwipeComplete={handleSwipeComplete}>
-          Find disputes
+          Find Disputes
         </SwipeButton>
       </div>
     </div>

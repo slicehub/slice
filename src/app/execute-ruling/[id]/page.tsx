@@ -57,27 +57,27 @@ export default function ExecuteRulingPage() {
   // --- Display Data ---
   const displayDispute = dispute
     ? {
-        id: dispute.id.toString(),
-        title: `Dispute #${dispute.id}`,
-        logo: "/images/icons/stellar-fund-icon.svg",
-        category: dispute.category,
-        actors: [
-          {
-            name: dispute.claimer.slice(0, 6) + "...",
-            role: "Claimer" as const,
-            avatar: "/images/profiles-mockup/profile-1.png",
-          },
-          {
-            name: dispute.defender.slice(0, 6) + "...",
-            role: "Defender" as const,
-            avatar: "/images/profiles-mockup/profile-2.png",
-          },
-        ],
-        generalContext:
-          "The voting phase has concluded. Execute the ruling to tally votes and distribute rewards.",
-        creationDate: "N/A",
-        deadline: "Ended",
-      }
+      id: dispute.id.toString(),
+      title: `Dispute #${dispute.id}`,
+      logo: "/images/icons/stellar-fund-icon.svg",
+      category: dispute.category,
+      actors: [
+        {
+          name: dispute.claimer.slice(0, 6) + "...",
+          role: "Claimer" as const,
+          avatar: "/images/profiles-mockup/profile-1.jpg",
+        },
+        {
+          name: dispute.defender.slice(0, 6) + "...",
+          role: "Defender" as const,
+          avatar: "/images/profiles-mockup/profile-2.jpg",
+        },
+      ],
+      generalContext:
+        "The voting phase has concluded. Execute the ruling to tally votes and distribute rewards.",
+      creationDate: "N/A",
+      deadline: "Ended",
+    }
     : null;
 
   return (
@@ -171,10 +171,9 @@ export default function ExecuteRulingPage() {
                 className={`
                   w-full py-4 rounded-xl font-manrope font-semibold tracking-tight
                   flex items-center justify-center gap-2 transition-all
-                  ${
-                    isExecuting || !dispute || dispute.status !== 2
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-[#8c8fff] text-white hover:opacity-90 shadow-lg shadow-[#8c8fff]/30"
+                  ${isExecuting || !dispute || dispute.status !== 2
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#8c8fff] text-white hover:opacity-90 shadow-lg shadow-[#8c8fff]/30"
                   }
                 `}
               >
