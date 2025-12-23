@@ -18,6 +18,7 @@ import { getVoteData } from "@/util/votingStorage";
 import { GlobalStateCard } from "@/components/debug/GlobalStateCard";
 import { DisputeInspector } from "@/components/debug/DisputeInspector";
 import { CryptoToolsCard } from "@/components/debug/CryptoToolsCard";
+import { NativeSendCard } from "@/components/debug/NativeSendCard";
 
 export default function DebugPage() {
   const router = useRouter();
@@ -259,6 +260,7 @@ export default function DebugPage() {
           logs={logs}
         />
 
+        <NativeSendCard />
         <CryptoToolsCard />
       </div>
     </div>
