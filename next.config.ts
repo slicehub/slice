@@ -15,6 +15,7 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["xo-connect"],
   webpack: (config) => {
     // These aliases mark React Native / Solana-related modules as "unresolvable"
     // in the browser bundle. This prevents webpack from trying to include
@@ -30,6 +31,13 @@ const nextConfig: NextConfig = {
       "@solana-program/memo": false,
       "@solana/kit": false,
       bs58: false,
+    };
+
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false
     };
 
     config.externals.push("pino-pretty", "lokijs", "encoding");

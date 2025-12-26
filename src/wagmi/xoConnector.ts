@@ -1,5 +1,4 @@
 import { createConnector } from 'wagmi';
-import { XOConnectProvider } from 'xo-connect';
 import { Chain } from 'wagmi/chains';
 
 // Helper to convert Wagmi Chains to the Hex Map required by XO
@@ -14,7 +13,7 @@ function getRpcMap(chains: readonly Chain[]) {
 }
 
 export function xoConnector() {
-    let providerInstance: XOConnectProvider | null = null;
+    let providerInstance: any = null;
 
     return createConnector((config) => ({
         id: 'xo-connect',
@@ -39,6 +38,10 @@ export function xoConnector() {
         async getProvider() {
             // Singleton pattern: Only create the provider once
             if (!providerInstance) {
+                // Dynamically import the library here to prevent server-side crashes
+                const mod = await import('xo-connect');
+                const XOConnectProvider = mod.XOConnectProvider;
+
                 const chains = config.chains;
                 // Default to the first chain in your config, or the requested one
                 const initialChain = chains[0];
