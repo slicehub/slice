@@ -1,11 +1,9 @@
 import { useCallback, useState } from "react";
 import { Contract } from "ethers";
 import { useSliceContract } from "./useSliceContract";
-import { useConnect } from "@/providers/ConnectProvider";
+import { useSmartWallet } from "@/hooks/useSmartWallet";
 import { toast } from "sonner";
 import { getContractsForChain } from "@/config/contracts";
-import { useEmbedded } from "@/providers/EmbeddedProvider";
-import { DEFAULT_CHAIN } from "@/config/chains";
 import { useContractTx } from "./useContractTx";
 
 const ERC20_ABI = [
@@ -31,9 +29,8 @@ async function processInBatches<T, R>(
 
 export function useAssignDispute() {
   const [isFinding, setIsFinding] = useState(false);
-  const { isEmbedded } = useEmbedded(); // Get context
+  const { address, signer, chainId } = useSmartWallet();
   const contract = useSliceContract();
-  const { address, signer } = useConnect();
   const { execute, isProcessing: isLoading } = useContractTx();
 
   const isReady = !!(contract && address && signer);
@@ -97,16 +94,6 @@ export function useAssignDispute() {
       const disputeData = await contract!.disputes(disputeId);
       const amountToApprove = disputeData.jurorStake; // Note: Ensure this field exists on contract struct
 
-      let chainId = 0;
-
-      // FIX: Robust Chain ID detection
-      if (isEmbedded) {
-        chainId = DEFAULT_CHAIN.chain.id;
-      } else if (signer?.provider) {
-        const net = await signer.provider.getNetwork();
-        chainId = Number(net.chainId);
-      }
-
       // Get BOTH contracts dynamically from the chain ID
       const { usdcToken, sliceContract: sliceAddress } =
         getContractsForChain(chainId);
@@ -116,10 +103,6 @@ export function useAssignDispute() {
       console.log(
         `[Join] Approving ${amountToApprove} USDC to Slice: ${sliceAddress}`,
       );
-
-      // Check allowance first to skip approve if possible? (Optional optimization, but sticking to existing logic flow roughly)
-      // Existing logic forces approve. I will keep it but add allowance check if I want, but let's stick to existing logic to be safe.
-      // Wait, current logic ALWAYS approves.
 
       toast.info("Approving Stake...");
       const approveTx = await usdcContract.approve(

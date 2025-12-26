@@ -21,9 +21,7 @@ export interface DisputeUI {
 }
 
 export async function transformDisputeData(
-    contractData: any,
-    userAddress?: string | null,
-    localVoteData?: any
+    contractData: any
 ): Promise<DisputeUI> {
     const id = contractData.id.toString();
     const status = Number(contractData.status);

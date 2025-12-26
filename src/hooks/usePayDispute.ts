@@ -1,24 +1,16 @@
 import { useState } from "react";
 import { Contract } from "ethers";
-import { useChainId } from "wagmi";
 import { toast } from "sonner";
 import { useSliceContract } from "./useSliceContract";
-import { useConnect } from "@/providers/ConnectProvider";
+import { useSmartWallet } from "@/hooks/useSmartWallet";
 import { getContractsForChain } from "@/config/contracts";
 import { erc20Abi } from "@/contracts/erc20-abi";
-import { useEmbedded } from "@/providers/EmbeddedProvider";
-import { DEFAULT_CHAIN } from "@/config/chains";
 
 export function usePayDispute() {
-  const { address, signer } = useConnect();
-  const { isEmbedded } = useEmbedded(); // Get context
+  const { address, signer, chainId } = useSmartWallet();
   const [isPaying, setIsPaying] = useState(false);
 
-  // 1. Get current chain to pick the right contract address
-  const wagmiChainId = useChainId();
-  const chainId = isEmbedded ? DEFAULT_CHAIN.chain.id : wagmiChainId;
-
-  // 2. We use the contract hook, which is now chain-aware (per your previous refactor)
+  // 1. We use the contract hook, which is now chain-aware
   const contract = useSliceContract();
 
   const payDispute = async (disputeId: string | number, _amountStr: string) => {
@@ -32,12 +24,10 @@ export function usePayDispute() {
     try {
       // --- STEP 1: Verify Chain Consistency ---
       // We double-check that the config map matches the current chain
-      // so we don't accidentally send a tx to the wrong deployment.
       const { sliceContract } = getContractsForChain(chainId);
 
       // --- STEP 2: Fetch Data Dynamically (The "Safe" Hybrid Approach) ---
       // Instead of assuming the token from config, we ask the contract directly.
-      // This guarantees we approve the exact token this specific deployment requires.
       const stakingTokenAddress = await contract.stakingToken();
 
       // Fetch the exact required stake amount from on-chain data

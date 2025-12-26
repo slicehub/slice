@@ -53,8 +53,7 @@ export function useDisputeList(listType: ListType) {
             const id = idBg.toString();
             // Using the adapter
             const d = await contract.disputes(id);
-            // We pass address for potential future use or if adapter is updated to use it
-            return await transformDisputeData(d, address);
+            return await transformDisputeData(d);
           }),
         );
 

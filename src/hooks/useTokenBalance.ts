@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Contract, formatUnits } from "ethers";
-import { useConnect } from "@/providers/ConnectProvider";
+import { useSmartWallet } from "@/hooks/useSmartWallet";
 import { erc20Abi } from "@/contracts/erc20-abi";
 
 export function useTokenBalance(tokenAddress: string | undefined) {
-  const { address, signer } = useConnect();
+  const { address, signer } = useSmartWallet();
   const [formatted, setFormatted] = useState<string | null>(null);
   const [symbol, setSymbol] = useState("USDC");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchBalance = async () => {
+  const fetchBalance = useCallback(async () => {
     if (!address || !signer || !tokenAddress) return;
 
     setIsLoading(true);
@@ -32,11 +32,11 @@ export function useTokenBalance(tokenAddress: string | undefined) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, signer, tokenAddress]);
 
   useEffect(() => {
     void fetchBalance();
-  }, [address, signer, tokenAddress]);
+  }, [fetchBalance]);
 
   return { formatted, symbol, isLoading, error, refetch: fetchBalance };
 }

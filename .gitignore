@@ -44,6 +44,7 @@ pnpm-lock.yaml
 
 public/swe-worker-development.js
 public/sw.js
+public/swe-worker-*.js
 public/workbox-*.js
 public/worker-*.js
 
