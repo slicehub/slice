@@ -6,8 +6,10 @@ import { type WalletClient } from "viem";
  */
 export function walletClientToSigner(walletClient: WalletClient) {
   const { account, chain, transport } = walletClient;
+  // FAIL SAFE: Return null instead of throwing error
   if (!account || !chain || !transport) {
-    throw new Error("Invalid wallet client");
+    // console.warn("WalletClient incomplete, waiting for connection data...");
+    return null;
   }
 
   const network = {

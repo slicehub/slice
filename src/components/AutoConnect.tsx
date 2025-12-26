@@ -22,7 +22,18 @@ export function AutoConnect() {
         if (xoConnector) {
             console.log("🔌 XO Environment detected: Auto-connecting...");
             attemptedRef.current = true;
-            connect({ connector: xoConnector });
+
+            // Add error handling to the connect call
+            connect(
+                { connector: xoConnector },
+                {
+                    onError: (err) => {
+                        console.error("AutoConnect Failed:", err);
+                        // Optional: Reset attemptedRef if you want to retry on certain errors
+                        // attemptedRef.current = false; 
+                    }
+                }
+            );
         }
     }, [isEmbedded, isConnected, connectors, connect]);
 

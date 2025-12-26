@@ -11,10 +11,10 @@ export function useSmartWallet() {
     const { isEmbedded } = useEmbedded();
 
     const signer = useMemo(() => {
-        if (walletClient) {
-            return walletClientToSigner(walletClient);
-        }
-        return null;
+        if (!walletClient) return null;
+
+        // This is now safe; it returns null instead of throwing if data is missing
+        return walletClientToSigner(walletClient);
     }, [walletClient]);
 
     return {
