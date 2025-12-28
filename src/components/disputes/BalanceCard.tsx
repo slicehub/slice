@@ -4,24 +4,18 @@ import React, { useState, useMemo } from "react";
 import { useChainId } from "wagmi";
 import { useFundWallet } from "@privy-io/react-auth";
 import { RefreshCw } from "lucide-react";
-
 import { DepositIcon, SendIcon, ReceiveIcon } from "./icons/ActionIcons";
 import { useConnect } from "@/providers/ConnectProvider";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { SendModal } from "./SendModal";
 import { ReceiveModal } from "./ReceiveModal";
 import { getContractsForChain } from "@/config/contracts";
-import { DEFAULT_CHAIN } from "@/config/chains";
-import { useEmbedded } from "@/providers/EmbeddedProvider";
 
 export const BalanceCard: React.FC = () => {
-  const { isEmbedded } = useEmbedded();
-  const wagmiChainId = useChainId();
-  const chainId = isEmbedded ? DEFAULT_CHAIN.chain.id : wagmiChainId;
-
+  const chainId = useChainId();
   const { address } = useConnect();
-  const { usdcToken } = getContractsForChain(chainId);
 
+  const { usdcToken } = getContractsForChain(chainId);
   const { formatted, loading: isLoading, refetch } = useTokenBalance(usdcToken);
   const { fundWallet } = useFundWallet();
 
@@ -43,7 +37,7 @@ export const BalanceCard: React.FC = () => {
     fundWallet({
       address,
       options: {
-        chain: { id: chainId },
+        chain: { id: chainId }, // Uses the trusted chainId
         asset: "USDC",
       },
     });
@@ -65,7 +59,7 @@ export const BalanceCard: React.FC = () => {
               </div>
 
               {/* Retry Button */}
-              {(displayBalance === "N/A" && !isLoading) && (
+              {displayBalance === "N/A" && !isLoading && (
                 <button
                   onClick={() => refetch()}
                   className="p-1.5 hover:bg-white/10 rounded-full transition-colors group"
@@ -75,8 +69,6 @@ export const BalanceCard: React.FC = () => {
                 </button>
               )}
             </div>
-
-            {/* Subtle Error Indicator Removed */}
           </div>
           <button className="bg-[#8c8fff] text-[#1b1c23] border-none rounded-[12.5px] px-[18px] py-[9px] h-7 flex items-center justify-center font-manrope font-extrabold text-xs tracking-[-0.36px] cursor-pointer hover:opacity-90 whitespace-nowrap shrink-0 mt-0 transition-opacity">
             Details
