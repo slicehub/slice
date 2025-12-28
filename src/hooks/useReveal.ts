@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSliceConnect } from "@/hooks/useSliceConnect";
+import { useAccount } from "wagmi";
 import { SLICE_ADDRESS } from "@/config/contracts";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { getVoteData } from "@/util/votingStorage";
 
 export function useReveal(disputeId: string) {
-  const { address } = useSliceConnect();
+  const { address } = useAccount();
 
   const { revealVote, isProcessing, logs } = useSliceVoting();
   const { dispute } = useGetDispute(disputeId);

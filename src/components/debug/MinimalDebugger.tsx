@@ -3,11 +3,10 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { Terminal, Send, Zap } from "lucide-react";
-import { useWalletClient } from "wagmi";
-import { useSliceConnect } from "@/hooks/useSliceConnect";
+import { useWalletClient, useAccount } from "wagmi";
 
 export const MinimalDebugger = () => {
-  const { address } = useSliceConnect();
+  const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);

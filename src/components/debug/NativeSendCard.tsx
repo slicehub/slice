@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { parseEther } from "viem";
 import { toast } from "sonner";
-import { useSendTransaction } from "wagmi";
+import { useSendTransaction, useAccount } from "wagmi";
 import { Send, Loader2, AlertTriangle } from "lucide-react";
-import { useSliceConnect } from "@/hooks/useSliceConnect";
 
 export const NativeSendCard = () => {
-  const { address } = useSliceConnect();
+  const { address } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
 
   const [status, setStatus] = useState<

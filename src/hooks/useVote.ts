@@ -3,14 +3,14 @@ import { toast } from "sonner";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { SLICE_ADDRESS } from "@/config/contracts";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
-import { useSliceConnect } from "@/hooks/useSliceConnect";
+import { useAccount } from "wagmi";
 import { getVoteData } from "@/util/votingStorage";
 
 const STATUS_COMMIT = 1;
 const STATUS_REVEAL = 2;
 
 export function useVote(disputeId: string) {
-  const { address } = useSliceConnect();
+  const { address } = useAccount();
 
   // Local state
   const [selectedVote, setSelectedVote] = useState<number | null>(null);

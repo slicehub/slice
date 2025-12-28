@@ -10,8 +10,8 @@ type ListType = "juror" | "all";
 
 export type Dispute = DisputeUI;
 
-const { address } = useAccount();
 export function useDisputeList(listType: ListType) {
+  const { address } = useAccount();
   // 1. Get the total number of disputes OR juror disputes depending on type
   // Note: For "juror" type, we need a separate read or logic.
   // Assuming 'getJurorDisputes' exists on contract for now, or we filter locally.

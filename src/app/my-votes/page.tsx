@@ -14,13 +14,14 @@ import {
   ShieldAlert,
   Zap,
 } from "lucide-react";
-import { useSliceConnect } from "@/hooks/useSliceConnect"; // Updated
+import { useSliceConnect } from "@/hooks/useSliceConnect";
+import { useAccount } from "wagmi";
 import { useDisputeList } from "@/hooks/useDisputeList";
 
 export default function MyVotesPage() {
   const router = useRouter();
-  // Updated hook usage
-  const { address, connect } = useSliceConnect();
+  const { address } = useAccount();
+  const { connect } = useSliceConnect();
 
   const { disputes, isLoading } = useDisputeList("juror");
 

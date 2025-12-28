@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useChainId } from "wagmi";
+import { useChainId, useAccount } from "wagmi";
 import { useFundWallet } from "@privy-io/react-auth";
 import { RefreshCw } from "lucide-react";
 import { DepositIcon, SendIcon, ReceiveIcon } from "./icons/ActionIcons";
-import { useSliceConnect } from "@/hooks/useSliceConnect";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { SendModal } from "./SendModal";
 import { ReceiveModal } from "./ReceiveModal";
@@ -13,7 +12,7 @@ import { getContractsForChain } from "@/config/contracts";
 
 export const BalanceCard: React.FC = () => {
   const chainId = useChainId();
-  const { address } = useSliceConnect();
+  const { address } = useAccount();
 
   const { usdcToken } = getContractsForChain(chainId);
   const { formatted, loading: isLoading, refetch } = useTokenBalance(usdcToken);

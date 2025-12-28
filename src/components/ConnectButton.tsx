@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useSliceConnect } from "@/hooks/useSliceConnect";
+import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { Loader2, Copy, Check, Wallet, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,9 @@ import { useEmbedded } from "@/hooks/useEmbedded";
 
 const ConnectButton = () => {
   const { isEmbedded } = useEmbedded();
-  const { connect, disconnect, address, isConnecting } = useSliceConnect();
+  const { connect, disconnect } = useSliceConnect();
+  const { address, status } = useAccount();
+  const isConnecting = status === "connecting" || status === "reconnecting";
 
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);

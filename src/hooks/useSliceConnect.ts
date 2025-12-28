@@ -11,7 +11,7 @@ export const useSliceConnect = () => {
   // 2. Get Wagmi controls (for Embedded)
   const { connectAsync, connectors } = useConnect();
   const { disconnectAsync } = useDisconnect();
-  const { address, isConnected, status, chainId } = useAccount();
+  const { address } = useAccount();
 
   // Unified Connect Function
   const connect = async () => {
@@ -43,9 +43,5 @@ export const useSliceConnect = () => {
   return {
     connect,
     disconnect,
-    address,
-    isConnected,
-    isConnecting: status === "connecting" || status === "reconnecting",
-    chainId,
   };
 };

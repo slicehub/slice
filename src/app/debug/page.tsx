@@ -11,21 +11,14 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatUnits } from "viem"; // CHANGED: from ethers to viem
-
-// Hooks
-import { useSliceConnect } from "@/hooks/useSliceConnect";
+import { formatUnits } from "viem";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
 import { useCreateDispute } from "@/hooks/useCreateDispute";
 import { usePayDispute } from "@/hooks/usePayDispute";
 import { getVoteData } from "@/util/votingStorage";
-import { useExecuteRuling } from "@/hooks/useExecuteRuling"; // NEW IMPORT
-
-// NEW IMPORTS
-import { usePublicClient } from "wagmi";
+import { useExecuteRuling } from "@/hooks/useExecuteRuling";
+import { usePublicClient, useAccount } from "wagmi";
 import { SLICE_ABI, SLICE_ADDRESS } from "@/config/contracts";
-
-// Components
 import { GlobalStateCard } from "@/components/debug/GlobalStateCard";
 import { DisputeInspector } from "@/components/debug/DisputeInspector";
 import { CryptoToolsCard } from "@/components/debug/CryptoToolsCard";
@@ -36,12 +29,10 @@ import { SmartDebugger } from "@/components/debug/SmartDebugger";
 
 export default function DebugPage() {
   const router = useRouter();
-  const { address } = useSliceConnect();
+  const { address } = useAccount();
 
-  // CHANGED: Use Public Client instead of Ethers Contract
   const publicClient = usePublicClient();
 
-  // Logic Hooks
   const {
     commitVote,
     revealVote,

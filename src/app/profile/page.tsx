@@ -4,13 +4,12 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Terminal, Bug, Trophy, Flame, Target } from "lucide-react";
 import ConnectButton from "@/components/ConnectButton";
-import { useReadContract } from "wagmi";
+import { useReadContract, useAccount } from "wagmi";
 import { SLICE_ABI, SLICE_ADDRESS } from "@/config/contracts";
-import { useSliceConnect } from "@/hooks/useSliceConnect"; // Updated
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { address } = useSliceConnect(); // Updated
+  const { address } = useAccount();
 
   // --- 1. Fetch Juror Data (Wagmi Style) ---
   const { data: jurorDisputes } = useReadContract({
