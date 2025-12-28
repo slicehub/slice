@@ -1,10 +1,14 @@
 import { useCallback, useState } from "react";
-import { useWriteContract, usePublicClient, useAccount, useChainId } from "wagmi";
+import {
+  useWriteContract,
+  usePublicClient,
+  useAccount,
+  useChainId,
+} from "wagmi";
 import { erc20Abi } from "viem";
 import { SLICE_ABI, getContractsForChain } from "@/config/contracts";
 import { toast } from "sonner";
 
-// Helper to match logic from original file
 async function processInBatches<T, R>(
   items: T[],
   batchSize: number,
@@ -45,7 +49,7 @@ export function useAssignDispute() {
       const count = await publicClient.readContract({
         address: sliceContract as `0x${string}`,
         abi: SLICE_ABI,
-        functionName: "disputeCount"
+        functionName: "disputeCount",
       });
 
       const totalDisputes = Number(count);
@@ -64,7 +68,7 @@ export function useAssignDispute() {
             address: sliceContract as `0x${string}`,
             abi: SLICE_ABI,
             functionName: "disputes",
-            args: [BigInt(id)]
+            args: [BigInt(id)],
           });
           // d is struct. status is enum (uint8).
           if (d.status === 1) return id; // Status 1 = Commit Phase (Open)
@@ -106,7 +110,7 @@ export function useAssignDispute() {
         address: sliceContract as `0x${string}`,
         abi: SLICE_ABI,
         functionName: "disputes",
-        args: [BigInt(disputeId)]
+        args: [BigInt(disputeId)],
       });
       const amountToApprove = disputeData.jurorStake;
 
@@ -117,7 +121,7 @@ export function useAssignDispute() {
         address: usdcToken as `0x${string}`,
         abi: erc20Abi,
         functionName: "allowance",
-        args: [address, sliceContract as `0x${string}`]
+        args: [address, sliceContract as `0x${string}`],
       });
 
       if (allowance < amountToApprove) {
@@ -126,7 +130,7 @@ export function useAssignDispute() {
           address: usdcToken as `0x${string}`,
           abi: erc20Abi,
           functionName: "approve",
-          args: [sliceContract as `0x${string}`, amountToApprove]
+          args: [sliceContract as `0x${string}`, amountToApprove],
         });
         await publicClient.waitForTransactionReceipt({ hash: approveHash });
         toast.success("Approval confirmed.");
@@ -139,14 +143,13 @@ export function useAssignDispute() {
         abi: SLICE_ABI,
         functionName: "joinDispute", // Assuming naming is joinDispute or stake? Original used: `contract.joinDispute`.
         // ABI in `slice-abi.ts` has `joinDispute`. Use that.
-        args: [BigInt(disputeId)]
+        args: [BigInt(disputeId)],
       });
 
       await publicClient.waitForTransactionReceipt({ hash: joinHash });
 
       toast.success("Successfully joined the dispute!");
       return true;
-
     } catch (error: any) {
       console.error("Join failed", error);
       toast.error(`Join failed: ${error.shortMessage || error.message}`);
@@ -161,6 +164,6 @@ export function useAssignDispute() {
     joinDispute,
     isLoading: isJoining, // Mapped to match old hook
     isFinding,
-    isReady: !!address
+    isReady: !!address,
   };
 }

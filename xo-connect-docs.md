@@ -36,7 +36,10 @@ npm install xo-connect
 import { XOConnectProvider } from "xo-connect";
 import { ethers } from "ethers";
 
-const provider = new ethers.providers.Web3Provider(new XOConnectProvider(), "any");
+const provider = new ethers.providers.Web3Provider(
+  new XOConnectProvider(),
+  "any",
+);
 
 await provider.send("eth_requestAccounts", []);
 const signer = provider.getSigner();
@@ -88,8 +91,8 @@ MIT
 
 ```ts
 // index.ts
-import { v4 as uuidv4 } from 'uuid';
-const Web3 = require('web3');
+import { v4 as uuidv4 } from "uuid";
+const Web3 = require("web3");
 
 export enum Method {
   available = "available",
@@ -100,28 +103,28 @@ export enum Method {
 }
 
 export interface Client {
-    _id: string;
-    alias: string;
-    image: string;
-    currencies: Array<{ id: string; address: string }>;
+  _id: string;
+  alias: string;
+  image: string;
+  currencies: Array<{ id: string; address: string }>;
 }
 
 export interface RequestParams {
-    method: Method;
-    data?: any;
-    currency?: string
-    onSuccess: (response: Response) => void;
-    onCancel: () => void;
+  method: Method;
+  data?: any;
+  currency?: string;
+  onSuccess: (response: Response) => void;
+  onCancel: () => void;
 }
 
 export interface Request extends RequestParams {
-    id: string;
+  id: string;
 }
 
 export interface Response {
-    id: string
-    type: string
-    data: any
+  id: string;
+  type: string;
+  data: any;
 }
 
 class _XOConnect {
@@ -129,21 +132,21 @@ class _XOConnect {
   private pendingRequests: Map<string, Request> = new Map();
   private client: Client;
 
-    setClient(client:Client) {
-        this.client = client;
-    } 
+  setClient(client: Client) {
+    this.client = client;
+  }
 
   async getClient(): Promise<Client | null> {
-    if(!this.client){
-        const {client} =  await this.connect()
-        this.client = client;
+    if (!this.client) {
+      const { client } = await this.connect();
+      this.client = client;
     }
     return this.client;
   }
 
   async delay(ms: number) {
     await new Promise((resolve) => setTimeout(() => resolve(""), ms)).then(
-      () => {}
+      () => {},
     );
   }
 
@@ -177,16 +180,15 @@ class _XOConnect {
           const signature = client.signature;
           const web3 = new Web3("");
           const address = web3.eth.accounts.recover(message, signature);
-        
 
           const eth = client.currencies.find(
-            (c) => c.id == "ethereum.mainnet.native.eth"
+            (c) => c.id == "ethereum.mainnet.native.eth",
           );
 
           if (eth.address !== address) {
             throw new Error("Invalid signature");
           }
-          
+
           this.setClient(client);
 
           resolve({
@@ -220,7 +222,7 @@ class _XOConnect {
         method: request.method,
         data: request.data,
         currency: request.currency || "eth",
-      })
+      }),
     );
     return id;
   }
@@ -232,7 +234,7 @@ class _XOConnect {
         id,
         type: "cancel",
         method: request.method,
-      })
+      }),
     );
     this.pendingRequests.delete(id);
   }
@@ -313,7 +315,7 @@ export class XOConnectProvider {
     const id = opts.defaultChainId.toLowerCase();
     if (!/^0x[0-9a-f]+$/i.test(id))
       throw new Error(
-        "XOConnectProvider: chainId must be hex (e.g., 0x1, 0x89)"
+        "XOConnectProvider: chainId must be hex (e.g., 0x1, 0x89)",
       );
 
     this.rpcMap = opts.rpcs;
@@ -355,7 +357,7 @@ export class XOConnectProvider {
     const client = await this.getClient();
     // currencies[*].chainId should be hex ("0x1", "0x89", ...)
     const cur = client.currencies?.find(
-      (c: any) => (c.chainId?.toLowerCase?.() ?? "") === this.chainIdHex
+      (c: any) => (c.chainId?.toLowerCase?.() ?? "") === this.chainIdHex,
     );
     return cur?.address ? [cur.address] : [];
   }
@@ -390,7 +392,7 @@ export class XOConnectProvider {
     const currencyId =
       tx?.currency ||
       client.currencies?.find(
-        (c: any) => c.chainId?.toLowerCase() === this.chainIdHex
+        (c: any) => c.chainId?.toLowerCase() === this.chainIdHex,
       )?.id;
 
     if (!currencyId)
@@ -411,7 +413,7 @@ export class XOConnectProvider {
             if (typeof d.signedTx === "string" && d.signedTx.startsWith("0x")) {
               const hash = await this.rpc.call<string>(
                 "eth_sendRawTransaction",
-                [d.signedTx]
+                [d.signedTx],
               );
               return resolve(hash);
             }
@@ -426,7 +428,9 @@ export class XOConnectProvider {
             }
 
             return reject(
-              new Error("Wallet returned neither signedTx nor transaction hash")
+              new Error(
+                "Wallet returned neither signedTx nor transaction hash",
+              ),
             );
           } catch (e) {
             return reject(e);
@@ -498,12 +502,12 @@ export class XOConnectProvider {
       case "eth_getBalance":
         return this.rpc.call(
           "eth_getBalance",
-          params ?? [(await this.getAccounts())[0], "latest"]
+          params ?? [(await this.getAccounts())[0], "latest"],
         );
       case "eth_getTransactionCount":
         return this.rpc.call(
           "eth_getTransactionCount",
-          params ?? [(await this.getAccounts())[0], "latest"]
+          params ?? [(await this.getAccounts())[0], "latest"],
         );
       case "eth_getCode":
         return this.rpc.call("eth_getCode", this.withLatest(params, 2));

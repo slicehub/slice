@@ -9,7 +9,11 @@ interface IconProps {
 /**
  * Crowdfunding Icon - Grid de 4 cuadrados
  */
-export const CrowdfundingIcon: React.FC<IconProps> = ({ className, size = 9, color = "#1b1c23" }) => {
+export const CrowdfundingIcon: React.FC<IconProps> = ({
+  className,
+  size = 9,
+  color = "#1b1c23",
+}) => {
   return (
     <svg
       width={size}
@@ -31,7 +35,11 @@ export const CrowdfundingIcon: React.FC<IconProps> = ({ className, size = 9, col
 /**
  * Person Icon - Icono de persona
  */
-export const PersonIcon: React.FC<IconProps> = ({ className, size = 10, color = "#1b1c23" }) => {
+export const PersonIcon: React.FC<IconProps> = ({
+  className,
+  size = 10,
+  color = "#1b1c23",
+}) => {
   return (
     <svg
       width={size}
@@ -53,7 +61,11 @@ export const PersonIcon: React.FC<IconProps> = ({ className, size = 10, color = 
 /**
  * Star Icon - Icono de estrella
  */
-export const StarIcon: React.FC<IconProps> = ({ className, size = 15, color = "#1B1C23" }) => {
+export const StarIcon: React.FC<IconProps> = ({
+  className,
+  size = 15,
+  color = "#1B1C23",
+}) => {
   return (
     <svg
       width={size}
@@ -75,7 +87,11 @@ export const StarIcon: React.FC<IconProps> = ({ className, size = 15, color = "#
 /**
  * Vote Icon - Icono de voto (documento con checkmark)
  */
-export const VoteIcon: React.FC<IconProps> = ({ className, size = 16, color = "#8c8fff" }) => {
+export const VoteIcon: React.FC<IconProps> = ({
+  className,
+  size = 16,
+  color = "#8c8fff",
+}) => {
   return (
     <svg
       width={size}
@@ -98,7 +114,11 @@ export const VoteIcon: React.FC<IconProps> = ({ className, size = 16, color = "#
 /**
  * Filter Icon - Icono de filtro
  */
-export const FilterIcon: React.FC<IconProps> = ({ className, size = 12, color = "#1B1C23" }) => {
+export const FilterIcon: React.FC<IconProps> = ({
+  className,
+  size = 12,
+  color = "#1B1C23",
+}) => {
   return (
     <svg
       width={size}

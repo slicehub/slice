@@ -11,10 +11,12 @@ interface VoteData {
 export const getVoteStorageKey = (
   contractAddress: string | undefined,
   disputeId: string | number,
-  userAddress: string | null | undefined
+  userAddress: string | null | undefined,
 ): string => {
   // Fallback values prevent crashes if data isn't ready, though logic should prevent this
-  const safeContract = contractAddress ? contractAddress.toLowerCase() : "unknown_contract";
+  const safeContract = contractAddress
+    ? contractAddress.toLowerCase()
+    : "unknown_contract";
   const safeUser = userAddress ? userAddress.toLowerCase() : "unknown_user";
 
   return `slice_v2_${safeContract}_dispute_${disputeId}_user_${safeUser}`;
@@ -28,7 +30,7 @@ export const saveVoteData = (
   disputeId: string | number,
   userAddress: string,
   vote: number,
-  salt: bigint
+  salt: bigint,
 ) => {
   if (!contractAddress || !userAddress) return;
 
@@ -52,7 +54,7 @@ export const saveVoteData = (
 export const getVoteData = (
   contractAddress: string | undefined,
   disputeId: string | number,
-  userAddress: string | null | undefined
+  userAddress: string | null | undefined,
 ): VoteData | null => {
   if (!contractAddress || !userAddress) return null;
 
@@ -75,7 +77,7 @@ export const getVoteData = (
 export const hasLocalVote = (
   contractAddress: string | undefined,
   disputeId: string | number,
-  userAddress: string | null | undefined
+  userAddress: string | null | undefined,
 ): boolean => {
   return !!getVoteData(contractAddress, disputeId, userAddress);
 };

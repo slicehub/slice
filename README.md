@@ -31,23 +31,23 @@ When **human judgment** is needed in decentralized applications—such as resolv
 
 ## Core Features
 
-* **Neutrality**: Provides objective, on-chain decisions.
-* **Random Juror Selection**: Ensures fairness and unpredictability.
-* **Private Commit–Reveal Voting**: Prevents bribery or manipulation.
-* **Economic Security**: Jurors stake tokens, earning rewards for honesty and risking penalties for dishonesty.
+- **Neutrality**: Provides objective, on-chain decisions.
+- **Random Juror Selection**: Ensures fairness and unpredictability.
+- **Private Commit–Reveal Voting**: Prevents bribery or manipulation.
+- **Economic Security**: Jurors stake tokens, earning rewards for honesty and risking penalties for dishonesty.
+
 ---
 
 ## Deployed Contracts
 
 The protocol is currently deployed on the following networks.
 
-| Network | Slice Core | USDC Token |
-| --- | --- | --- |
-| **Base Sepolia** | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x5dEaC602762362FE5f135FA5904351916053cF70` |
+| Network            | Slice Core                                   | USDC Token                                   |
+| ------------------ | -------------------------------------------- | -------------------------------------------- |
+| **Base Sepolia**   | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x5dEaC602762362FE5f135FA5904351916053cF70` |
 | **Scroll Sepolia** | `0x095815CDcf46160E4A25127A797D33A9daF39Ec0` | `0x2C9678042D52B97D27f2bD2947F7111d93F3dD0D` |
-| **Base** | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
-| **Scroll** | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` |
-
+| **Base**           | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| **Scroll**         | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` |
 
 ## Environment & Connectivity
 
@@ -59,24 +59,25 @@ Slice uses **Verifiable Random Functions (VRF)** to select jurors from a staked 
 
 To prevent bribery, collusion, and "copycat" voting, Slice implements a robust two-stage voting process:
 
-  * **Commit Phase:** Jurors submit a hash of their vote + a secret salt (`keccak256(vote + salt)`). The vote remains hidden on-chain.
-  * **Reveal Phase:** Jurors reveal their vote and salt. Slice verifies the hash matches the commitment. Only revealed votes are tallied.
+- **Commit Phase:** Jurors submit a hash of their vote + a secret salt (`keccak256(vote + salt)`). The vote remains hidden on-chain.
+- **Reveal Phase:** Jurors reveal their vote and salt. Slice verifies the hash matches the commitment. Only revealed votes are tallied.
 
 ### 3\. 🪙 Configurable Staking & Incentives
 
 Slice is token-agnostic. Each deployment can configure its own **staking token** (e.g., USDC, stablecoins, or governance tokens).
 
-  * **Staking:** Jurors stake tokens to gain eligibility. Higher stake = higher selection probability.
-  * **Rewards:** Jurors who vote with the majority are rewarded.
-  * **Slashing:** Jurors who vote against the majority (incoherent) lose a portion of their stake, incentivizing honest consensus.
+- **Staking:** Jurors stake tokens to gain eligibility. Higher stake = higher selection probability.
+- **Rewards:** Jurors who vote with the majority are rewarded.
+- **Slashing:** Jurors who vote against the majority (incoherent) lose a portion of their stake, incentivizing honest consensus.
 
 1. Go to [Reown Dashboard](https://dashboard.reown.com) and create a new project.
 2. Copy your `Project ID`.
 3. Rename `.env.example` to `.env.local` and paste env variables.
+
 ```.env.local
   NEXT_PUBLIC_PROJECT_ID="YOUR_PROJECT_ID"
   # Set the environment (will default to development/Testnet if omitted)
-  # NEXT_PUBLIC_APP_ENV=production 
+  # NEXT_PUBLIC_APP_ENV=production
 ```
 
 2.  **Install dependencies:**
@@ -105,7 +106,7 @@ Slice is token-agnostic. Each deployment can configure its own **staking token**
 
     Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) to launch the Slice App.
 
------
+---
 
 ## 🧩 Integration Guide (For Developers)
 
@@ -118,13 +119,13 @@ Integrating Slice into your protocol is as simple as 1-2-3:
 3.  **Read the Verdict:**
     Once the dispute status is `Executed`, read the `winner` address from the `disputes` mapping and execute your logic (e.g., release escrow funds).
 
------
+---
 
 ## 🗺️ Roadmap
 
-  * [x] **Phase 1: Foundation** (Core Contracts, Basic UI, Commit-Reveal)
-  * [ ] **Phase 2: Expansion** (Arbitration Standards, Multiple Court Verticals)
-  * [ ] **Phase 3: Decentralization** (DAO Governance, Permissionless Court Creation)
-  * [ ] **Phase 4: Ecosystem** (SDKs for easy integration with major DeFi/Gig platforms)
+- [x] **Phase 1: Foundation** (Core Contracts, Basic UI, Commit-Reveal)
+- [ ] **Phase 2: Expansion** (Arbitration Standards, Multiple Court Verticals)
+- [ ] **Phase 3: Decentralization** (DAO Governance, Permissionless Court Creation)
+- [ ] **Phase 4: Ecosystem** (SDKs for easy integration with major DeFi/Gig platforms)
 
------
+---

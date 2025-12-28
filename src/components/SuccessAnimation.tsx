@@ -17,7 +17,9 @@ interface SuccessAnimationProps {
   onComplete: () => void;
 }
 
-export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ onComplete }) => {
+export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
+  onComplete,
+}) => {
   const lottieRef = useRef<any>(null);
   const [animationData, setAnimationData] = useState<any>(null);
 
@@ -68,4 +70,3 @@ export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ onComplete }
     </div>
   );
 };
-

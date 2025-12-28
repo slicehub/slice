@@ -21,7 +21,6 @@ export default function CategoryAmountPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#F8F9FC]">
-
       {/* 1. Simplified Header (Just the Back Button) */}
       <div className="px-6 pt-6 pb-2">
         <button
@@ -34,10 +33,8 @@ export default function CategoryAmountPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col justify-center px-5 pb-8 gap-4 overflow-y-auto">
-
         {/* 2. Main Stake Card */}
         <div className="w-full bg-white rounded-[32px] p-6 shadow-[0px_8px_30px_rgba(0,0,0,0.04)] border border-white flex flex-col items-center justify-center text-center relative overflow-visible">
-
           {/* --- NEW: Category Selector (Inside the card) --- */}
           <div className="relative z-20 w-full mb-6">
             <button
@@ -49,18 +46,25 @@ export default function CategoryAmountPage() {
                   {/* You can swap this icon based on selection */}
                   <Target className="w-5 h-5" />
                 </div>
-                <span className="font-bold text-sm text-[#1b1c23]">{category}</span>
+                <span className="font-bold text-sm text-[#1b1c23]">
+                  {category}
+                </span>
               </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
             </button>
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 z-50 animate-in fade-in zoom-in-95">
-                {['General', 'Tech & Software', 'Freelance'].map((cat) => (
+                {["General", "Tech & Software", "Freelance"].map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => { setCategory(cat); setIsDropdownOpen(false); }}
+                    onClick={() => {
+                      setCategory(cat);
+                      setIsDropdownOpen(false);
+                    }}
                     className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#F5F6F9] text-sm font-bold text-gray-600 hover:text-[#1b1c23] transition-colors"
                   >
                     {cat}
@@ -110,10 +114,11 @@ export default function CategoryAmountPage() {
             <AlertCircle className="w-5 h-5" />
           </div>
           <p className="text-[11px] font-bold text-gray-500 leading-[1.5] mt-0.5 text-left">
-            <span className="text-[#1b1c23]">Heads up:</span> Once you start a dispute, funds will be locked in the contract until a ruling is executed.
+            <span className="text-[#1b1c23]">Heads up:</span> Once you start a
+            dispute, funds will be locked in the contract until a ruling is
+            executed.
           </p>
         </div>
-
       </div>
 
       {/* Bottom Action Area */}

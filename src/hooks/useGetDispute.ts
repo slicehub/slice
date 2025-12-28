@@ -1,5 +1,5 @@
 import { useReadContract } from "wagmi";
-import { SLICE_ABI, SLICE_ADDRESS } from "@/config/contracts"; // Ensure these imports match your project
+import { SLICE_ABI, SLICE_ADDRESS } from "@/config/contracts";
 import { transformDisputeData, type DisputeUI } from "@/util/disputeAdapter";
 import { useState, useEffect } from "react";
 
@@ -9,7 +9,7 @@ export function useGetDispute(id: string) {
     data: rawDispute,
     isLoading,
     error,
-    refetch
+    refetch,
   } = useReadContract({
     address: SLICE_ADDRESS,
     abi: SLICE_ABI,
@@ -18,10 +18,11 @@ export function useGetDispute(id: string) {
     query: {
       enabled: !!id, // Only run if ID exists
       staleTime: 5000, // Cache for 5 seconds
-    }
+    },
   });
 
-  const [transformedDispute, setTransformedDispute] = useState<DisputeUI | null>(null);
+  const [transformedDispute, setTransformedDispute] =
+    useState<DisputeUI | null>(null);
 
   // 2. Transform the data using your utility
   // Since transformDisputeData is async (fetches IPFS), we need a useEffect
@@ -33,7 +34,10 @@ export function useGetDispute(id: string) {
       }
       try {
         // We pass the raw result to the transformer we fixed in Step 1
-        const transformed = await transformDisputeData({ ...rawDispute as any, id });
+        const transformed = await transformDisputeData({
+          ...(rawDispute as any),
+          id,
+        });
         setTransformedDispute(transformed);
       } catch (e) {
         console.error("Failed to transform dispute data", e);
@@ -46,6 +50,6 @@ export function useGetDispute(id: string) {
     dispute: transformedDispute,
     loading: isLoading,
     error,
-    refetch
+    refetch,
   };
 }

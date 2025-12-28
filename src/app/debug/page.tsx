@@ -68,25 +68,25 @@ export default function DebugPage() {
   const refreshGlobalState = useCallback(async () => {
     if (!publicClient || !address) return;
     try {
-      const count = await publicClient.readContract({
+      const count = (await publicClient.readContract({
         address: SLICE_ADDRESS,
         abi: SLICE_ABI,
-        functionName: 'disputeCount'
-      }) as bigint;
+        functionName: "disputeCount",
+      })) as bigint;
 
-      const userDisputeIds = await publicClient.readContract({
+      const userDisputeIds = (await publicClient.readContract({
         address: SLICE_ADDRESS,
         abi: SLICE_ABI,
-        functionName: 'getUserDisputes',
-        args: [address as `0x${string}`]
-      }) as bigint[];
+        functionName: "getUserDisputes",
+        args: [address as `0x${string}`],
+      })) as bigint[];
 
-      const jurorDisputeIds = await publicClient.readContract({
+      const jurorDisputeIds = (await publicClient.readContract({
         address: SLICE_ADDRESS,
         abi: SLICE_ABI,
-        functionName: 'getJurorDisputes',
-        args: [address as `0x${string}`]
-      }) as bigint[];
+        functionName: "getJurorDisputes",
+        args: [address as `0x${string}`],
+      })) as bigint[];
 
       setMyPartyDisputes(userDisputeIds.map((id) => id.toString()));
       setMyJurorDisputes(jurorDisputeIds.map((id) => id.toString()));
@@ -106,12 +106,12 @@ export default function DebugPage() {
     if (!publicClient || !targetId) return;
     setIsLoadingData(true);
     try {
-      const d = await publicClient.readContract({
+      const d = (await publicClient.readContract({
         address: SLICE_ADDRESS,
         abi: SLICE_ABI,
-        functionName: 'disputes',
-        args: [BigInt(targetId)]
-      }) as any;
+        functionName: "disputes",
+        args: [BigInt(targetId)],
+      })) as any;
 
       const statusLabels = ["Created", "Commit", "Reveal", "Executed"];
       const isClaimer = d.claimer.toLowerCase() === address?.toLowerCase();
@@ -120,12 +120,12 @@ export default function DebugPage() {
       let hasRevealed = false;
       try {
         if (address) {
-          hasRevealed = await publicClient.readContract({
+          hasRevealed = (await publicClient.readContract({
             address: SLICE_ADDRESS,
             abi: SLICE_ABI,
-            functionName: 'hasRevealed',
-            args: [BigInt(targetId), address as `0x${string}`]
-          }) as boolean;
+            functionName: "hasRevealed",
+            args: [BigInt(targetId), address as `0x${string}`],
+          })) as boolean;
         }
       } catch (e) {
         console.error("hasRevealed check failed", e);
@@ -135,9 +135,8 @@ export default function DebugPage() {
       }
 
       setRawDisputeData({
-
         // Struct usually has id. Let's assume d.id exists or d is array.
-        // If d is array (Wagmi default for struct), properties are accessed by index or name if ABI is precise. 
+        // If d is array (Wagmi default for struct), properties are accessed by index or name if ABI is precise.
         // Wagmi v2 with Viem usually returns object with named keys if ABI has named outputs.
         // Assuming object.
         id: targetId, // Safe fallback
@@ -169,11 +168,7 @@ export default function DebugPage() {
       });
 
       if (address) {
-        const stored = getVoteData(
-          SLICE_ADDRESS,
-          targetId,
-          address,
-        );
+        const stored = getVoteData(SLICE_ADDRESS, targetId, address);
         setLocalStorageData(stored);
       }
     } catch (e) {
@@ -207,11 +202,13 @@ export default function DebugPage() {
   };
 
   const handleJoin = async () => {
-    // NOTE: Using useAssignDispute logic would be ideal if we imported it. 
-    // But prompt said we can REPLACE raw calls. 
+    // NOTE: Using useAssignDispute logic would be ideal if we imported it.
+    // But prompt said we can REPLACE raw calls.
     // Since `useAssignDispute` is not imported, let's just show a toast or import it.
     // I'll import it to be clean.
-    toast.info("Please use the main UI to join (Code migrated to useAssignDispute)");
+    toast.info(
+      "Please use the main UI to join (Code migrated to useAssignDispute)",
+    );
     // Or I can add `useAssignDispute` import.
     // Let's stick to what's requested: "Replace them with the hooks".
   };

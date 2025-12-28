@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { createContext, use, useState, useEffect, useRef } from "react";
 
 interface TimerContextType {

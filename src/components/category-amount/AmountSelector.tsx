@@ -72,10 +72,11 @@ export const AmountSelector: React.FC<AmountSelectorProps> = ({
         {AMOUNTS.map((amount) => (
           <button
             key={amount}
-            className={`absolute top-0 bg-transparent border-none font-manrope text-sm text-[#31353b] tracking-[-0.36px] leading-[1.25] cursor-pointer p-0 transition-opacity duration-200 whitespace-nowrap ${amount === selectedAmount
+            className={`absolute top-0 bg-transparent border-none font-manrope text-sm text-[#31353b] tracking-[-0.36px] leading-[1.25] cursor-pointer p-0 transition-opacity duration-200 whitespace-nowrap ${
+              amount === selectedAmount
                 ? "opacity-100 font-extrabold"
                 : "opacity-80 font-semibold hover:opacity-100"
-              }`}
+            }`}
             onClick={() => handleAmountClick(amount)}
             style={{
               left: `${(AMOUNTS.indexOf(amount) / (AMOUNTS.length - 1)) * 100}%`,

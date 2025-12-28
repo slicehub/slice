@@ -7,13 +7,13 @@ export const getContractsForChain = (chainId: number) => {
     console.warn(`Chain ID ${chainId} not found in config, using default.`);
     return {
       sliceContract: DEFAULT_CHAIN.contracts.slice,
-      usdcToken: DEFAULT_CHAIN.contracts.usdc
+      usdcToken: DEFAULT_CHAIN.contracts.usdc,
     };
   }
 
   return {
     sliceContract: config.contracts.slice,
-    usdcToken: config.contracts.usdc
+    usdcToken: config.contracts.usdc,
   };
 };
 

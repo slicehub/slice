@@ -3,8 +3,16 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import {
-  Gavel, Eye, Loader2, ArrowLeft, Wallet, CheckCircle2,
-  ArrowRight, Coins, ShieldAlert, Zap
+  Gavel,
+  Eye,
+  Loader2,
+  ArrowLeft,
+  Wallet,
+  CheckCircle2,
+  ArrowRight,
+  Coins,
+  ShieldAlert,
+  Zap,
 } from "lucide-react";
 import { useSliceConnect } from "@/hooks/useSliceConnect"; // Updated
 import { useDisputeList } from "@/hooks/useDisputeList";
@@ -106,12 +114,13 @@ export default function MyVotesPage() {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div
-                  className={`absolute left-0 top-8 bottom-8 w-1.5 rounded-r-full ${task.phase === "VOTE"
+                  className={`absolute left-0 top-8 bottom-8 w-1.5 rounded-r-full ${
+                    task.phase === "VOTE"
                       ? "bg-[#8c8fff]"
                       : task.phase === "REVEAL"
                         ? "bg-[#1b1c23]"
                         : "bg-emerald-500"
-                    }`}
+                  }`}
                 />
 
                 <div className="pl-6 pr-5 py-5 flex flex-col gap-4">
@@ -149,12 +158,13 @@ export default function MyVotesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`p-2 rounded-xl ${task.phase === "VOTE"
+                        className={`p-2 rounded-xl ${
+                          task.phase === "VOTE"
                             ? "bg-[#8c8fff]/10 text-[#8c8fff]"
                             : task.phase === "REVEAL"
                               ? "bg-gray-100 text-gray-600"
                               : "bg-emerald-50 text-emerald-600"
-                          }`}
+                        }`}
                       >
                         {task.phase === "VOTE" ? (
                           <Gavel className="w-4 h-4" />
@@ -169,8 +179,9 @@ export default function MyVotesPage() {
                           Deadline
                         </span>
                         <span
-                          className={`text-xs font-black ${task.isUrgent ? "text-rose-500" : "text-[#1b1c23]"
-                            }`}
+                          className={`text-xs font-black ${
+                            task.isUrgent ? "text-rose-500" : "text-[#1b1c23]"
+                          }`}
                         >
                           {task.deadlineLabel}
                         </span>
@@ -180,11 +191,12 @@ export default function MyVotesPage() {
                     <button
                       className={`
                         pl-5 pr-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-md flex items-center gap-2 transition-all duration-300
-                        ${task.phase === "VOTE"
-                          ? "bg-[#1b1c23] hover:bg-[#32363f]"
-                          : task.phase === "REVEAL"
-                            ? "bg-[#8c8fff] hover:bg-[#7a7de0] shadow-[#8c8fff]/20"
-                            : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                        ${
+                          task.phase === "VOTE"
+                            ? "bg-[#1b1c23] hover:bg-[#32363f]"
+                            : task.phase === "REVEAL"
+                              ? "bg-[#8c8fff] hover:bg-[#7a7de0] shadow-[#8c8fff]/20"
+                              : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                         }
                       `}
                     >

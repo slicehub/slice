@@ -17,7 +17,7 @@ export function useDisputeParties(dispute: any) {
         roleLabel: "Defendant",
         avatarUrl: "/images/profiles-mockup/profile-2.jpg",
         themeColor: "gray",
-      }
+      },
     };
   }, [dispute]);
 }

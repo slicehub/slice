@@ -43,15 +43,18 @@ export function useCreateDispute() {
         address: SLICE_ADDRESS,
         abi: SLICE_ABI,
         functionName: "createDispute",
-        args: [{ // Check ABI: createDispute takes a struct "DisputeConfig"
-          defender: defenderAddress as `0x${string}`,
-          category: category,
-          ipfsHash: ipfsHash,
-          jurorsRequired: BigInt(jurorsRequired),
-          paySeconds: time,
-          commitSeconds: time,
-          revealSeconds: time
-        }],
+        args: [
+          {
+            // Check ABI: createDispute takes a struct "DisputeConfig"
+            defender: defenderAddress as `0x${string}`,
+            category: category,
+            ipfsHash: ipfsHash,
+            jurorsRequired: BigInt(jurorsRequired),
+            paySeconds: time,
+            commitSeconds: time,
+            revealSeconds: time,
+          },
+        ],
       });
 
       console.log("Creation TX sent:", hash);
@@ -64,10 +67,10 @@ export function useCreateDispute() {
 
       toast.success("Dispute created successfully!");
       return true;
-
     } catch (error: any) {
       console.error("Create dispute failed", error);
-      const msg = error.reason || error.shortMessage || error.message || "Unknown error";
+      const msg =
+        error.reason || error.shortMessage || error.message || "Unknown error";
       toast.error(`Create Failed: ${msg}`);
       return false;
     } finally {

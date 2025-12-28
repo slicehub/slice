@@ -20,7 +20,7 @@ export default function ProfilePage() {
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
-    }
+    },
   });
 
   // --- State ---
@@ -146,7 +146,16 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-[#eff0ff] flex items-center justify-center text-[#8c8fff] group-hover:scale-110 transition-transform duration-300">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="8" cy="8" r="6" />
                 <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
                 <path d="M7 6h1v4" />

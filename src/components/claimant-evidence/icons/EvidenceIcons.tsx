@@ -9,7 +9,11 @@ interface IconProps {
 /**
  * Picture Icon - Icono de imagen
  */
-export const PictureIcon: React.FC<IconProps> = ({ className, size = 10, color = "#1b1c23" }) => {
+export const PictureIcon: React.FC<IconProps> = ({
+  className,
+  size = 10,
+  color = "#1b1c23",
+}) => {
   return (
     <svg
       width={size}
@@ -69,7 +73,11 @@ export const FullscreenIcon: React.FC<IconProps> = ({
 /**
  * Play Icon - Icono de play para videos
  */
-export const PlayIcon: React.FC<IconProps> = ({ className, size = 37, color = "#1b1c23" }) => {
+export const PlayIcon: React.FC<IconProps> = ({
+  className,
+  size = 37,
+  color = "#1b1c23",
+}) => {
   return (
     <svg
       width={size}
@@ -82,10 +90,7 @@ export const PlayIcon: React.FC<IconProps> = ({ className, size = 37, color = "#
       xmlns="http://www.w3.org/2000/svg"
     >
       <circle cx="18.5" cy="18.5" r="18.5" fill="white" fillOpacity="0.9" />
-      <path
-        d="M14 11L26 18.5L14 26V11Z"
-        fill={color}
-      />
+      <path d="M14 11L26 18.5L14 26V11Z" fill={color} />
     </svg>
   );
 };

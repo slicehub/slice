@@ -6,10 +6,10 @@ interface CalendarIconProps {
   color?: string;
 }
 
-export const CalendarIcon: React.FC<CalendarIconProps> = ({ 
-  className, 
-  size = 10, 
-  color = "#8c8fff" 
+export const CalendarIcon: React.FC<CalendarIconProps> = ({
+  className,
+  size = 10,
+  color = "#8c8fff",
 }) => {
   return (
     <svg
@@ -29,4 +29,3 @@ export const CalendarIcon: React.FC<CalendarIconProps> = ({
     </svg>
   );
 };
-

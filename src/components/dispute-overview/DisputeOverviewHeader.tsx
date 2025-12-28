@@ -4,7 +4,9 @@ interface DisputeOverviewHeaderProps {
   onBack: () => void;
 }
 
-export const DisputeOverviewHeader: React.FC<DisputeOverviewHeaderProps> = ({ onBack }) => {
+export const DisputeOverviewHeader: React.FC<DisputeOverviewHeaderProps> = ({
+  onBack,
+}) => {
   return (
     <div className="w-full pt-9 px-[18px] pb-0 flex items-start relative">
       <button

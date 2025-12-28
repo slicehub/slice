@@ -39,30 +39,30 @@ export default function DisputeOverviewPage() {
   // Helper to get formatted data
   const displayDispute = dispute
     ? {
-      id: dispute.id.toString(),
-      title: dispute.title || `Dispute #${dispute.id}`,
-      category: dispute.category,
-      status:
-        ["Created", "Commit", "Reveal", "Executed"][dispute.status] ||
-        "Unknown",
-      claimer: {
-        name: dispute.claimer,
-        shortName: `${dispute.claimer.slice(0, 6)}...${dispute.claimer.slice(-4)}`,
-        avatar: "/images/profiles-mockup/profile-1.jpg", // Using real avatar
-        isWinner:
-          isFinished && winnerAddress === dispute.claimer.toLowerCase(),
-      },
-      defender: {
-        name: dispute.defender,
-        shortName: `${dispute.defender.slice(0, 6)}...${dispute.defender.slice(-4)}`,
-        avatar: "/images/profiles-mockup/profile-2.jpg", // Using real avatar
-        isWinner:
-          isFinished && winnerAddress === dispute.defender.toLowerCase(),
-      },
-      description: dispute.description || "No description provided.",
-      deadlineLabel: dispute.deadlineLabel, // Changed from deadline to deadlineLabel
-      stake: dispute.stake, // Already formatted in adapter
-    }
+        id: dispute.id.toString(),
+        title: dispute.title || `Dispute #${dispute.id}`,
+        category: dispute.category,
+        status:
+          ["Created", "Commit", "Reveal", "Executed"][dispute.status] ||
+          "Unknown",
+        claimer: {
+          name: dispute.claimer,
+          shortName: `${dispute.claimer.slice(0, 6)}...${dispute.claimer.slice(-4)}`,
+          avatar: "/images/profiles-mockup/profile-1.jpg", // Using real avatar
+          isWinner:
+            isFinished && winnerAddress === dispute.claimer.toLowerCase(),
+        },
+        defender: {
+          name: dispute.defender,
+          shortName: `${dispute.defender.slice(0, 6)}...${dispute.defender.slice(-4)}`,
+          avatar: "/images/profiles-mockup/profile-2.jpg", // Using real avatar
+          isWinner:
+            isFinished && winnerAddress === dispute.defender.toLowerCase(),
+        },
+        description: dispute.description || "No description provided.",
+        deadlineLabel: dispute.deadlineLabel, // Changed from deadline to deadlineLabel
+        stake: dispute.stake, // Already formatted in adapter
+      }
     : null;
 
   if (isLoading || !displayDispute) {

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSliceConnect } from "@/hooks/useSliceConnect"; // Updated
+import { useSliceConnect } from "@/hooks/useSliceConnect";
 import { SLICE_ADDRESS } from "@/config/contracts";
 import { useSliceVoting } from "@/hooks/useSliceVoting";
 import { useGetDispute } from "@/hooks/useGetDispute";
 import { getVoteData } from "@/util/votingStorage";
 
 export function useReveal(disputeId: string) {
-  const { address } = useSliceConnect(); // Updated
+  const { address } = useSliceConnect();
 
   const { revealVote, isProcessing, logs } = useSliceVoting();
   const { dispute } = useGetDispute(disputeId);
@@ -40,6 +40,6 @@ export function useReveal(disputeId: string) {
     status,
     revealVote: () => revealVote(disputeId),
     isProcessing,
-    logs
+    logs,
   };
 }

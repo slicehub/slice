@@ -33,12 +33,7 @@ export function generateSalt(): bigint {
  */
 export function calculateCommitment(vote: number, salt: bigint): string {
   // Viem: Encode packed arguments then hash
-  return keccak256(
-    encodePacked(
-      ["uint256", "uint256"],
-      [BigInt(vote), salt]
-    )
-  );
+  return keccak256(encodePacked(["uint256", "uint256"], [BigInt(vote), salt]));
 }
 
 /**
@@ -55,8 +50,8 @@ export function calculateNullifier(
   const hash = keccak256(
     encodePacked(
       ["uint256", "uint256", "uint64"],
-      [identitySecret, salt, BigInt(proposalId)]
-    )
+      [identitySecret, salt, BigInt(proposalId)],
+    ),
   );
 
   // Convert hex string back to Uint8Array

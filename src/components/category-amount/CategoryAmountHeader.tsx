@@ -14,7 +14,7 @@ const CATEGORIES = [
 
 export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({
   onBack,
-  onCategorySelect
+  onCategorySelect,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -32,7 +32,7 @@ export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({
 
   const handleToggle = () => setIsOpen(!isOpen);
 
-  const handleSelect = (category: typeof CATEGORIES[0]) => {
+  const handleSelect = (category: (typeof CATEGORIES)[0]) => {
     setSelectedCategory(category.label);
     setIsOpen(false);
     if (onCategorySelect) {
@@ -42,7 +42,10 @@ export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -70,7 +73,7 @@ export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({
       {/* Dropdown Wrapper */}
       <div className="relative w-[336px] self-center" ref={dropdownRef}>
         <button
-          className={`bg-white border-none rounded-[22.5px] h-[45px] w-full pr-[13px] flex items-center gap-0 cursor-pointer transition-all duration-200 box-border shadow-[0px_2px_4px_rgba(0,0,0,0.05)] hover:opacity-95 hover:shadow-[0px_4px_8px_rgba(0,0,0,0.08)] ${isOpen ? 'rounded-b-none shadow-none' : ''}`}
+          className={`bg-white border-none rounded-[22.5px] h-[45px] w-full pr-[13px] flex items-center gap-0 cursor-pointer transition-all duration-200 box-border shadow-[0px_2px_4px_rgba(0,0,0,0.05)] hover:opacity-95 hover:shadow-[0px_4px_8px_rgba(0,0,0,0.08)] ${isOpen ? "rounded-b-none shadow-none" : ""}`}
           onClick={handleToggle}
           type="button"
         >
@@ -93,7 +96,7 @@ export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({
             alt="Dropdown"
             className="w-[13px] h-2 shrink-0 mr-[13px] transition-transform duration-200"
             style={{
-              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
             }}
           />
         </button>
@@ -103,7 +106,7 @@ export const CategoryAmountHeader: React.FC<CategoryAmountHeaderProps> = ({
             {CATEGORIES.map((category) => (
               <button
                 key={category.id}
-                className={`w-full px-5 py-3 bg-transparent border-none font-manrope font-semibold text-sm text-[#31353b] text-left cursor-pointer transition-all duration-200 hover:bg-[#f5f6f9] hover:text-[#1b1c23] hover:pl-6 ${selectedCategory === category.label ? 'bg-[#f5f6f9] text-[#8c8fff] font-extrabold' : ''}`}
+                className={`w-full px-5 py-3 bg-transparent border-none font-manrope font-semibold text-sm text-[#31353b] text-left cursor-pointer transition-all duration-200 hover:bg-[#f5f6f9] hover:text-[#1b1c23] hover:pl-6 ${selectedCategory === category.label ? "bg-[#f5f6f9] text-[#8c8fff] font-extrabold" : ""}`}
                 onClick={() => handleSelect(category)}
               >
                 {category.label}

@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useWriteContract, usePublicClient, useAccount, useChainId } from "wagmi";
+import {
+  useWriteContract,
+  usePublicClient,
+  useAccount,
+  useChainId,
+} from "wagmi";
 import { parseUnits, erc20Abi } from "viem";
 import { SLICE_ABI, getContractsForChain } from "@/config/contracts";
 import { toast } from "sonner";
@@ -38,7 +43,7 @@ export function usePayDispute() {
         address: usdcToken as `0x${string}`,
         abi: erc20Abi,
         functionName: "allowance",
-        args: [address, sliceContract as `0x${string}`]
+        args: [address, sliceContract as `0x${string}`],
       });
 
       if (allowance < amountBI) {
@@ -65,7 +70,7 @@ export function usePayDispute() {
       // Wagmi automatically estimates. If we need buffer, we can pass gas in options.
       // For now, let's rely on standard estimation.
 
-      // Function name in contract is `fundAppeal` or similar? 
+      // Function name in contract is `fundAppeal` or similar?
       // Checked `payDispute.ts` view_file -> it calls `contract.payDispute`.
       // The ABI in `slice-abi.ts` has `payDispute`.
 
@@ -80,7 +85,7 @@ export function usePayDispute() {
         // ABI: `payDispute(uint256 _id)` - correct. It pulls the required amount from the user's balance/allowance internally?
         // No, `payDispute` in solidity usually transfers `requiredStake` from msg.sender.
         // Wait, why did the hook convert `amountStr`?
-        // Ah, the hook used `amountToApprove = disputeData.requiredStake`. 
+        // Ah, the hook used `amountToApprove = disputeData.requiredStake`.
         // The `amountStr` argument in `payDispute` function signature was unused in the original code logic?
         // Original: `payDispute = async (..., _amountStr) ... const amountToApprove = disputeData.requiredStake`
         // So `_amountStr` was ignored or used for UI validaton?
@@ -92,10 +97,10 @@ export function usePayDispute() {
 
       toast.success("Payment successful!");
       return true;
-
     } catch (error: any) {
       console.error("Payment flow failed", error);
-      const msg = error.reason || error.shortMessage || error.message || "Unknown error";
+      const msg =
+        error.reason || error.shortMessage || error.message || "Unknown error";
       toast.error(`Payment failed: ${msg}`);
       return false;
     } finally {
@@ -108,6 +113,6 @@ export function usePayDispute() {
     payDispute,
     // Match the original return names for compatibility if possible, or update consumers
     isPaying: loading,
-    step
+    step,
   };
 }

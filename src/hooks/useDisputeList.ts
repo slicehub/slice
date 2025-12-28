@@ -10,11 +10,10 @@ type ListType = "juror" | "all";
 
 export type Dispute = DisputeUI;
 
+const { address } = useAccount();
 export function useDisputeList(listType: ListType) {
-  const { address } = useAccount();
-
   // 1. Get the total number of disputes OR juror disputes depending on type
-  // Note: For "juror" type, we need a separate read or logic. 
+  // Note: For "juror" type, we need a separate read or logic.
   // Assuming 'getJurorDisputes' exists on contract for now, or we filter locally.
   // Based on previous code: ids = await contract.getJurorDisputes(address);
 
@@ -25,7 +24,7 @@ export function useDisputeList(listType: ListType) {
     args: address ? [address] : undefined,
     query: {
       enabled: listType === "juror" && !!address,
-    }
+    },
   });
 
   const { data: totalCount } = useReadContract({
@@ -34,7 +33,7 @@ export function useDisputeList(listType: ListType) {
     functionName: "disputeCount",
     query: {
       enabled: listType === "all",
-    }
+    },
   });
 
   // 2. Prepare the Multicall Array
@@ -42,7 +41,6 @@ export function useDisputeList(listType: ListType) {
     const contracts = [];
 
     if (listType === "juror" && jurorDisputeIds) {
-
       const ids = Array.from(jurorDisputeIds as bigint[]);
       for (const id of ids) {
         contracts.push({
@@ -56,7 +54,7 @@ export function useDisputeList(listType: ListType) {
       const total = Number(totalCount);
       // Loop backwards to show newest first, limit to 20
       const start = total; // disputeCount is length, so last index is total - 1? usually count is next ID.
-      // If count is 1, ID is 0. 
+      // If count is 1, ID is 0.
       // Let's assume count is Next ID.
       const end = Math.max(0, start - 20);
 
@@ -73,11 +71,15 @@ export function useDisputeList(listType: ListType) {
   }, [listType, jurorDisputeIds, totalCount]);
 
   // 3. Fetch ALL disputes in one single RPC call
-  const { data: results, isLoading: isMulticallLoading, refetch } = useReadContracts({
+  const {
+    data: results,
+    isLoading: isMulticallLoading,
+    refetch,
+  } = useReadContracts({
     contracts: calls,
     query: {
       enabled: calls.length > 0,
-    }
+    },
   });
 
   const [disputes, setDisputes] = useState<DisputeUI[]>([]);
@@ -104,7 +106,7 @@ export function useDisputeList(listType: ListType) {
           // If the struct has the ID, we are good.
 
           return await transformDisputeData(result.result);
-        })
+        }),
       );
 
       setDisputes(processed.filter((d): d is DisputeUI => d !== null));
@@ -117,6 +119,6 @@ export function useDisputeList(listType: ListType) {
   return {
     disputes,
     isLoading: isMulticallLoading || isProcessing,
-    refetch
+    refetch,
   };
 }

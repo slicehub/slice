@@ -42,6 +42,6 @@ export function useExecuteRuling() {
 
   return {
     executeRuling,
-    isExecuting // Matches the original return name (was isExecuting in view_file)
+    isExecuting, // Matches the original return name (was isExecuting in view_file)
   };
 }

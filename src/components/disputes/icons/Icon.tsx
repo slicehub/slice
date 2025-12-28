@@ -16,7 +16,9 @@ export const IconWrapper: React.FC<{
   width?: string | number;
   height?: string | number;
 }> = ({ children, className, color, hoverColor, viewBox, width, height }) => {
-  const [currentColor, setCurrentColor] = React.useState(color || "currentColor");
+  const [currentColor, setCurrentColor] = React.useState(
+    color || "currentColor",
+  );
 
   return (
     <svg
@@ -41,7 +43,11 @@ export const IconWrapper: React.FC<{
   );
 };
 
-export const NotificationIcon: React.FC<IconProps> = ({ className, color = "#1b1c23", hoverColor }) => {
+export const NotificationIcon: React.FC<IconProps> = ({
+  className,
+  color = "#1b1c23",
+  hoverColor,
+}) => {
   return (
     <IconWrapper
       className={className}
@@ -69,7 +75,11 @@ export const NotificationIcon: React.FC<IconProps> = ({ className, color = "#1b1
   );
 };
 
-export const DepositIcon: React.FC<IconProps> = ({ className, color = "white", hoverColor }) => {
+export const DepositIcon: React.FC<IconProps> = ({
+  className,
+  color = "white",
+  hoverColor,
+}) => {
   return (
     <IconWrapper
       className={className}
@@ -90,7 +100,11 @@ export const DepositIcon: React.FC<IconProps> = ({ className, color = "white", h
   );
 };
 
-export const SendIcon: React.FC<IconProps> = ({ className, color = "white", hoverColor }) => {
+export const SendIcon: React.FC<IconProps> = ({
+  className,
+  color = "white",
+  hoverColor,
+}) => {
   return (
     <IconWrapper
       className={className}
@@ -112,7 +126,10 @@ export const SendIcon: React.FC<IconProps> = ({ className, color = "white", hove
 };
 
 // Componentes que usan los SVGs descargados de Figma como SVG inline para mejor control
-export const BarChartIcon: React.FC<IconProps> = ({ className, color = "#8c8fff" }) => {
+export const BarChartIcon: React.FC<IconProps> = ({
+  className,
+  color = "#8c8fff",
+}) => {
   return (
     <svg
       width="20"
@@ -136,7 +153,7 @@ export const BarChartIcon: React.FC<IconProps> = ({ className, color = "#8c8fff"
 
 export const FilterIcon: React.FC<IconProps> = ({ className, hoverColor }) => {
   const [hovered, setHovered] = React.useState(false);
-  
+
   return (
     <img
       src="/images/icons/filter-icon.svg"
@@ -145,7 +162,8 @@ export const FilterIcon: React.FC<IconProps> = ({ className, hoverColor }) => {
       style={{
         width: "12px",
         height: "12px",
-        filter: hovered && hoverColor ? `drop-shadow(0 0 2px ${hoverColor})` : "none",
+        filter:
+          hovered && hoverColor ? `drop-shadow(0 0 2px ${hoverColor})` : "none",
         transition: "filter 0.2s",
       }}
       onMouseEnter={() => setHovered(true)}
