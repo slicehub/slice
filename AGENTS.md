@@ -36,5 +36,5 @@
 
 ## Configuration & Secrets
 
-- Copy `.env.example` to `.env.local` and set required keys (e.g., `NEXT_PUBLIC_PROJECT_ID`).
+- Copy `.env.example` to `.env.local` and set required keys
 - Never commit secrets; keep `.env.local` local to your machine.
