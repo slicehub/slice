@@ -1,6 +1,6 @@
 # ⚖️ Slice Protocol Application
 
-This project is the frontend implementation for **Slice**, a **neutral, on-chain dispute resolution protocol** built on Next.js and integrated with **Privy** and **Wagmi**.
+This project is the frontend implementation for **Slice**, a **neutral, on-chain dispute resolution protocol** built on Next.js. It features a **multi-tenant architecture** capable of running as a standalone PWA or as an embedded MiniApp across various wallet ecosystems (Base, Farcaster, Lemon, Beexo).
 
 **🔗 Live Demo**: [Testnet](https://dev.slicehub.xyz) | [Mainnet](https://app.slicehub.xyz)
 
@@ -14,20 +14,38 @@ Slice ensures a trustless, verifiable, and economically secure ruling (Party A o
 
 ---
 
-## Why Slice?
+## 🏗️ Architecture: Multi-Tenant & Strategy Pattern
 
-When **human judgment** is needed in decentralized applications—such as resolving conflicts, ambiguities, or subjective decisions—**Slice** provides a reliable and on-chain mechanism. It removes the need for centralized moderators and uses blockchain's transparency and cryptographic security.
+This application uses a **Strategy Pattern** to manage wallet connections and SDK interactions. Instead of a single monolithic connection logic, we use an abstraction layer that selects the appropriate **Adapter** based on the runtime environment (detected via subdomains and SDK presence).
+
+### 1. Connection Strategies
+We support three distinct connection strategies:
+
+| Strategy | Description | Used By |
+| :--- | :--- | :--- |
+| **Wagmi SW** | Uses Smart Wallets (Coinbase/Safe) via Privy & Wagmi. | **PWA**, **Base**, **Farcaster** |
+| **Wagmi EOA** | Uses standard Injected (EOA) connectors. | **Beexo** |
+| **Lemon SDK** | Uses the native `@lemoncash/mini-app-sdk`. | **Lemon** |
+
+### 2. Supported MiniApps & Environments
+The application behaves differently depending on the access point (Subdomain) and injected providers.
+
+| Platform | Subdomain | Connection Strategy | Auth Type |
+| :--- | :--- | :--- | :--- |
+| **Standard PWA** | `app.` | **Wagmi SW** | Social / Email / Wallet |
+| **Base MiniApp** | `base.` | **Wagmi SW** | Coinbase Smart Wallet |
+| **Farcaster** | `frames.` | **Wagmi SW** | Farcaster Identity |
+| **Beexo** | `beexo.` | **Wagmi EOA** | Injected Provider (Beexo) |
+| **Lemon** | `lemon.` | **Lemon SDK** | Native Lemon Auth |
 
 ---
 
 ## 🚀 Try Slice Now
 
-Experience Slice in action before diving into the code:
+Experience Slice in action across our supported networks:
 
-- **Testnet Demo**: [dev.slicehub.xyz](https://dev.slicehub.xyz) - Try the protocol risk-free on Base Sepolia and Scroll Sepolia
-- **Mainnet App**: [app.slicehub.xyz](https://app.slicehub.xyz) - Live production version on Base and Scroll mainnet
-
-> **New to Slice?** Start with the testnet demo to explore dispute creation, juror voting, and the commit-reveal process without using real funds.
+- **Testnet Demo**: [dev.slicehub.xyz](https://dev.slicehub.xyz) - (Base Sepolia / Scroll Sepolia)
+- **Mainnet App**: [app.slicehub.xyz](https://app.slicehub.xyz) - (Base / Scroll)
 
 ---
 
@@ -42,15 +60,6 @@ Experience Slice in action before diving into the code:
 
 ---
 
-## Core Features
-
-- **Neutrality**: Provides objective, on-chain decisions.
-- **Random Juror Selection**: Ensures fairness and unpredictability.
-- **Private Commit–Reveal Voting**: Prevents bribery or manipulation.
-- **Economic Security**: Jurors stake tokens, earning rewards for honesty and risking penalties for dishonesty.
-
----
-
 ## Integration Guide (For Developers)
 
 Integrating Slice into your protocol is as simple as 1-2-3:
@@ -60,45 +69,40 @@ Integrating Slice into your protocol is as simple as 1-2-3:
 2.  **Wait for Ruling:**
     Slice handles the juror selection, voting, and consensus off-chain and on-chain.
 3.  **Read the Verdict:**
-    Once the dispute status is `Executed`, read the `winner` address from the `disputes` mapping and execute your logic (e.g., release escrow funds).
+    Once the dispute status is `Executed`, read the `winner` address from the `disputes` mapping and execute your logic.
 
 ---
 
 ## Deployed Contracts
 
-The protocol is currently deployed on the following networks.
-
 | Network            | Slice Core                                   | USDC Token                                   |
 | ------------------ | -------------------------------------------- | -------------------------------------------- |
-| **Base Sepolia**   | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x5dEaC602762362FE5f135FA5904351916053cF70` |
+| **Base Sepolia** | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x5dEaC602762362FE5f135FA5904351916053cF70` |
 | **Scroll Sepolia** | `0x095815CDcf46160E4A25127A797D33A9daF39Ec0` | `0x2C9678042D52B97D27f2bD2947F7111d93F3dD0D` |
-| **Base**           | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
-| **Scroll**         | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` |
+| **Base** | `0xD8A10bD25e0E5dAD717372fA0C66d3a59a425e4D` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| **Scroll** | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` |
 
 ---
 
 ## Getting Started
 
 1.  **Configure Environment:**
-    Rename `.env.example` to `.env.local` and add your keys:
+    Rename `.env.example` to `.env.local` and add your keys. Note that specific strategies (like Lemon) may require additional variables if running locally.
 
     ```bash
-    NEXT_PUBLIC_APP_ENV="development" # or 'production' for Mainnet
+    NEXT_PUBLIC_APP_ENV="development" # or 'production'
 
     # Pinata / IPFS Config
     NEXT_PUBLIC_PINATA_JWT="your_pinata_jwt"
     NEXT_PUBLIC_PINATA_GATEWAY_URL="your_gateway_url"
 
-    # Privy Config
+    # Privy Config (For PWA/Base/Farcaster)
     NEXT_PUBLIC_PRIVY_APP_ID="your_privy_app_id"
     NEXT_PUBLIC_PRIVY_CLIENT_ID="your_privy_client_id"
-    NEXT_PUBLIC_PRIVY_JWKS_ENDPOINT="https://api.privy.io/v1/jwks"
-    NEXT_PRIVY_SECRET="your_privy_secret"
     
     # Contracts
-    NEXT_PUBLIC_APP_ENV="development"
-    NEXT_PUBLIC_BASE_SLICE_CONTRACT="0xYourContractAddress"
-    NEXT_PUBLIC_BASE_USDC_CONTRACT="0xYourUSDCContractAddress"
+    NEXT_PUBLIC_BASE_SLICE_CONTRACT="0x..."
+    NEXT_PUBLIC_BASE_USDC_CONTRACT="0x..."
     ```
 
 2.  **Install dependencies:**
@@ -113,132 +117,43 @@ The protocol is currently deployed on the following networks.
     pnpm run dev
     ```
 
-    Open [http://localhost:3000](http://localhost:3000) to launch the Slice App.
-  
----
-
-## Embedded vs. Web Mode
-
-The app supports two distinct runtime environments, controlled by `NEXT_PUBLIC_IS_EMBEDDED`:
-
-1. **Web Mode (`false`)**:
-* Uses **Privy** for authentication.
-* Standard "Connect Wallet" flow.
-* Best for desktop/mobile browsers.
-
-
-2. **Embedded Mode (`true`)**:
-* Uses **XO-Connect** (via `src/wagmi/xoConnector.ts`).
-* Designed for running inside a parent wallet iframe.
-* Automatically connects to the parent wallet context without UI prompts.
-
-
----
-
-## Smart Contract Development (Hardhat) and Configuration
-
-The `contracts/` directory contains the Solidity smart contracts. The project uses **Hardhat** with **Viem** for compilation and testing.
-
-### Hardhat Setup
-
-This project uses **Hardhat Configuration Variables** for secure secret management (instead of `.env` for private keys).
-
-1. **Set your Deployer Private Key:**
-```bash
-npx hardhat vars set DEPLOYER_PRIVATE_KEY
-
-```
-
-
-2. **Set your RPC URL (e.g., Alchemy/Infura for Base Sepolia):**
-```bash
-npx hardhat vars set BASE_SEPOLIA_RPC_URL
-
-```
-
-
-### Available Commands
-
-* **Compile Contracts:**
-```bash
-npx hardhat compile
-
-```
-
-* **Run Tests:**
-```bash
-npx hardhat test
-
-```
-
-* **Deploy (Example):**
-You can run scripts located in `scripts/` (create one if needed):
-```bash
-npx hardhat run scripts/deploy.ts --network baseSepolia
-
-```
-
-### Contract Architecture
-
-* **`Slice.sol`**: The core protocol logic handling dispute creation, juror selection (VRF), voting (commit/reveal), and ruling execution.
-* **`MockUSDC.sol`**: A test token used for development on testnets to simulate staking.
-
-### Staking Token
-
-Slice is token-agnostic. Each deployment can configure its own **staking token** (e.g., USDC, stablecoins, or governance tokens).
-
-- **Staking:** Jurors stake tokens to gain eligibility. Higher stake = higher selection probability.
-- **Rewards:** Jurors who vote with the majority are rewarded.
-- **Slashing:** Jurors who vote against the majority (incoherent) lose a portion of their stake, incentivizing honest consensus.
+    * **PWA Mode:** Open `http://localhost:3000`
+    * **Lemon Mode:** Use a tunnel or specific port configuration to simulate the Lemon environment if needed, or set `NEXT_PUBLIC_FORCE_STRATEGY="lemon"` for UI testing.
 
 ---
 
 ## ⚙️ Application Configuration
 
-This project uses a centralized configuration strategy located in the `src/config/` directory to manage multi-chain support and environment switching.
+The `src/config/` and `src/adapters/` directories manage the multi-environment logic.
 
-### Directory Structure (`src/config/`)
+### Abstraction Layer (`src/adapters/`)
+We abstract wallet interactions behind a common interface. The app does not know *which* wallet provider is active, only that it can `connect`, `sign`, and `sendTransaction`.
 
-* **`app.ts`**:
-* Exports static constants for external services (Privy, Pinata).
-* Determines if the app is running in **Embedded Mode** via `IS_EMBEDDED`.
+* **`useWalletAdapter`**: The hook that determines the active strategy based on the subdomain or window object.
+* **`LemonAdapter`**: Wraps `@lemoncash/mini-app-sdk`.
+* **`WagmiAdapter`**: Wraps standard Wagmi hooks (configured for either Smart Wallets or EOA).
 
+### Chain Configuration (`src/config/chains.ts`)
+* Exports `SUPPORTED_CHAINS` mapping Wagmi `Chain` objects to contract addresses.
+* Automatically defaults to the correct chain based on `NEXT_PUBLIC_APP_ENV`.
 
-* **`chains.ts`**:
-* **Crucial File**: This is where supported networks are defined.
-* It exports `SUPPORTED_CHAINS`, which maps Wagmi `Chain` objects to specific contract addresses (Slice & USDC).
-* It automatically selects the default chain based on `NEXT_PUBLIC_APP_ENV`.
+---
 
+## Smart Contract Development
 
-* **`contracts.ts`**:
-* Exports `getContractsForChain(chainId)`.
-* This utility dynamically returns the correct contract addresses based on the user's current network, allowing the UI to adapt if the user switches chains.
+The `contracts/` directory contains the Solidity smart contracts, using **Hardhat** and **Viem**.
 
-
-### Adding a New Chain
-
-1. Open `src/config/chains.ts`.
-2. Import the chain from `wagmi/chains` (e.g., `optimism`).
-3. Add a new entry to the `SUPPORTED_CHAINS` array:
-
-```typescript
-{
-  chain: optimism,
-  contracts: {
-    slice: "0x...", // Your deployed Slice contract
-    usdc: "0x...",  // USDC on that chain
-  },
-}
-```
+### Commands
+* **Compile:** `npx hardhat compile`
+* **Test:** `npx hardhat test`
+* **Deploy:** `npx hardhat run scripts/deploy.ts --network baseSepolia`
 
 ---
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1: Foundation** (Core Protocol, Web UI, Commit-Reveal Voting)
-- [ ] **Phase 2: Expansion** (Additional Miniapps, Multi-chain Deployment, More Networks)
-- [ ] **Phase 3: Developer Tools** (REST API, TypeScript SDK, Integration Libraries)
-- [ ] **Phase 4: Specialized Courts** (Multiple Dispute Categories, Vertical-Specific Courts, Custom Arbitration Rules)
-- [ ] **Phase 5: Ecosystem Growth** (DAO Governance, Permissionless Court Creation, Community-Driven Development)
-
----
+- [x] **Phase 1: Foundation** (Core Protocol, Web UI)
+- [x] **Phase 2: Architecture Overhaul** (Strategy Pattern, Multi-Tenant SDKs)
+- [ ] **Phase 3: MiniApp Expansion** (Live integration with Lemon, Beexo, Farcaster)
+- [ ] **Phase 4: Specialized Courts** (Vertical-Specific Courts)
+- [ ] **Phase 5: DAO Governance** (Community-Driven Development)
