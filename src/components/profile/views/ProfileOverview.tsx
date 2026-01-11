@@ -7,6 +7,7 @@ import { useJurorStats } from "@/hooks/useJurorStats";
 import { useWithdraw } from "@/hooks/useWithdraw";
 import { Button } from "@/components/ui/button";
 import { PendingPaymentsDialog } from "@/components/profile/PendingPaymentsDialog";
+import { PendingExecutionsDialog } from "@/components/profile/PendingExecutionsDialog";
 
 export const ProfileOverview = () => {
   const router = useRouter();
@@ -15,8 +16,11 @@ export const ProfileOverview = () => {
 
   return (
     <div className="flex flex-col gap-6 pb-20">
-      {/*0. Pending Payments Alert */}
-      <PendingPaymentsDialog />
+      {/* 0. Action Alerts */}
+      <div className="flex flex-col gap-0">
+        <PendingPaymentsDialog />
+        <PendingExecutionsDialog />
+      </div>
 
       {/* Hero Card */}
       <div className="relative w-full rounded-4xl p-1 bg-linear-to-b from-gray-100 to-white shadow-xl shadow-gray-200/50">
