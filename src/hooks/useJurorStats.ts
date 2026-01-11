@@ -32,11 +32,15 @@ export function useJurorStats() {
     };
   }
 
-  // Parse Data: struct { totalDisputes; coherentVotes; totalEarnings; }
-  // Wagmi returns this as an array or object depending on config, usually array for unnamed structs
-  const matches = Number((data as unknown as any[])[0]);
-  const wins = Number((data as unknown as any[])[1]);
-  const rawEarnings = (data as unknown as any[])[2];
+  // Parse Data: struct JurorStats { totalDisputes; coherentVotes; totalEarnings; }
+  // Viem/Wagmi can return this as an object (named struct) or array depending on ABI config.
+  // Handle both cases safely.
+  const raw = data as any;
+
+  // Try object property access first (preferred), fallback to array index
+  const matches = Number(raw.totalDisputes ?? raw[0] ?? 0);
+  const wins = Number(raw.coherentVotes ?? raw[1] ?? 0);
+  const rawEarnings = raw.totalEarnings ?? raw[2] ?? 0n;
 
   // Calculate Accuracy
   const accuracyVal = matches > 0 ? (wins / matches) * 100 : 0;

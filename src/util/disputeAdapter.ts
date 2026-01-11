@@ -31,19 +31,102 @@ export interface DisputeUI {
   defenderCarouselEvidence?: string[];
 }
 
+/**
+ * Safely extracts a value from contract data that may be returned as an object (struct)
+ * or as an array, depending on the ABI configuration and Viem version.
+ */
+function getField<T>(
+  data: any,
+  fieldName: string,
+  arrayIndex: number,
+  defaultValue: T,
+): T {
+  if (data === null || data === undefined) return defaultValue;
+
+  // Try object property access first (preferred for named structs)
+  if (data[fieldName] !== undefined) {
+    return data[fieldName] as T;
+  }
+
+  // Fallback to array index access (for unnamed/tuple returns)
+  if (Array.isArray(data) && data[arrayIndex] !== undefined) {
+    return data[arrayIndex] as T;
+  }
+
+  // If data is an object with numeric keys (array-like object from Viem)
+  if (typeof data === "object" && data[arrayIndex] !== undefined) {
+    return data[arrayIndex] as T;
+  }
+
+  return defaultValue;
+}
+
 export async function transformDisputeData(
   contractData: any,
   decimals: number = 6,
 ): Promise<DisputeUI> {
-  const id = contractData.id.toString();
-  const status = Number(contractData.status);
+  // Extract fields using safe accessor with fallbacks
+  // Struct field order based on Solidity Dispute struct:
+  // 0: id, 1: claimer, 2: defender, 3: category, 4: requiredStake,
+  // 5: jurorsRequired, 6: ipfsHash, 7: commitsCount, 8: revealsCount,
+  // 9: status, 10: claimerPaid, 11: defenderPaid, 12: winner,
+  // 13: payDeadline, 14: evidenceDeadline, 15: commitDeadline, 16: revealDeadline
+
+  const id = (
+    getField(contractData, "id", 0, BigInt(0)) ?? contractData.id
+  ).toString();
+  const claimer = getField<string>(
+    contractData,
+    "claimer",
+    1,
+    "0x0000000000000000000000000000000000000000",
+  );
+  const defender = getField<string>(
+    contractData,
+    "defender",
+    2,
+    "0x0000000000000000000000000000000000000000",
+  );
+  const categoryRaw = getField<string>(contractData, "category", 3, "General");
+  const requiredStake = getField<bigint>(
+    contractData,
+    "requiredStake",
+    4,
+    BigInt(0),
+  );
+  const jurorsRequired = Number(
+    getField<bigint>(contractData, "jurorsRequired", 5, BigInt(3)),
+  );
+  const ipfsHash = getField<string>(contractData, "ipfsHash", 6, "");
+  const status = Number(getField<number>(contractData, "status", 9, 0));
+  const winnerRaw = getField<string>(
+    contractData,
+    "winner",
+    12,
+    "0x0000000000000000000000000000000000000000",
+  );
+  // Treat zero address as no winner
+  const winner =
+    winnerRaw === "0x0000000000000000000000000000000000000000"
+      ? undefined
+      : winnerRaw;
+  const evidenceDeadline = Number(
+    getField<bigint>(contractData, "evidenceDeadline", 14, BigInt(0)),
+  );
+  const commitDeadline = Number(
+    getField<bigint>(contractData, "commitDeadline", 15, BigInt(0)),
+  );
+  const revealDeadline = Number(
+    getField<bigint>(contractData, "revealDeadline", 16, BigInt(0)),
+  );
+
   const now = Math.floor(Date.now() / 1000);
 
   // Defaults
   let title = `Dispute #${id}`;
   let description = "No description provided.";
   let defenderDescription = undefined;
-  let category = contractData.category || "General";
+  let category = categoryRaw || "General";
   let evidence: string[] = [];
 
   // Containers for metadata
@@ -57,8 +140,8 @@ export async function transformDisputeData(
   let aliases = { claimer: null, defender: null };
 
   // Fetch IPFS Metadata
-  if (contractData.ipfsHash) {
-    const meta = await fetchJSONFromIPFS(contractData.ipfsHash);
+  if (ipfsHash) {
+    const meta = await fetchJSONFromIPFS(ipfsHash);
     if (meta) {
       title = meta.title || title;
       description = meta.description || description;
@@ -84,10 +167,10 @@ export async function transformDisputeData(
 
   if (status === 1) {
     phase = "VOTE";
-    deadline = Number(contractData.commitDeadline);
+    deadline = commitDeadline;
   } else if (status === 2) {
     phase = "REVEAL";
-    deadline = Number(contractData.revealDeadline);
+    deadline = revealDeadline;
     if (now > deadline) phase = "WITHDRAW";
   } else if (status === 3) {
     phase = "CLOSED";
@@ -108,21 +191,19 @@ export async function transformDisputeData(
     phase,
     deadlineLabel,
     isUrgent,
-    stake: contractData.requiredStake
-      ? formatUnits(contractData.requiredStake, decimals)
-      : "0",
-    jurorsRequired: Number(contractData.jurorsRequired),
-    revealDeadline: Number(contractData.revealDeadline),
-    evidenceDeadline: Number(contractData.evidenceDeadline),
+    stake: requiredStake ? formatUnits(requiredStake, decimals) : "0",
+    jurorsRequired,
+    revealDeadline,
+    evidenceDeadline,
     description,
     evidence,
-    claimer: contractData.claimer,
-    defender: contractData.defender,
-    winner: contractData.winner,
+    claimer,
+    defender,
+    winner,
 
     // Map new fields using the aliases found in IPFS
-    claimerName: aliases.claimer || contractData.claimer,
-    defenderName: aliases.defender || contractData.defender,
+    claimerName: aliases.claimer || claimer,
+    defenderName: aliases.defender || defender,
     audioEvidence,
     carouselEvidence,
     defenderDescription,

@@ -15,8 +15,12 @@ export function useAllDisputes() {
 
   // 2. Calculate the latest 20 IDs (e.g., 50, 49, 48...)
   const calls = useMemo(() => {
-    if (!countData) return [];
+    // FIX: Check for undefined explicitly. '0n' is falsy, so !countData triggers incorrectly on 0.
+    if (countData === undefined) return [];
+
     const total = Number(countData);
+    if (total === 0) return []; // Explicitly return empty if 0 disputes
+
     const start = total;
     const end = Math.max(1, total - 20 + 1); // Fetch last 20
     const contracts = [];
@@ -48,8 +52,17 @@ export function useAllDisputes() {
   // 4. Transform Data (IPFS, etc.)
   useEffect(() => {
     async function process() {
+      // Immediate exit if we know count is 0
+      if (countData !== undefined && Number(countData) === 0) {
+        setDisputes([]);
+        setIsProcessing(false);
+        return;
+      }
+
       if (!results) {
-        if (!isMulticallLoading && countData) setIsProcessing(false);
+        // Ensure we stop loading if countData is defined (even if 0, though caught above)
+        if (!isMulticallLoading && countData !== undefined)
+          setIsProcessing(false);
         return;
       }
 

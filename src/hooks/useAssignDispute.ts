@@ -71,7 +71,10 @@ export function useAssignDispute() {
             args: [BigInt(id)],
           });
           // d is struct. status is enum (uint8).
-          if (d.status === 1) return id; // Status 1 = Commit Phase (Open)
+          // Handle both object (struct) and array return types safely
+          const raw = d as any;
+          const status = raw.status ?? raw[9] ?? null; // Index 9 = status in Dispute struct
+          if (status === 1) return id; // Status 1 = Commit Phase (Open)
         } catch (e) {
           console.warn(`[Matchmaker] Skipped #${id}`, e);
         }
